@@ -1,6 +1,6 @@
 # Docket
 
-Simple markdown to HTML documentation rendering.
+Simple markdown to HTML documentation rendering. Docket aims to be a Rust clone of [`d`](https://github.com/sjl/d).
 
 * Binary which can be installed with `cargo install`
 * Command line argument parsing with [Docopt](https://docs.rs/docopt/0.8.1/docopt/)
