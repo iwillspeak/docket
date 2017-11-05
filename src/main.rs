@@ -5,6 +5,9 @@ extern crate docopt;
 extern crate serde_derive;
 extern crate pulldown_cmark;
 extern crate glob;
+#[macro_use]
+extern crate log;
+extern crate env_logger;
 
 mod docket;
 // mod page;
@@ -50,6 +53,8 @@ fn path_or_default(maybe_path: Option<String>, default: &str) -> PathBuf {
 }
 
 fn main() {
+
+    let _ = env_logger::init();
 
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())

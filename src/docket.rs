@@ -34,7 +34,7 @@ impl Docket {
     /// The path to search for documentation. Markdown files in this
     /// directory will be used for documentation.
     pub fn new(doc_path: &Path) -> Self {
-        println!("Searching for docs in {:?}", doc_path);
+        trace!("Searching for docs in {:?}", doc_path);
         if !doc_path.is_dir() {
             // TODO: Return Result<> instead?
             panic!("Not a directory");
@@ -68,6 +68,6 @@ impl Docket {
     ///
     /// Creates a tree of HTML files in the given `output` directory.
     pub fn render(self, output: &Path) {
-        println!("Rendering docs to {:?} ({:?})", output, self);
+        trace!("Rendering docs to {:?} ({:?})", output, self);
     }
 }
