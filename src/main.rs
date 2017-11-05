@@ -5,10 +5,12 @@ extern crate docopt;
 extern crate serde_derive;
 extern crate pulldown_cmark;
 
-// mod docket;
+mod docket;
 // mod page;
 
 use docopt::*;
+use std::path::PathBuf;
+use docket::Docket;
 
 /// Usage Information
 ///
@@ -36,11 +38,44 @@ struct Args {
     flag_target: Option<String>,
 }
 
+/// Path or Default
+///
+/// Try to convert a command line argument to a path. Falling back to
+/// the default if none is provided.
+fn path_or_default(maybe_path: Option<String>, default: &str) -> PathBuf {
+    maybe_path
+        .map({|p| PathBuf::from(p)})
+        .unwrap_or(default.to_owned().into())
+}
+
 fn main() {
 
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
 
-    println!("Args: {:?}", args);
+    let source = path_or_default(args.flag_source, ".");
+    let target = path_or_default(args.flag_target, "build/");
+    Docket::new(&source)
+        .render(&target);
+
+}
+
+#[cfg(test)]
+mod test {
+
+    use std::path::Path;
+    use super::*;
+
+    #[test]
+    fn path_or_default_with_valid_argument() {
+        let source = Some("/Users/foo/".to_owned());
+        assert_eq!(Path::new("/Users/foo/"), path_or_default(source, "."));
+    }
+    
+    #[test]
+    fn path_or_default_without_argument() {
+        let source = None;
+        assert_eq!(Path::new("baz/"), path_or_default(source, "baz/"));
+    }
 }
