@@ -10,7 +10,8 @@ extern crate log;
 extern crate env_logger;
 
 mod docket;
-// mod page;
+mod page;
+mod util;
 
 use docopt::*;
 use std::path::PathBuf;

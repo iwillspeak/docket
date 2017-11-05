@@ -1,5 +1,8 @@
 use std::path::{Path, PathBuf};
 use glob::glob;
+use pulldown_cmark::{Parser,html};
+use page::Page;
+use util::read_file_to_string;
 
 /// Docket
 ///
@@ -69,5 +72,25 @@ impl Docket {
     /// Creates a tree of HTML files in the given `output` directory.
     pub fn render(self, output: &Path) {
         trace!("Rendering docs to {:?} ({:?})", output, self);
+        let footer = self.rendered_footer();
+
+        let mut rendered_pages = Vec::new();
+        for path in self.pages {
+            let output_name = path.file_stem().unwrap();
+            let output_path = output.join(output_name).with_extension("html");
+            rendered_pages.push(Page::new(&path).render_with_footer(&footer, &output_path));
+        }
+        
+    }
+
+    /// Render the Footer to a String
+    fn rendered_footer(&self) -> String {
+        let mut footer = String::new();
+        if let Some(ref footer_path) = self.footer {
+            let contents = read_file_to_string(&footer_path);
+            let parsed = Parser::new(&contents);
+            html::push_html(&mut footer, parsed);
+        }
+        footer
     }
 }
