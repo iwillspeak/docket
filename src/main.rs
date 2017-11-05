@@ -4,6 +4,7 @@ extern crate docopt;
 #[macro_use]
 extern crate serde_derive;
 extern crate pulldown_cmark;
+extern crate glob;
 
 mod docket;
 // mod page;
