@@ -1,5 +1,6 @@
 use std::path::Path;
 use pulldown_cmark::*;
+use toc::*;
 
 /// Page to be Rendered
 pub struct Page<'a> {
@@ -19,13 +20,17 @@ impl <'a> Page<'a> {
     ///
     /// Reads the markdown from the file path for this page, renders
     /// the HTML and returns information about the rendered page.
-    pub fn render_with_footer(&self, footer: &str, path: &Path) -> PageInfo {
+    pub fn render_with_footer(&self, _footer: &str, _path: &Path) -> PageInfo {
         debug!("Rendering page: {:?}", self.path);
         let source = ::util::read_file_to_string(self.path);
-        let parser = Parser::new(&source);
+        let mut parser = Parser::new(&source);
+
+        let _toc = parse_toc(&mut parser);
+
         for event in parser {
             println!("ev: {:?}", event);
         }
+
         PageInfo
     }
 }

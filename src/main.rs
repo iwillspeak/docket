@@ -12,6 +12,7 @@ extern crate env_logger;
 mod docket;
 mod page;
 mod util;
+mod toc;
 
 use docopt::*;
 use std::path::PathBuf;
