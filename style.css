@@ -1,0 +1,50 @@
+body {
+	margin: 16px auto;
+	width: 480px;
+}
+
+h1, h2, h3, h4, h5, h6 {
+	font-family: Serif;
+	margin: 1em 0;
+	font-weight: semibold;
+}
+
+h1 {
+	font-size: 36px;
+}
+
+h2 {
+	font-size: 28px;
+}
+
+h3 {
+	font-size: 24px;
+}
+
+p {
+	font-family: Serif;
+	line-height: 1.6;
+}
+
+p > code {
+	font-family: Monospace;
+	background-color: #EEE;
+	border: 1px solid #333;
+	border-radius: 2px;
+	padding: 1px 7px;
+}
+
+pre > code {
+	margin: 1em 0;
+	background-color: #EEE;
+	border-left: 2px solid #333;
+	display: block;
+	font-family: Monospace;
+	padding: 10px;
+}
+
+footer {
+	color: #555;
+	text-align: center;
+	border-top: 1px solid #EFEFEF;
+}

@@ -1,4 +1,5 @@
 use std::path::{Path, PathBuf};
+use std::fs::create_dir_all;
 use glob::glob;
 use pulldown_cmark::{Parser,html};
 use page::Page;
@@ -75,9 +76,12 @@ impl Docket {
         let footer = self.rendered_footer();
 
         let mut rendered_pages = Vec::new();
+        create_dir_all(&output).unwrap();
+        info!("Created outpud dir: {:?}", output);
         for path in self.pages {
             let output_name = path.file_stem().unwrap();
             let output_path = output.join(output_name).with_extension("html");
+            info!("Rendering {:?} to {:?}", output_name, output_path);
             rendered_pages.push(Page::new(&path).render_with_footer(&footer, &output_path));
         }
         

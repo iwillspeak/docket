@@ -17,10 +17,9 @@ pub struct TocNode {
 }
 
 /// Parse a TOC tree from the headers in the markdown document
-pub fn parse_toc<'a, P : IntoIterator<Item=Event<'a>>>(parser: P) -> Vec<TocNode> {
+pub fn parse_toc<'a, P : Iterator<Item=Event<'a>>>(mut parser: P) -> Vec<TocNode> {
     let mut nodes = Vec::new();
     let mut current = None;
-    let mut parser = parser.into_iter();
     while let Some(event) = parser.next() {
         match event {
             Event::Start(Tag::Header(level)) => {
