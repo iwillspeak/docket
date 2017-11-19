@@ -57,6 +57,14 @@ pub fn parse_toc<'a, P : Iterator<Item=Event<'a>>>(mut parser: P) -> Vec<TocNode
     nodes
 }
 
+impl TocNode {
+
+    /// Get the plain text from a header
+    pub fn plain_header(&self) -> &str {
+        &self.header
+    }
+}
+
 #[cfg(test)]
 mod test {
 

@@ -12,7 +12,11 @@ pub struct Page<'a> {
 }
 
 /// Result of page rendering
-pub struct PageInfo;
+pub struct PageInfo {
+
+    /// Title of the page
+    pub title: String,
+}
 
 impl <'a> Page<'a> {
     
@@ -25,25 +29,38 @@ impl <'a> Page<'a> {
     /// Reads the markdown from the file path for this page, renders
     /// the HTML and returns information about the rendered page.
     pub fn render_with_footer(&self, footer: &str, path: &Path) -> PageInfo {
+
         debug!("Rendering page: {:?}", self.path);
+
         let source = ::util::read_file_to_string(self.path);
         let events = Parser::new(&source).collect::<Vec<_>>();
+        let toc = parse_toc(events.clone().into_iter());
+        info!("TOC: {:?}", toc);
 
-        // let toc = parse_toc(events.iter());
+        let title = toc[0].plain_header().to_owned();
 
-        // println!("TOC: {:?}", toc);
-
-        for event in events.iter() {
-            println!("ev: {:?}", event);
-        }
-
-        let mut rendered = String::new();
-        rendered.push_str(&format!("<head><style>{}</style></head><body>", &STYLE));
-        html::push_html(&mut rendered, events.into_iter());
-        rendered.push_str(&format!("<footer>{}</footer></body>", footer));
         let mut file = File::create(path).unwrap();
+
+        // HTML header, containing hardcoded CSS
+        write!(file, "<html>
+  <head>
+    <title>{}</title>
+    <style>{}</style>
+  </head>
+<body>",
+               title,
+               &STYLE).unwrap();
+
+        // Render the main part of the page
+        let mut rendered = String::new();
+        html::push_html(&mut rendered, events.into_iter());
         write!(file, "{}", rendered).unwrap();
-        
-        PageInfo
+
+        // footer finishes body.
+        write!(file, "<footer>{}</footer></body>", footer).unwrap();
+
+        PageInfo {
+            title: title
+        }
     }
 }

@@ -1,8 +1,9 @@
-use std::path::{Path, PathBuf};
-use std::fs::create_dir_all;
+use std::path::{Path, PathBuf, Component};
+use std::io::prelude::*;
+use std::fs::{File, create_dir_all};
 use glob::glob;
 use pulldown_cmark::{Parser,html};
-use page::Page;
+use page::{Page, PageInfo};
 use util::read_file_to_string;
 
 /// Docket
@@ -12,6 +13,10 @@ use util::read_file_to_string;
 /// them out to HTML files.
 #[derive(Debug)]
 pub struct Docket {
+
+    /// The documentation title, based on the directory name
+    title: String,
+
     /// The index, if there is one
     index: Option<PathBuf>,
 
@@ -44,6 +49,17 @@ impl Docket {
             panic!("Not a directory");
         }
 
+        let title = Path::canonicalize(doc_path)
+            .unwrap()
+            .components()
+            .filter_map(|c| match c {
+                Component::Normal(path) => path.to_owned().into_string().ok(),
+                _ => None
+            })
+            .filter(|s| s != "docs")
+            .last()
+            .unwrap();
+
         let pattern = doc_path.join("*.md");
         // This seems a bit unwrappy..
         let matches = glob(pattern.to_str().unwrap())
@@ -62,6 +78,7 @@ impl Docket {
             }
         }
         Docket {
+            title: title.to_string(),
             index: index,
             footer: footer,
             pages: pages,
@@ -78,13 +95,27 @@ impl Docket {
         let mut rendered_pages = Vec::new();
         create_dir_all(&output).unwrap();
         info!("Created outpud dir: {:?}", output);
-        for path in self.pages {
+        for path in self.pages.iter() {
             let output_name = path.file_stem().unwrap();
             let output_path = output.join(output_name).with_extension("html");
             info!("Rendering {:?} to {:?}", output_name, output_path);
             rendered_pages.push(Page::new(&path).render_with_footer(&footer, &output_path));
         }
         
+        self.render_index(rendered_pages, output);
+    }
+
+    /// Render the index page
+    fn render_index<P>(&self, pages: P, output: &Path)
+        where P: IntoIterator<Item=PageInfo>
+    {
+        let mut file = File::create(output.join("index.html")).unwrap();
+        write!(file, "<head><title>{0}</title></head><body><h1>{0}</h1>", self.title).unwrap();
+
+        write!(file, "<ul>").unwrap();
+        for page in pages {
+            write!(file, "<li><h2><a>{}</a></h2></li>", page.title).unwrap();
+        }
     }
 
     /// Render the Footer to a String
