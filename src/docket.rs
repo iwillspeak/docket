@@ -1,7 +1,7 @@
 use std::path::{Path, PathBuf, Component};
+use std::io;
 use std::io::prelude::*;
 use std::fs::{File, create_dir_all};
-use glob::glob;
 use pulldown_cmark::{Parser,html};
 use page::{Page, PageInfo};
 use util::read_file_to_string;
@@ -42,7 +42,7 @@ impl Docket {
     ///
     /// The path to search for documentation. Markdown files in this
     /// directory will be used for documentation.
-    pub fn new(doc_path: &Path) -> Self {
+    pub fn new(doc_path: &Path) -> io::Result<Self> {
         trace!("Searching for docs in {:?}", doc_path);
         if !doc_path.is_dir() {
             // TODO: Return Result<> instead?
@@ -60,29 +60,35 @@ impl Docket {
             .last()
             .unwrap();
 
-        let pattern = doc_path.join("*.md");
-        // This seems a bit unwrappy..
-        let matches = glob(pattern.to_str().unwrap())
-            .unwrap()
-            .filter_map(|p| p.ok());
-
         let mut index = None;
         let mut footer = None;
         let mut pages = Vec::new();
 
-        for path in matches.into_iter() {
-            match path {
-                ref p if is_file(&p, "footer") => footer = Some(p.to_owned()),
-                ref p if is_file(&p, "index") => index = Some(p.to_owned()),
-                _ => pages.push(path),
+        for entry in doc_path.read_dir()? {
+            let entry = entry?;
+            let path = entry.path();
+            if let Some(ext) = path.extension() {
+                let extension = ext.to_string_lossy();
+                match extension.as_ref() {
+                    "md" |
+                    "markdown" |
+                    "mdown" => {
+                        match path {
+                            ref p if is_file(&p, "footer") => footer = Some(p.to_owned()),
+                            ref p if is_file(&p, "index") => index = Some(p.to_owned()),
+                            _ => pages.push(path.clone()),
+                        }
+                    },
+                    _ => ()
+                }
             }
         }
-        Docket {
+        Ok(Docket {
             title: title.to_string(),
             index: index,
             footer: footer,
             pages: pages,
-        }
+        })
     }
 
     /// Render to Html

@@ -4,7 +4,6 @@ extern crate docopt;
 #[macro_use]
 extern crate serde_derive;
 extern crate pulldown_cmark;
-extern crate glob;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
@@ -65,6 +64,7 @@ fn main() {
     let source = path_or_default(args.flag_source, ".");
     let target = path_or_default(args.flag_target, "build/");
     Docket::new(&source)
+        .unwrap()
         .render(&target);
 
 }
