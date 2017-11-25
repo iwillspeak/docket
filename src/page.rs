@@ -1,7 +1,8 @@
-use std::fs::File;
+use std::fs::{File, create_dir_all};
 use std::io::prelude::*;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use pulldown_cmark::*;
+use util;
 use toc::*;
 
 static STYLE: &'static str = include_str!("../style.css");
@@ -13,8 +14,14 @@ pub struct Page<'a> {
 
 /// Result of page rendering
 pub struct PageInfo {
-    /// Title of the page
+    /// Title of the page.
     pub title: String,
+
+    /// The slug of the page.
+    pub slug: String,
+
+    /// The path this page was rendered to.
+    pub path: PathBuf,
 }
 
 impl<'a> Page<'a> {
@@ -26,9 +33,7 @@ impl<'a> Page<'a> {
     ///
     /// Reads the markdown from the file path for this page, renders
     /// the HTML and returns information about the rendered page.
-    pub fn render_with_footer(&self, footer: &str, path: &Path) -> PageInfo {
-
-        debug!("Rendering page: {:?}", self.path);
+    pub fn render_with_footer(&self, footer: &str, output_dir: &Path) -> PageInfo {
 
         let source = ::util::read_file_to_string(self.path);
         let events = Parser::new(&source).collect::<Vec<_>>();
@@ -37,7 +42,16 @@ impl<'a> Page<'a> {
 
         let title = toc[0].plain_header().to_owned();
 
-        let mut file = File::create(path).unwrap();
+        // Create a slug for this page. Render to `index.html` in that
+        // directory, ensuring that it exists.
+        let slug = util::slugify(&title);
+        let output_dir = output_dir.join(&slug);
+        let output_path = output_dir.join("index.html");
+        create_dir_all(&output_dir).unwrap();
+
+        debug!("Rendering to: {:?}", output_path);
+
+        let mut file = File::create(&output_path).unwrap();
 
         // HTML header, containing hardcoded CSS
         write!(
@@ -60,6 +74,10 @@ impl<'a> Page<'a> {
         // footer finishes body.
         write!(file, "<footer>{}</footer></body>", footer).unwrap();
 
-        PageInfo { title: title }
+        PageInfo {
+            title: title,
+            slug: slug,
+            path: output_path,
+        }
     }
 }

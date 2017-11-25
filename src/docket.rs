@@ -96,10 +96,8 @@ impl Docket {
         create_dir_all(&output).unwrap();
         info!("Created outpud dir: {:?}", output);
         for path in self.pages.iter() {
-            let output_name = path.file_stem().unwrap();
-            let output_path = output.join(output_name).with_extension("html");
-            info!("Rendering {:?} to {:?}", output_name, output_path);
-            rendered_pages.push(Page::new(&path).render_with_footer(&footer, &output_path));
+            info!("Rendering {:?}", path);
+            rendered_pages.push(Page::new(&path).render_with_footer(&footer, &output));
         }
 
         self.render_index(rendered_pages, output);
@@ -119,7 +117,7 @@ impl Docket {
 
         write!(file, "<ul>").unwrap();
         for page in pages {
-            write!(file, "<li><h2><a>{}</a></h2></li>", page.title).unwrap();
+            write!(file, r#"<li><h2><a href="{}">{}</a></h2></li>"#, page.slug, page.title).unwrap();
         }
     }
 
