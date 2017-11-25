@@ -56,12 +56,13 @@ impl<'a> Page<'a> {
         // HTML header, containing hardcoded CSS
         write!(
             file,
-            "<html>
+            r#"<html>
   <head>
     <title>{}</title>
+    <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
     <style>{}</style>
   </head>
-<body>",
+<body>"#,
             title,
             &STYLE
         ).unwrap();
