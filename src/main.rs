@@ -49,7 +49,9 @@ struct Args {
 /// the default if none is provided.
 fn path_or_default(maybe_path: Option<String>, default: &str) -> PathBuf {
     maybe_path
-        .map({|p| PathBuf::from(p)})
+        .map({
+            |p| PathBuf::from(p)
+        })
         .unwrap_or(default.to_owned().into())
 }
 
@@ -63,9 +65,7 @@ fn main() {
 
     let source = path_or_default(args.flag_source, ".");
     let target = path_or_default(args.flag_target, "build/");
-    Docket::new(&source)
-        .unwrap()
-        .render(&target);
+    Docket::new(&source).unwrap().render(&target);
 
 }
 
@@ -80,7 +80,7 @@ mod test {
         let source = Some("/Users/foo/".to_owned());
         assert_eq!(Path::new("/Users/foo/"), path_or_default(source, "."));
     }
-    
+
     #[test]
     fn path_or_default_without_argument() {
         let source = None;

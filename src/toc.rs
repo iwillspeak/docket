@@ -3,7 +3,6 @@ use pulldown_cmark::*;
 /// A node in the table of contents
 #[derive(PartialEq, Debug)]
 pub struct TocNode {
-
     /// The header level of this node.
     ///
     /// Not always the same as the depth.
@@ -17,24 +16,24 @@ pub struct TocNode {
 }
 
 /// Parse a TOC tree from the headers in the markdown document
-pub fn parse_toc<'a, P : Iterator<Item=Event<'a>>>(mut parser: P) -> Vec<TocNode> {
+pub fn parse_toc<'a, P: Iterator<Item = Event<'a>>>(mut parser: P) -> Vec<TocNode> {
     let mut nodes = Vec::new();
     let mut current = None;
     while let Some(event) = parser.next() {
         match event {
             Event::Start(Tag::Header(level)) => {
-                current = Some(TocNode{
+                current = Some(TocNode {
                     level: level,
                     header: String::new(),
                     children: Vec::new(),
                 })
-            },
+            }
             Event::End(Tag::Header(_)) => {
                 current = match current {
                     Some(node) => {
                         nodes.push(node);
                         None
-                    },
+                    }
                     None => None,
                 }
             }
@@ -47,10 +46,10 @@ pub fn parse_toc<'a, P : Iterator<Item=Event<'a>>>(mut parser: P) -> Vec<TocNode
                             header: node.header,
                             children: node.children,
                         })
-                    },
-                    None => None
+                    }
+                    None => None,
                 }
-            },
+            }
             _ => {}
         }
     }
@@ -58,7 +57,6 @@ pub fn parse_toc<'a, P : Iterator<Item=Event<'a>>>(mut parser: P) -> Vec<TocNode
 }
 
 impl TocNode {
-
     /// Get the plain text from a header
     pub fn plain_header(&self) -> &str {
         &self.header
@@ -87,12 +85,15 @@ mod test {
 
         let toc = parse_toc(&mut parser);
 
-        assert_eq!(vec![
-            TocNode {
-                level: 1,
-                header: "I am an H1".to_owned(),
-                children: Vec::new()
-            }
-        ], toc);
+        assert_eq!(
+            vec![
+                TocNode {
+                    level: 1,
+                    header: "I am an H1".to_owned(),
+                    children: Vec::new(),
+                },
+            ],
+            toc
+        );
     }
 }

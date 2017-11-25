@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf, Component};
 use std::io;
 use std::io::prelude::*;
 use std::fs::{File, create_dir_all};
-use pulldown_cmark::{Parser,html};
+use pulldown_cmark::{Parser, html};
 use page::{Page, PageInfo};
 use util::read_file_to_string;
 
@@ -13,7 +13,6 @@ use util::read_file_to_string;
 /// them out to HTML files.
 #[derive(Debug)]
 pub struct Docket {
-
     /// The documentation title, based on the directory name
     title: String,
 
@@ -29,13 +28,10 @@ pub struct Docket {
 
 /// Checks if this is the expected file
 fn is_file(path: &Path, name: &str) -> bool {
-    path.file_stem()
-        .map(|p| p == name)
-        .unwrap_or(false)
+    path.file_stem().map(|p| p == name).unwrap_or(false)
 }
 
 impl Docket {
-
     /// Create a Docket Instance
     ///
     /// ## Arguments
@@ -54,7 +50,7 @@ impl Docket {
             .components()
             .filter_map(|c| match c {
                 Component::Normal(path) => path.to_owned().into_string().ok(),
-                _ => None
+                _ => None,
             })
             .filter(|s| s != "docs")
             .last()
@@ -70,16 +66,14 @@ impl Docket {
             if let Some(ext) = path.extension() {
                 let extension = ext.to_string_lossy();
                 match extension.as_ref() {
-                    "md" |
-                    "markdown" |
-                    "mdown" => {
+                    "md" | "markdown" | "mdown" => {
                         match path {
                             ref p if is_file(&p, "footer") => footer = Some(p.to_owned()),
                             ref p if is_file(&p, "index") => index = Some(p.to_owned()),
                             _ => pages.push(path.clone()),
                         }
-                    },
-                    _ => ()
+                    }
+                    _ => (),
                 }
             }
         }
@@ -107,16 +101,21 @@ impl Docket {
             info!("Rendering {:?} to {:?}", output_name, output_path);
             rendered_pages.push(Page::new(&path).render_with_footer(&footer, &output_path));
         }
-        
+
         self.render_index(rendered_pages, output);
     }
 
     /// Render the index page
     fn render_index<P>(&self, pages: P, output: &Path)
-        where P: IntoIterator<Item=PageInfo>
+    where
+        P: IntoIterator<Item = PageInfo>,
     {
         let mut file = File::create(output.join("index.html")).unwrap();
-        write!(file, "<head><title>{0}</title></head><body><h1>{0}</h1>", self.title).unwrap();
+        write!(
+            file,
+            "<head><title>{0}</title></head><body><h1>{0}</h1>",
+            self.title
+        ).unwrap();
 
         write!(file, "<ul>").unwrap();
         for page in pages {

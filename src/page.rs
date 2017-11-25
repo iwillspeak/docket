@@ -8,22 +8,20 @@ static STYLE: &'static str = include_str!("../style.css");
 
 /// Page to be Rendered
 pub struct Page<'a> {
-    path: &'a Path
+    path: &'a Path,
 }
 
 /// Result of page rendering
 pub struct PageInfo {
-
     /// Title of the page
     pub title: String,
 }
 
-impl <'a> Page<'a> {
-    
+impl<'a> Page<'a> {
     pub fn new(path: &'a Path) -> Self {
         Page { path: path }
     }
-    
+
     /// Render this page to a given path
     ///
     /// Reads the markdown from the file path for this page, renders
@@ -42,14 +40,17 @@ impl <'a> Page<'a> {
         let mut file = File::create(path).unwrap();
 
         // HTML header, containing hardcoded CSS
-        write!(file, "<html>
+        write!(
+            file,
+            "<html>
   <head>
     <title>{}</title>
     <style>{}</style>
   </head>
 <body>",
-               title,
-               &STYLE).unwrap();
+            title,
+            &STYLE
+        ).unwrap();
 
         // Render the main part of the page
         let mut rendered = String::new();
@@ -59,8 +60,6 @@ impl <'a> Page<'a> {
         // footer finishes body.
         write!(file, "<footer>{}</footer></body>", footer).unwrap();
 
-        PageInfo {
-            title: title
-        }
+        PageInfo { title: title }
     }
 }
