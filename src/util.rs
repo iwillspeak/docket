@@ -42,6 +42,10 @@ pub fn slugify(input: &str) -> String {
         .collect()
 }
 
+/// Slufigy a Path
+pub fn slugify_path(input: &Path) -> String {
+    slugify(&input.file_stem().unwrap().to_string_lossy())
+}
 
 #[cfg(test)]
 mod test {
@@ -85,5 +89,19 @@ mod test {
         assert_eq!("hello", slugify("01-hello"));
         assert_eq!("01a-foo", slugify("01a-foo"));
         assert_eq!("01a-foo", slugify("01a-foo"));
+    }
+
+    #[test]
+    fn slugify_path_removes_extension() {
+        assert_eq!("about", slugify_path(Path::new("01-about.md")));
+        assert_eq!("foo", slugify_path(Path::new("foo.html")));
+        assert_eq!("bar-baz", slugify_path(Path::new("10-bar-baz")));
+        assert_eq!("human2.0", slugify_path(Path::new("human2.0.html")));
+    }
+
+    #[test]
+    fn slugify_path_removes_leading_path() {
+        assert_eq!("world", slugify_path(Path::new("hello/world.gif")));
+        assert_eq!("e", slugify_path(Path::new("a/b/c/cd/11-e.10")));
     }
 }

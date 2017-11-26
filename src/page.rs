@@ -44,7 +44,7 @@ impl<'a> Page<'a> {
 
         // Create a slug for this page. Render to `index.html` in that
         // directory, ensuring that it exists.
-        let slug = util::slugify(&title);
+        let slug = util::slugify_path(self.path);
         let output_dir = output_dir.join(&slug);
         let output_path = output_dir.join("index.html");
         create_dir_all(&output_dir).unwrap();
