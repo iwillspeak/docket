@@ -7,11 +7,15 @@ extern crate pulldown_cmark;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
+extern crate failure;
 
 mod docket;
 mod page;
 mod util;
 mod toc;
+mod index;
+mod renderable;
+mod renderer;
 
 use docopt::*;
 use std::path::PathBuf;

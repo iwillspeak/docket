@@ -1,11 +1,11 @@
-use std::fs::{File, create_dir_all};
 use std::io::prelude::*;
+use std::io;
 use std::path::{Path, PathBuf};
+use std::borrow::Cow;
 use pulldown_cmark::*;
+use renderable::Renderable;
 use util;
 use toc::*;
-
-static STYLE: &'static str = include_str!("../style.css");
 
 /// Page to be Rendered
 pub struct Page<'a> {
@@ -24,61 +24,36 @@ pub struct PageInfo {
     pub path: PathBuf,
 }
 
-impl<'a> Page<'a> {
-    pub fn new(path: &'a Path) -> Self {
-        Page { path: path }
+impl<'a> Renderable for Page<'a> {
+    fn get_slug(&self) -> String {
+        util::slugify_path(self.path)
     }
 
-    /// Render this page to a given path
-    ///
-    /// Reads the markdown from the file path for this page, renders
-    /// the HTML and returns information about the rendered page.
-    pub fn render_with_footer(&self, footer: &str, output_dir: &Path) -> PageInfo {
+    fn get_title<'t>(&'t self) -> Cow<'t, str> {
+        self.get_slug().into()
+    }
+
+    fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
 
         let source = ::util::read_file_to_string(self.path);
         let events = Parser::new(&source).collect::<Vec<_>>();
         let toc = parse_toc(events.clone().into_iter());
         info!("TOC: {:?}", toc);
 
-        let title = toc[0].plain_header().to_owned();
-
-        // Create a slug for this page. Render to `index.html` in that
-        // directory, ensuring that it exists.
-        let slug = util::slugify_path(self.path);
-        let output_dir = output_dir.join(&slug);
-        let output_path = output_dir.join("index.html");
-        create_dir_all(&output_dir).unwrap();
-
-        debug!("Rendering to: {:?}", output_path);
-
-        let mut file = File::create(&output_path).unwrap();
-
-        // HTML header, containing hardcoded CSS
-        write!(
-            file,
-            r#"<html>
-  <head>
-    <title>{}</title>
-    <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
-    <style>{}</style>
-  </head>
-<body>"#,
-            title,
-            &STYLE
-        ).unwrap();
+        // TODO: get this exposed in `get_title`
+        let _title = toc[0].plain_header().to_owned();
 
         // Render the main part of the page
         let mut rendered = String::new();
         html::push_html(&mut rendered, events.into_iter());
         write!(file, "{}", rendered).unwrap();
 
-        // footer finishes body.
-        write!(file, "<footer>{}</footer></body>", footer).unwrap();
+        Ok(())
+    }
+}
 
-        PageInfo {
-            title: title,
-            slug: slug,
-            path: output_path,
-        }
+impl<'a> Page<'a> {
+    pub fn new(path: &'a Path) -> Self {
+        Page { path: path }
     }
 }

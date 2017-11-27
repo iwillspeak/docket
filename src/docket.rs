@@ -1,9 +1,9 @@
 use std::path::{Path, PathBuf, Component};
 use std::io;
-use std::io::prelude::*;
-use std::fs::{File, create_dir_all};
 use pulldown_cmark::{Parser, html};
-use page::{Page, PageInfo};
+use page::Page;
+use index::Index;
+use renderer::Renderer;
 use util::read_file_to_string;
 
 /// Docket
@@ -92,33 +92,18 @@ impl Docket {
         trace!("Rendering docs to {:?} ({:?})", output, self);
         let footer = self.rendered_footer();
 
-        let mut rendered_pages = Vec::new();
-        create_dir_all(&output).unwrap();
-        info!("Created outpud dir: {:?}", output);
-        for path in self.pages.iter() {
-            info!("Rendering {:?}", path);
-            rendered_pages.push(Page::new(&path).render_with_footer(&footer, &output));
-        }
+        let renderer = Renderer::new(footer);
 
-        self.render_index(rendered_pages, output);
-    }
+        let rendered_pages: Vec<_> = self.pages.iter()
+            .map(|path| Page::new(&path))
+            .map(|p| renderer.render(&p, &output))
+            .collect::<Result<Vec<_>, _>>()
+            .unwrap(); // TODO: Unwrap
 
-    /// Render the index page
-    fn render_index<P>(&self, pages: P, output: &Path)
-    where
-        P: IntoIterator<Item = PageInfo>,
-    {
-        let mut file = File::create(output.join("index.html")).unwrap();
-        write!(
-            file,
-            "<head><title>{0}</title></head><body><h1>{0}</h1>",
-            self.title
-        ).unwrap();
+        let index = Index::new(self.title, self.index, rendered_pages);
 
-        write!(file, "<ul>").unwrap();
-        for page in pages {
-            write!(file, r#"<li><h2><a href="{}">{}</a></h2></li>"#, page.slug, page.title).unwrap();
-        }
+        renderer.render(&index, &output)
+            .unwrap(); // TODO: unwrap
     }
 
     /// Render the Footer to a String
