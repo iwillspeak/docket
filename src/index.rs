@@ -28,7 +28,7 @@ impl Renderable for Index {
 
     fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
 
-        write!(file, r#"<h1><a href="">{}</a></h1>"#, self.title)?;
+        write!(file, r#"<header class="index-heading"><h1><a href="">{}</a></h1></header>"#, self.title)?;
 
         if let Some(ref index_md) = self.path {
             debug!("found index file, rendering");
@@ -41,11 +41,12 @@ impl Renderable for Index {
 
         // List of pages in the index
         debug!("listing pages in index");
-        write!(file, r#"<ul class="index-toc">"#)?;
+        write!(file, "<h2>Table of Contents</h2>")?;
+        write!(file, r#"<ol class="index-toc">"#)?;
         for page in self.pages.iter() {
-            write!(file, r#"<li><h2><a href="{}">{}</a></h2></li>"#, page.slug, page.title)?;
+            write!(file, r#"<li><a href="{}">{}</a></li>"#, page.slug, page.title)?;
         }
-        write!(file, "</ul>")?;
+        write!(file, "</ol>")?;
         
         Ok(())
     }
