@@ -94,7 +94,8 @@ impl Docket {
 
         let renderer = Renderer::new(footer);
 
-        let rendered_pages: Vec<_> = self.pages.iter()
+        let rendered_pages: Vec<_> = self.pages
+            .iter()
             .map(|path| Page::new(&path))
             .map(|p| renderer.render(&p, &output))
             .collect::<Result<Vec<_>, _>>()
@@ -102,8 +103,7 @@ impl Docket {
 
         let index = Index::new(self.title, self.index, rendered_pages);
 
-        renderer.render(&index, &output)
-            .unwrap(); // TODO: unwrap
+        renderer.render(&index, &output).unwrap(); // TODO: unwrap
     }
 
     /// Render the Footer to a String
