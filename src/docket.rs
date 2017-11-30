@@ -45,16 +45,22 @@ impl Docket {
             panic!("Not a directory");
         }
 
-        let title = Path::canonicalize(doc_path)
-            .unwrap()
-            .components()
-            .filter_map(|c| match c {
-                Component::Normal(path) => path.to_owned().into_string().ok(),
-                _ => None,
-            })
-            .filter(|s| s != "docs")
-            .last()
-            .unwrap();
+
+        let title_file = doc_path.join("title");
+        let title = if title_file.is_file() {
+            read_file_to_string(&title_file)
+        } else {
+            Path::canonicalize(doc_path)
+                .unwrap()
+                .components()
+                .filter_map(|c| match c {
+                    Component::Normal(path) => path.to_owned().into_string().ok(),
+                    _ => None,
+                })
+                .filter(|s| s != "docs")
+                .last()
+                .unwrap()
+        };
 
         let mut index = None;
         let mut footer = None;
