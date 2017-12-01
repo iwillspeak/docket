@@ -26,11 +26,6 @@ pub struct Docket {
     pages: Vec<PathBuf>,
 }
 
-/// Checks if this is the expected file
-fn is_file(path: &Path, name: &str) -> bool {
-    path.file_stem().map(|p| p == name).unwrap_or(false)
-}
-
 impl Docket {
     /// Create a Docket Instance
     ///
@@ -44,7 +39,6 @@ impl Docket {
             // TODO: Return Result<> instead?
             panic!("Not a directory");
         }
-
 
         let title_file = doc_path.join("title");
         let title = if title_file.is_file() {
@@ -74,8 +68,8 @@ impl Docket {
                 match extension.as_ref() {
                     "md" | "markdown" | "mdown" => {
                         match path {
-                            ref p if is_file(&p, "footer") => footer = Some(p.to_owned()),
-                            ref p if is_file(&p, "index") => index = Some(p.to_owned()),
+                            ref p if has_stem(&p, "footer") => footer = Some(p.to_owned()),
+                            ref p if has_stem(&p, "index") => index = Some(p.to_owned()),
                             _ => pages.push(path.clone()),
                         }
                     }
@@ -122,4 +116,9 @@ impl Docket {
         }
         footer
     }
+}
+
+/// Checks if this is the expected file
+fn has_stem(path: &Path, name: &str) -> bool {
+    path.file_stem().map(|p| p == name).unwrap_or(false)
 }
