@@ -1,99 +1,105 @@
 use pulldown_cmark::*;
 
-/// A node in the table of contents
-#[derive(PartialEq, Debug)]
-pub struct TocNode {
-    /// The header level of this node.
-    ///
-    /// Not always the same as the depth.
-    level: i32,
+/// # A single ement in the TOC
+///
+/// Represents either a captured event from Pulldown or a header
+/// element.
+pub enum TocElement {
+    /// Pre-Rendered HTML block
+    Html(String),
 
-    /// The body of the header
-    header: String,
+    /// TOC references
+    TocReference,
 
-    /// A list of child nodes, if there are any
-    children: Vec<TocNode>,
+    /// A heading
+    Heading(Heading)
+}
+
+/// # A heading
+pub struct Heading {
+    /// The header level. H1 .. H6
+    pub level: i32,
+
+    /// The raw contents for this heading.
+    pub contents: String,
 }
 
 /// Parse a TOC tree from the headers in the markdown document
-pub fn parse_toc<'a, P: Iterator<Item = Event<'a>>>(mut parser: P) -> Vec<TocNode> {
-    let mut nodes = Vec::new();
-    let mut current = None;
-    while let Some(event) = parser.next() {
-        match event {
-            Event::Start(Tag::Header(level)) => {
-                current = Some(TocNode {
-                    level: level,
-                    header: String::new(),
-                    children: Vec::new(),
-                })
+pub fn parse_toc<'a, P: Iterator<Item = Event<'a>>>(parser: P) -> Vec<TocElement> {
+    let mut toc = Vec::new();
+    let mut current = Vec::new();
+
+    for e in parser {
+        match e {
+            Event::Start(Tag::Header(_)) => {
+                let mut rendered = String::new();
+                html::push_html(&mut rendered, current.into_iter());
+                current = Vec::new();
+                toc.push(TocElement::Html(rendered));
             }
-            Event::End(Tag::Header(_)) => {
-                current = match current {
-                    Some(node) => {
-                        nodes.push(node);
-                        None
-                    }
-                    None => None,
-                }
+            Event::End(Tag::Header(i)) => {
+                let mut rendered = String::new();
+                html::push_html(&mut rendered, current.into_iter());
+                current = Vec::new();
+                toc.push(TocElement::Heading(Heading{
+                    level: i,
+                    contents: rendered,
+                }));
+
+                current.clear();
             }
-            Event::Text(text) => {
-                current = match current {
-                    Some(mut node) => {
-                        node.header.push_str(&text);
-                        Some(TocNode {
-                            level: node.level,
-                            header: node.header,
-                            children: node.children,
-                        })
-                    }
-                    None => None,
-                }
+            Event::Text(ref t) if t == "[TOC]" => {
+                let mut rendered = String::new();
+                html::push_html(&mut rendered, current.into_iter());
+                current = Vec::new();
+                toc.push(TocElement::Html(rendered));
+                toc.push(TocElement::TocReference);
             }
-            _ => {}
+            e => current.push(e),
         }
     }
-    nodes
+
+    if current.len() > 0 {
+        let mut rendered = String::new();
+        html::push_html(&mut rendered, current.into_iter());
+        toc.push(TocElement::Html(rendered));
+    }
+
+    toc
 }
 
-impl TocNode {
-    /// Get the plain text from a header
-    pub fn plain_header(&self) -> &str {
-        &self.header
+impl Heading {
+    /// Get the Plain Text Representation of the heading
+    pub fn plain_header(&self) -> String {
+        self.contents.clone()
     }
 }
 
 #[cfg(test)]
 mod test {
 
-    use super::*;
+    // use super::*;
 
-    #[test]
-    fn parse_wit_no_headings() {
-        let doc = "hello world";
-        let mut parser = Parser::new(doc);
+    // #[test]
+    // fn parse_wit_no_headings() {
+    //     let doc = "hello world";
+    //     let mut parser = Parser::new(doc);
 
-        let toc = parse_toc(&mut parser);
+    //     let toc = parse_toc(&mut parser);
 
-        assert_eq!(0, toc.len());
-    }
+    //     assert_eq!(0, toc.len());
+    // }
 
-    #[test]
-    fn parse_with_single_heading() {
-        let doc = "# I am an H1";
-        let mut parser = Parser::new(doc);
+    // #[test]
+    // fn parse_with_single_heading() {
+    //     let doc = "# I am an H1";
+    //     let mut parser = Parser::new(doc);
 
-        let toc = parse_toc(&mut parser);
+    //     let toc = parse_toc(&mut parser);
 
-        assert_eq!(
-            vec![
-                TocNode {
-                    level: 1,
-                    header: "I am an H1".to_owned(),
-                    children: Vec::new(),
-                },
-            ],
-            toc
-        );
-    }
+    //     assert_eq!(
+    //         Vec::<TocElement>::new(),
+    //         toc
+    //     );
+    // }
 }

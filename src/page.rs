@@ -10,6 +10,7 @@ use toc::*;
 /// Page to be Rendered
 pub struct Page<'a> {
     path: &'a Path,
+    toc: Vec<TocElement>,
 }
 
 /// Result of page rendering
@@ -30,22 +31,38 @@ impl<'a> Renderable for Page<'a> {
     }
 
     fn get_title<'t>(&'t self) -> Cow<'t, str> {
-        self.get_slug().into()
+        self.toc.iter()
+            .filter_map(|e| {
+                match e {
+                    &TocElement::Heading(ref h) => Some(h.plain_header()),
+                    _ => None,
+                }
+            })
+            .nth(0)
+            .unwrap_or("".into()).into()
     }
 
     fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
 
-        let source = ::util::read_file_to_string(self.path);
-        let events = Parser::new(&source).collect::<Vec<_>>();
-        let toc = parse_toc(events.clone().into_iter());
-        info!("TOC: {:?}", toc);
+        // TODO: render the TOC into an HTML `ol`.
+        let rendered_toc = String::new();
 
-        // TODO: get this exposed in `get_title`
-        let _title = toc[0].plain_header().to_owned();
+        let parts = self.toc
+            .iter()
+            .map(|e| {
+                match e {
+                    &TocElement::Html(ref s) => s.to_owned(),
+                    &TocElement::Heading(ref h) => {
+                        format!("<h{0}>{1}</h{0}>", h.level, h.contents)
+                    },
+                    &TocElement::TocReference => rendered_toc.clone()
+                }
+            })
+            .collect::<Vec<_>>();
 
-        // Render the main part of the page
-        let mut rendered = String::new();
-        html::push_html(&mut rendered, events.into_iter());
+        let rendered = &parts[..]
+            .concat();
+            
         write!(file, "{}", rendered).unwrap();
 
         Ok(())
@@ -54,6 +71,14 @@ impl<'a> Renderable for Page<'a> {
 
 impl<'a> Page<'a> {
     pub fn new(path: &'a Path) -> Self {
-        Page { path: path }
+
+        let source = ::util::read_file_to_string(path);
+        let events = Parser::new(&source).collect::<Vec<_>>();
+        let toc = parse_toc(events.into_iter());
+
+        Page {
+            path: path,
+            toc: toc,
+        }
     }
 }
