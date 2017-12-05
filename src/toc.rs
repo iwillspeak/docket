@@ -12,7 +12,7 @@ pub enum TocElement {
     TocReference,
 
     /// A heading
-    Heading(Heading)
+    Heading(Heading, Vec<TocElement>),
 }
 
 /// # A heading
@@ -32,27 +32,19 @@ pub fn parse_toc<'a, P: Iterator<Item = Event<'a>>>(parser: P) -> Vec<TocElement
     for e in parser {
         match e {
             Event::Start(Tag::Header(_)) => {
-                let mut rendered = String::new();
-                html::push_html(&mut rendered, current.into_iter());
-                current = Vec::new();
-                toc.push(TocElement::Html(rendered));
+                toc.push(TocElement::Html(render_to_string(current.drain(..))));
             }
             Event::End(Tag::Header(i)) => {
-                let mut rendered = String::new();
-                html::push_html(&mut rendered, current.into_iter());
-                current = Vec::new();
-                toc.push(TocElement::Heading(Heading{
-                    level: i,
-                    contents: rendered,
-                }));
-
-                current.clear();
+                toc.push(TocElement::Heading(
+                    Heading {
+                        level: i,
+                        contents: render_to_string(current.drain(..)),
+                    },
+                    Vec::new(),
+                ));
             }
             Event::Text(ref t) if t == "[TOC]" => {
-                let mut rendered = String::new();
-                html::push_html(&mut rendered, current.into_iter());
-                current = Vec::new();
-                toc.push(TocElement::Html(rendered));
+                toc.push(TocElement::Html(render_to_string(current.drain(..))));
                 toc.push(TocElement::TocReference);
             }
             e => current.push(e),
@@ -60,12 +52,23 @@ pub fn parse_toc<'a, P: Iterator<Item = Event<'a>>>(parser: P) -> Vec<TocElement
     }
 
     if current.len() > 0 {
-        let mut rendered = String::new();
-        html::push_html(&mut rendered, current.into_iter());
+        let rendered = render_to_string(current.into_iter());
         toc.push(TocElement::Html(rendered));
     }
 
     toc
+}
+
+/// # Render Pulldown Events to a String
+///
+/// Takes a set of captured events and renders them to a string.
+fn render_to_string<'a, I>(events: I) -> String
+where
+    I: Iterator<Item = Event<'a>>,
+{
+    let mut rendered = String::new();
+    html::push_html(&mut rendered, events.into_iter());
+    rendered
 }
 
 impl Heading {

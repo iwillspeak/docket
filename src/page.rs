@@ -31,15 +31,15 @@ impl<'a> Renderable for Page<'a> {
     }
 
     fn get_title<'t>(&'t self) -> Cow<'t, str> {
-        self.toc.iter()
-            .filter_map(|e| {
-                match e {
-                    &TocElement::Heading(ref h) => Some(h.plain_header()),
-                    _ => None,
-                }
+        self.toc
+            .iter()
+            .filter_map(|e| match e {
+                &TocElement::Heading(ref h, _) => Some(h.plain_header()),
+                _ => None,
             })
             .nth(0)
-            .unwrap_or("".into()).into()
+            .unwrap_or("".into())
+            .into()
     }
 
     fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
@@ -49,20 +49,15 @@ impl<'a> Renderable for Page<'a> {
 
         let parts = self.toc
             .iter()
-            .map(|e| {
-                match e {
-                    &TocElement::Html(ref s) => s.to_owned(),
-                    &TocElement::Heading(ref h) => {
-                        format!("<h{0}>{1}</h{0}>", h.level, h.contents)
-                    },
-                    &TocElement::TocReference => rendered_toc.clone()
-                }
+            .map(|e| match e {
+                &TocElement::Html(ref s) => s.to_owned(),
+                &TocElement::Heading(ref h, _) => format!("<h{0}>{1}</h{0}>", h.level, h.contents),
+                &TocElement::TocReference => rendered_toc.clone(),
             })
             .collect::<Vec<_>>();
 
-        let rendered = &parts[..]
-            .concat();
-            
+        let rendered = &parts[..].concat();
+
         write!(file, "{}", rendered).unwrap();
 
         Ok(())
