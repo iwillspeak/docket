@@ -62,11 +62,31 @@ where
                         parse_toc_at(parser, i),
                     ));
                 }
-                Event::Text(ref t) if t == "[TOC]" => {
-                    if current.len() > 0 {
-                        toc.push(TocElement::Html(render_to_string(current.drain(..))));
+                // Replace code blocks which start with `:::`-lines
+                // with ones containing the appropriate type.
+                Event::Text(ref t) if t.starts_with(":::") => {
+                    let last = current.pop();
+                    if let Some(event) = last {
+                        if let Event::Start(Tag::CodeBlock(_)) = event {
+                            current.push(Event::Start(Tag::CodeBlock(String::from(&t[3..]).into())));
+                        } else {
+                            current.push(event);
+                        }
                     }
-                    toc.push(TocElement::TocReference);
+                }
+                // Replace references to the TOC, but only if they are
+                // at the start of a new paragraph. This allows the
+                // escaping of the prhase with code blocks and within
+                // longer streams of text
+                Event::Text(ref t) if t == "[TOC]" => {
+                    if let Some(&Event::Start(Tag::Paragraph)) = current.last() {
+                        if current.len() > 0 {
+                            toc.push(TocElement::Html(render_to_string(current.drain(..))));
+                        }
+                        toc.push(TocElement::TocReference);
+                    } else {
+                        current.push(Event::Text("[TOC]".into()))
+                    }
                 }
                 e => current.push(e),
             }

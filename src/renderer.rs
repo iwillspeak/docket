@@ -55,7 +55,11 @@ impl Renderer {
   <head>
     <title>{}</title>
     <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
+    <link rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
     <style>{}</style>
+    <script>hljs.initHighlightingOnLoad();</script>
   </head>
 <body>"#,
             title,
