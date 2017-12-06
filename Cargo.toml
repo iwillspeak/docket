@@ -1,6 +1,8 @@
 [package]
 name = "docket"
 version = "0.1.0"
+description = "Simple markdown to HTML documentation rendering"
+license = "Apache-2.0"
 authors = ["Will Speak <lithiumflame@gmail.com>"]
 
 [dependencies]
