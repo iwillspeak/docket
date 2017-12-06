@@ -21,7 +21,7 @@ Once all pages are rendered will will then know the 'pretty' names for each page
 
 ## TODO
 
- * [ ] Properly parse the TOC tree and substitute it into the individual files.
+ * [x] Properly parse the TOC tree and substitute it into the individual files.
  * [x] Add links to the pages on the index page, with the proper slugs. E.g.: `about` rather than `01-about.html`. These should come from the headings, but slugified.
  * [x] Add styling to the main page. Maybe some kind of abstraction around rendering content and style that the same code can be used for pages and index?
  * [x] Allow `title` file to override the project name guessed from the directory.
