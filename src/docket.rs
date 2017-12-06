@@ -92,7 +92,7 @@ impl Docket {
         trace!("Rendering docs to {:?} ({:?})", output, self);
         let footer = self.rendered_footer();
 
-        let renderer = Renderer::new(footer);
+        let renderer = Renderer::new(self.title.clone(), footer);
 
         let rendered_pages: Vec<_> = self.pages
             .iter()

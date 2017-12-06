@@ -26,14 +26,15 @@ impl Renderable for Index {
         (&self.title[..]).into()
     }
 
-    fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
-
+    fn write_header<T: Write>(&self, file: &mut T, title: &str) -> io::Result<()> {
         write!(
             file,
             r#"<header class="index-heading"><h1><a href="">{}</a></h1></header>"#,
-            self.title
-        )?;
+            title
+        )
+    }
 
+    fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
         if let Some(ref index_md) = self.path {
             debug!("found index file, rendering");
             let contents = read_file_to_string(&index_md);

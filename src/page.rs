@@ -10,6 +10,7 @@ use toc::*;
 /// Page to be Rendered
 pub struct Page<'a> {
     path: &'a Path,
+    title: String,
     toc: Vec<TocElement>,
 }
 
@@ -79,15 +80,11 @@ impl<'a> Renderable for Page<'a> {
     }
 
     fn get_title<'t>(&'t self) -> Cow<'t, str> {
-        self.toc
-            .iter()
-            .filter_map(|e| match e {
-                &TocElement::Heading(ref h, _) => Some(h.plain_header()),
-                _ => None,
-            })
-            .nth(0)
-            .unwrap_or("".into())
-            .into()
+        Cow::Borrowed(&self.title)
+    }
+
+    fn write_header<T: Write>(&self, file: &mut T, title: &str) -> io::Result<()> {
+        write!(file, "<header class=\"page-heading\"><h1><a href=\"#\">{}</h1><a class=\"home-link\" href=\"/\">{}</a></header>", self.get_title(), title)
     }
 
     fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
@@ -101,12 +98,21 @@ impl<'a> Page<'a> {
 
         let source = ::util::read_file_to_string(path);
         let events = Parser::new(&source).collect::<Vec<_>>();
-        let toc = parse_toc(events.into_iter());
+        let mut toc = parse_toc(events.into_iter());
+        let mut title = path.file_stem().unwrap().to_string_lossy().to_string();
+
+        if toc.len() == 1 {
+            if let TocElement::Heading(main_header, children) = toc.remove(0) {
+                title = main_header.contents;
+                toc = children;
+            }
+        }
 
         debug!("TOC: {:?}", toc);
 
         Page {
             path: path,
+            title: title,
             toc: toc,
         }
     }

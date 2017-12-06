@@ -16,6 +16,9 @@ pub trait Renderable {
     /// the <head>
     fn get_title<'a>(&'a self) -> Cow<'a, str>;
 
+    /// Write the heading to the output file.
+    fn write_header<T: Write>(&self, f: &mut T, title: &str) -> io::Result<()>;
+
     /// Write the body to the output file.
     fn write_body<T: Write>(&self, &mut T) -> io::Result<()>;
 }

@@ -112,11 +112,6 @@ impl Heading {
             slug: slug,
         }
     }
-
-    /// Get the Plain Text Representation of the heading
-    pub fn plain_header(&self) -> String {
-        self.contents.clone()
-    }
 }
 
 #[cfg(test)]

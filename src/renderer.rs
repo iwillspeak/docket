@@ -14,6 +14,9 @@ static STYLE: &'static str = include_str!("../style.css");
 /// footer). Responsible for knowing how to take the HTML from a
 /// `Renderable` and write it out to a file.
 pub struct Renderer {
+    /// The title of the project
+    title: String,
+
     /// The rendered page footer
     footer: String,
 }
@@ -23,8 +26,11 @@ impl Renderer {
     ///
     /// # Arguments
     ///  - `footer` The footer to render at the bottom of each page.
-    pub fn new(footer: String) -> Self {
-        Renderer { footer }
+    pub fn new(title: String, footer: String) -> Self {
+        Renderer {
+            title,
+            footer
+        }
     }
 
     /// Render the page
@@ -56,6 +62,7 @@ impl Renderer {
             &STYLE
         )?;
 
+        renderable.write_header(&mut file, &self.title)?;
         renderable.write_body(&mut file)?;
 
         // footer finishes body.
