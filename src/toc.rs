@@ -1,4 +1,5 @@
 use pulldown_cmark::*;
+use std::borrow::Cow;
 use util;
 use std::iter::Peekable;
 
@@ -67,10 +68,12 @@ where
                 Event::Text(ref t) if t.starts_with(":::") => {
                     let last = current.pop();
                     if let Some(event) = last {
-                        if let Event::Start(Tag::CodeBlock(_)) = event {
+                        if let Event::Start(Tag::CodeBlock(Cow::Borrowed(""))) = event {
+                            
                             current.push(Event::Start(Tag::CodeBlock(String::from(&t[3..]).into())));
                         } else {
                             current.push(event);
+                            current.push(Event::Text(t.clone()));
                         }
                     }
                 }
