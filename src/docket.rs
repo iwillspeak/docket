@@ -5,6 +5,7 @@ use page::Page;
 use index::Index;
 use renderer::Renderer;
 use util::read_file_to_string;
+use failure::Error;
 
 /// Docket
 ///
@@ -88,7 +89,7 @@ impl Docket {
     /// Render to Html
     ///
     /// Creates a tree of HTML files in the given `output` directory.
-    pub fn render(self, output: &Path) {
+    pub fn render(self, output: &Path) -> Result<(), Error> {
         trace!("Rendering docs to {:?} ({:?})", output, self);
         let footer = self.rendered_footer();
 
@@ -98,12 +99,13 @@ impl Docket {
             .iter()
             .map(|path| Page::new(&path))
             .map(|p| renderer.render(&p, &output))
-            .collect::<Result<Vec<_>, _>>()
-            .unwrap(); // TODO: Unwrap
+            .collect::<Result<Vec<_>, _>>()?;
 
         let index = Index::new(self.title, self.index, rendered_pages);
 
-        renderer.render(&index, &output).unwrap(); // TODO: unwrap
+        renderer.render(&index, &output)?;
+
+        Ok(())
     }
 
     /// Render the Footer to a String

@@ -69,7 +69,7 @@ fn main() {
 
     let source = path_or_default(args.flag_source, ".");
     let target = path_or_default(args.flag_target, "build/");
-    Docket::new(&source).unwrap().render(&target);
+    Docket::new(&source).unwrap().render(&target).unwrap();
 
 }
 
