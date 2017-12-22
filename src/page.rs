@@ -84,7 +84,7 @@ impl<'a> Renderable for Page<'a> {
     }
 
     fn write_header<T: Write>(&self, file: &mut T, title: &str) -> io::Result<()> {
-        write!(file, "<header class=\"page-heading\"><h1><a href=\"#\">{}</h1><a class=\"home-link\" href=\"/\">{}</a></header>", self.get_title(), title)
+        write!(file, "<header class=\"page-heading\"><h1><a href=\"#\">{}</h1><a class=\"home-link\" href=\"../\">{}</a></header>", self.get_title(), title)
     }
 
     fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
