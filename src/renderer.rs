@@ -61,7 +61,7 @@ impl Renderer {
     <style>{}</style>
     <script>hljs.initHighlightingOnLoad();</script>
   </head>
-<body>"#,
+  <body>"#,
             title,
             &STYLE
         )?;
@@ -70,7 +70,7 @@ impl Renderer {
         renderable.write_body(&mut file)?;
 
         // footer finishes body.
-        write!(file, "<footer>{}</footer></body>", self.footer)?;
+        write!(file, "<footer>{}</footer></body></html>", self.footer)?;
 
         Ok(PageInfo {
             title: title.into(),
