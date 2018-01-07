@@ -106,7 +106,7 @@ footer {
 </style>
     <script>hljs.initHighlightingOnLoad();</script>
   </head>
-<body><header class="page-heading"><h1><a href="#">Configuration</h1><a class="home-link" href="/">docket</a></header><p>Docket aims to replicate the features of <code>d</code>. Although this is built around limitation of configuration there are still a few settings that can be tweaked.</p>
+  <body><header class="page-heading"><h1><a href="#">Configuration</h1><a class="home-link" href="../">docket</a></header><p>Docket aims to replicate the features of <code>d</code>. Although this is built around limitation of configuration there are still a few settings that can be tweaked.</p>
 <p><ol><li><a href="#Documentation-Files">Documentation Files</a><ol></ol></li><li><a href="#Page-Uris">Page Uris</a><ol></ol></li><li><a href="#Page-Titles">Page Titles</a><ol></ol></li><li><a href="#Index">Index</a><ol></ol></li><li><a href="#Documentation-Title">Documentation Title</a><ol></ol></li><li><a href="#Footer">Footer</a><ol></ol></li><li><a href="#Markdown-Features">Markdown Features</a><ol><li><a href="#Tree-of-Contents">Tree of Contents</a></li><li><a href="#Highlighting">Highlighting</a></li></ol></li></ol></p>
 <h2 id="Documentation-Files"><a href="#Documentation-Files">Documentation Files</a></h2><p>Each file in the source directory with the extension of <code>md</code>, <code>mdown</code> or <code>markdown</code> is rendered as a page.</p>
 <h2 id="Page-Uris"><a href="#Page-Uris">Page Uris</a></h2><p>The Uri of a page is created from the file name by stripping leading numbers and replacing non-uri-safe characters with <code>-</code>. This allows leading numbers to be added to input file names to control the order in which pages appear in the main index.</p>
@@ -123,10 +123,11 @@ def foo():
     pass
 ```
 </code></pre>
-<p>In addition the first line of the code block can specify a type hint if it begins with <code></code>:</p>
-<pre><code class="language-nohighlight">            
+<p>In addition the first line of the code block can specify a type hint if it begins with <code>:::</code>:</p>
+<pre><code class="language-nohighlight">    :::rust
+        
     fn main() {
         println!(&quot;hello world!&quot;);
     }
 </code></pre>
-<footer></footer></body>
+<footer></footer></body></html>
