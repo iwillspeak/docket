@@ -2,27 +2,17 @@
 
 Simple markdown to HTML documentation rendering. Docket aims to be a Rust clone of [`d`](https://github.com/sjl/d).
 
+## Key Features
+
 * Binary which can be installed with `cargo install`
 * Command line argument parsing with [Docopt](https://docs.rs/docopt/0.8.1/docopt/)
 * Markdown rendering with `pulldown-cmark`.
 * Zero-configuration.
 
-## Implementation
+## Getting Started
 
-The main program will just instantiate a `Docket` instance with parameters parsed from the command line. The `Docket` will scan the tree and find pages to be rendered.
+Docket can be installed with cargo via `cargo install docket`. Once installed you should be able to run it form the command line as `docket`.
 
-When rendering a page:
+To begin creating your documentation create a new `docs/` folder at the root of your repository. Add a file called `index.md` with a short markdown description of the project. Add pages by creating new markdown files in the `docs/` folder. Each page should have a level-1 heading at the beginning which is treated as the title of the page. 
 
- * Write out the header, which will contain styling information for the page.
- * Write out the body, transforming the H1 to be a page link, and inserting the TOC into the body.
- * Write out the global footer, if there is one.
-
-Once all pages are rendered will will then know the 'pretty' names for each page (extracted from the H1). We can then write out the index page.
-
-## TODO
-
- * [x] Properly parse the TOC tree and substitute it into the individual files.
- * [x] Add links to the pages on the index page, with the proper slugs. E.g.: `about` rather than `01-about.html`. These should come from the headings, but slugified.
- * [x] Add styling to the main page. Maybe some kind of abstraction around rendering content and style that the same code can be used for pages and index?
- * [x] Allow `title` file to override the project name guessed from the directory.
- * [x] Syntax highlighting with Pygments-compatible library.
+To render the HTML output change to the `docs/` folder and run `docket`. This should create a new `docs/build/` folder containing the rendered site; ready to be published to a web-server or served with GitHub Pages. For more information about setup and configuration [check out the docs](https://iwillspeak.github.io/docket/).
