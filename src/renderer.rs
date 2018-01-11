@@ -27,10 +27,7 @@ impl Renderer {
     /// # Arguments
     ///  - `footer` The footer to render at the bottom of each page.
     pub fn new(title: String, footer: String) -> Self {
-        Renderer {
-            title,
-            footer
-        }
+        Renderer { title, footer }
     }
 
     /// Render the page

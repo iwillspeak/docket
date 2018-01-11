@@ -34,7 +34,13 @@ fn render_tree<'a, W: Write, I: Iterator<Item = &'a TocElement>>(
     for e in tree {
         match e {
             &TocElement::Heading(ref h, ref children) => {
-                write!(w, "<h{0} id=\"{1}\"><a href=\"#{1}\">{2}</a></h{0}>", h.level, h.slug, h.contents)?;
+                write!(
+                    w,
+                    "<h{0} id=\"{1}\"><a href=\"#{1}\">{2}</a></h{0}>",
+                    h.level,
+                    h.slug,
+                    h.contents
+                )?;
                 render_tree(children.iter(), toc, w)?;
             }
             &TocElement::Html(ref html) => {
@@ -84,7 +90,12 @@ impl<'a> Renderable for Page<'a> {
     }
 
     fn write_header<T: Write>(&self, file: &mut T, title: &str) -> io::Result<()> {
-        write!(file, "<header class=\"page-heading\"><h1><a href=\"#\">{}</h1><a class=\"home-link\" href=\"../\">{}</a></header>", self.get_title(), title)
+        write!(
+            file,
+            "<header class=\"page-heading\"><h1><a href=\"#\">{}</h1><a class=\"home-link\" href=\"../\">{}</a></header>",
+            self.get_title(),
+            title
+        )
     }
 
     fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
