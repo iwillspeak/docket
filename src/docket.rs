@@ -1,11 +1,19 @@
 use std::path::{Path, PathBuf, Component};
-use std::io;
 use pulldown_cmark::{Parser, html};
 use page::Page;
 use index::Index;
 use renderer::Renderer;
 use util::read_file_to_string;
 use failure::Error;
+
+#[derive(Debug, Fail)]
+enum DocketError {
+    /// Path used to create the docket instance was bad
+    #[fail(display = "Not a directory {:?}", path)]
+    PathNotDirectory {
+        path: PathBuf
+    }
+}
 
 /// Docket
 ///
@@ -34,11 +42,10 @@ impl Docket {
     ///
     /// The path to search for documentation. Markdown files in this
     /// directory will be used for documentation.
-    pub fn new(doc_path: &Path) -> io::Result<Self> {
+    pub fn new(doc_path: &Path) -> Result<Self, Error> {
         trace!("Searching for docs in {:?}", doc_path);
         if !doc_path.is_dir() {
-            // TODO: Return Result<> instead?
-            panic!("Not a directory");
+            return Err(DocketError::PathNotDirectory{ path: doc_path.to_owned() }.into());
         }
 
         let title_file = doc_path.join("title");

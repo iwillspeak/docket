@@ -7,6 +7,7 @@ extern crate pulldown_cmark;
 #[macro_use]
 extern crate log;
 extern crate env_logger;
+#[macro_use]
 extern crate failure;
 
 mod docket;
@@ -20,6 +21,7 @@ mod renderer;
 use docopt::*;
 use std::path::PathBuf;
 use docket::Docket;
+use failure::Error;
 
 /// Usage Information
 ///
@@ -69,8 +71,19 @@ fn main() {
 
     let source = path_or_default(args.flag_source, ".");
     let target = path_or_default(args.flag_target, "build/");
-    Docket::new(&source).unwrap().render(&target).unwrap();
 
+    if let Err(e) = run(source, target) {
+        eprintln!("Error: {}", e);
+        std::process::exit(-1);
+    }
+}
+
+/// Run Method
+///
+/// The main work of rendering the documentation. Separated into a
+/// different function so we can use the `?` operator.
+fn run(source: PathBuf, target: PathBuf) -> Result<(), Error> {
+    Docket::new(&source)?.render(&target)
 }
 
 #[cfg(test)]
