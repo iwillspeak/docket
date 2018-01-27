@@ -35,6 +35,7 @@ Usage: docket [options]
 
 Options:
   -h --help           Show this screen.
+  --version           Show the version.
   -s, --source=<in>   Documentation directory, default is current directory.
   -t, --target=<out>  Write the output to <out>, default is `./build/`.
 ";
@@ -45,6 +46,7 @@ Options:
 /// program. This is filled in for us by Docopt.
 #[derive(Debug, Deserialize)]
 struct Args {
+    flag_version: bool,
     flag_source: Option<String>,
     flag_target: Option<String>,
 }
@@ -68,6 +70,10 @@ fn main() {
     let args: Args = Docopt::new(USAGE)
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
+
+    if args.flag_version {
+        println!("Doctopt version {}", env!("CARGO_PKG_VERSION"));
+    }
 
     let source = path_or_default(args.flag_source, ".");
     let target = path_or_default(args.flag_target, "build/");
