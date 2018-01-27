@@ -1,3 +1,5 @@
+#![deny(missing_docs)]
+
 use std::path::{Path, PathBuf, Component};
 use pulldown_cmark::{Parser, html};
 use page::Page;
