@@ -51,6 +51,7 @@ impl Renderer {
             r#"<html>
   <head>
     <title>{}</title>
+    <meta name="viewport" content="width=700">
     <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
     <link rel="stylesheet"
       href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
