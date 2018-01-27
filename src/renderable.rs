@@ -21,4 +21,7 @@ pub trait Renderable {
 
     /// Write the body to the output file.
     fn write_body<T: Write>(&self, &mut T) -> io::Result<()>;
+
+    /// Path from this renderbabel to the Root
+    fn path_to_root(&self) -> Cow<str>;
 }

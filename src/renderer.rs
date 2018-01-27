@@ -6,8 +6,6 @@ use page::PageInfo;
 
 use failure::Error;
 
-static STYLE: &'static str = include_str!("../style.css");
-
 /// Render Context
 ///
 /// Holds the state of the current render session (basically just the
@@ -43,6 +41,8 @@ impl Renderer {
         let output_path = output_dir.join("index.html");
         create_dir_all(&output_dir)?;
 
+        let style_path = format!("{}/style.css", renderable.path_to_root());
+
         let mut file = File::create(&output_path)?;
 
         // HTML header, containing hardcoded CSS
@@ -56,12 +56,12 @@ impl Renderer {
     <link rel="stylesheet"
       href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
     <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-    <style>{}</style>
+    <link rel="stylesheet" href="{}">
     <script>hljs.initHighlightingOnLoad();</script>
   </head>
   <body>"#,
             title,
-            &STYLE
+            style_path,
         )?;
 
         renderable.write_header(&mut file, &self.title)?;

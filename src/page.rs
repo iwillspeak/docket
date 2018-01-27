@@ -102,6 +102,10 @@ impl<'a> Renderable for Page<'a> {
         let toc = toc_to_html(self.toc.iter(), 3);
         render_tree(self.toc.iter(), &toc, file)
     }
+
+    fn path_to_root(&self) -> Cow<str> {
+        "..".into()
+    }
 }
 
 impl<'a> Page<'a> {

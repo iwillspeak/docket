@@ -60,6 +60,10 @@ impl Renderable for Index {
 
         Ok(())
     }
+
+    fn path_to_root(&self) -> Cow<str> {
+        ".".into()
+    }
 }
 
 impl Index {

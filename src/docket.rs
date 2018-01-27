@@ -7,6 +7,8 @@ use index::Index;
 use renderer::Renderer;
 use util::read_file_to_string;
 use failure::Error;
+use std::io::prelude::*;
+use std::fs::File;
 
 #[derive(Debug, Fail)]
 enum DocketError {
@@ -36,6 +38,12 @@ pub struct Docket {
     /// The pages, in order
     pages: Vec<PathBuf>,
 }
+
+/// The raw stylesheet contents
+///
+/// This string is written to the assets file `style.css` and
+/// referenced from each rendered page.
+static STYLE: &'static str = include_str!("../style.css");
 
 impl Docket {
     /// Create a Docket Instance
@@ -114,6 +122,8 @@ impl Docket {
 
         renderer.render(&index, &output)?;
 
+        copy_asset(&STYLE, &output.join("style.css"))?;
+
         Ok(())
     }
 
@@ -127,6 +137,16 @@ impl Docket {
         }
         footer
     }
+}
+
+/// Copy Asset to Output Directory
+///
+/// Creates a new file in the output directory and writes the given
+/// string to it.
+fn copy_asset(content: &str, path: &Path) -> Result<(), Error> {
+    let mut file = File::create(&path)?;
+    write!(file, "{}", content)?;
+    Ok(())
 }
 
 /// Checks if this is the expected file
