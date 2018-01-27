@@ -88,6 +88,7 @@ pre > code {
 	border-bottom: none;
 	border-left: 2px solid #00BCD4;
 	display: block;
+	overflow: auto;
 	padding: 10px;
 }
 
