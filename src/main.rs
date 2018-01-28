@@ -72,7 +72,7 @@ fn main() {
         .unwrap_or_else(|e| e.exit());
 
     if args.flag_version {
-        println!("Doctopt version {}", env!("CARGO_PKG_VERSION"));
+        println!("Docket version {}", env!("CARGO_PKG_VERSION"));
     }
 
     let source = path_or_default(args.flag_source, ".");
