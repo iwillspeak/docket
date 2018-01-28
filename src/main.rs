@@ -1,14 +1,14 @@
 //! Markdown to HTML Documentation Generator
 
 extern crate docopt;
-#[macro_use]
-extern crate serde_derive;
-extern crate pulldown_cmark;
-#[macro_use]
-extern crate log;
 extern crate env_logger;
 #[macro_use]
 extern crate failure;
+#[macro_use]
+extern crate log;
+extern crate pulldown_cmark;
+#[macro_use]
+extern crate serde_derive;
 
 mod docket;
 mod page;
@@ -57,14 +57,11 @@ struct Args {
 /// the default if none is provided.
 fn path_or_default(maybe_path: Option<String>, default: &str) -> PathBuf {
     maybe_path
-        .map({
-            |p| PathBuf::from(p)
-        })
+        .map({ |p| PathBuf::from(p) })
         .unwrap_or(default.to_owned().into())
 }
 
 fn main() {
-
     let _ = env_logger::init();
 
     let args: Args = Docopt::new(USAGE)

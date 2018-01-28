@@ -69,10 +69,8 @@ where
                     let last = current.pop();
                     if let Some(event) = last {
                         if let Event::Start(Tag::CodeBlock(Cow::Borrowed(""))) = event {
-
-                            current.push(Event::Start(
-                                Tag::CodeBlock(String::from(&t[3..]).into()),
-                            ));
+                            current
+                                .push(Event::Start(Tag::CodeBlock(String::from(&t[3..]).into())));
                         } else {
                             current.push(event);
                             current.push(Event::Text(t.clone()));
@@ -208,7 +206,6 @@ mod test {
 "#;
         let mut parser = Parser::new(doc);
 
-
         let toc = parse_toc(&mut parser);
 
         assert_eq!(
@@ -218,10 +215,10 @@ mod test {
                     vec![
                         TocElement::Heading(
                             h(2, "Heading 2.1"),
-                            vec![TocElement::Heading(h(3, "Heading 3.1"), Vec::new())]
+                            vec![TocElement::Heading(h(3, "Heading 3.1"), Vec::new())],
                         ),
                         TocElement::Heading(h(2, "Heading 2.2"), Vec::new()),
-                    ]
+                    ],
                 ),
                 TocElement::Heading(h(1, "Heading 1.2"), Vec::new()),
             ],

@@ -1,6 +1,6 @@
 use std::path::Path;
 use std::io::prelude::*;
-use std::fs::{File, create_dir_all};
+use std::fs::{create_dir_all, File};
 use renderable::Renderable;
 use page::PageInfo;
 
@@ -60,8 +60,7 @@ impl Renderer {
     <script>hljs.initHighlightingOnLoad();</script>
   </head>
   <body>"#,
-            title,
-            style_path,
+            title, style_path,
         )?;
 
         renderable.write_header(&mut file, &self.title)?;

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use std::path::PathBuf;
 use renderable::Renderable;
 use page::PageInfo;
-use pulldown_cmark::{Parser, html};
+use pulldown_cmark::{html, Parser};
 use util::read_file_to_string;
 
 pub struct Index {
@@ -52,8 +52,7 @@ impl Renderable for Index {
             write!(
                 file,
                 r#"<li><a href="{}">{}</a></li>"#,
-                page.slug,
-                page.title
+                page.slug, page.title
             )?;
         }
         write!(file, "</ol>")?;

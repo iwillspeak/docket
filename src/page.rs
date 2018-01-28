@@ -37,9 +37,7 @@ fn render_tree<'a, W: Write, I: Iterator<Item = &'a TocElement>>(
                 write!(
                     w,
                     "<h{0} id=\"{1}\"><a href=\"#{1}\">{2}</a></h{0}>",
-                    h.level,
-                    h.slug,
-                    h.contents
+                    h.level, h.slug, h.contents
                 )?;
                 render_tree(children.iter(), toc, w)?;
             }
@@ -110,7 +108,6 @@ impl<'a> Renderable for Page<'a> {
 
 impl<'a> Page<'a> {
     pub fn new(path: &'a Path) -> Self {
-
         let source = ::util::read_file_to_string(path);
         let events = Parser::new(&source).collect::<Vec<_>>();
         let mut toc = parse_toc(events.into_iter());

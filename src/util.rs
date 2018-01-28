@@ -19,7 +19,6 @@ pub fn read_file_to_string(path: &Path) -> String {
 /// Convert a string of arbitrary charactes to a form suitable for use
 /// as an HTML identifier or file name.
 pub fn slugify(input: &str) -> String {
-
     let to_map = match input.find('-') {
         Some(offset) => {
             let (prefix, suffix) = input.split_at(offset + 1);

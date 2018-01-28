@@ -1,7 +1,7 @@
 #![deny(missing_docs)]
 
-use std::path::{Path, PathBuf, Component};
-use pulldown_cmark::{Parser, html};
+use std::path::{Component, Path, PathBuf};
+use pulldown_cmark::{html, Parser};
 use page::Page;
 use index::Index;
 use renderer::Renderer;
@@ -14,9 +14,7 @@ use std::fs::File;
 enum DocketError {
     /// Path used to create the docket instance was bad
     #[fail(display = "Not a directory {:?}", path)]
-    PathNotDirectory {
-        path: PathBuf
-    }
+    PathNotDirectory { path: PathBuf },
 }
 
 /// Docket
@@ -55,7 +53,9 @@ impl Docket {
     pub fn new(doc_path: &Path) -> Result<Self, Error> {
         trace!("Searching for docs in {:?}", doc_path);
         if !doc_path.is_dir() {
-            return Err(DocketError::PathNotDirectory{ path: doc_path.to_owned() }.into());
+            return Err(DocketError::PathNotDirectory {
+                path: doc_path.to_owned(),
+            }.into());
         }
 
         let title_file = doc_path.join("title");
@@ -84,13 +84,11 @@ impl Docket {
             if let Some(ext) = path.extension() {
                 let extension = ext.to_string_lossy();
                 match extension.as_ref() {
-                    "md" | "markdown" | "mdown" => {
-                        match path {
-                            ref p if has_stem(&p, "footer") => footer = Some(p.to_owned()),
-                            ref p if has_stem(&p, "index") => index = Some(p.to_owned()),
-                            _ => pages.push(path.clone()),
-                        }
-                    }
+                    "md" | "markdown" | "mdown" => match path {
+                        ref p if has_stem(&p, "footer") => footer = Some(p.to_owned()),
+                        ref p if has_stem(&p, "index") => index = Some(p.to_owned()),
+                        _ => pages.push(path.clone()),
+                    },
                     _ => (),
                 }
             }
