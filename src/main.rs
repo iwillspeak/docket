@@ -46,7 +46,6 @@ Options:
 /// program. This is filled in for us by Docopt.
 #[derive(Debug, Deserialize)]
 struct Args {
-    flag_version: bool,
     flag_source: Option<String>,
     flag_target: Option<String>,
 }
@@ -65,12 +64,9 @@ fn main() {
     let _ = env_logger::init();
 
     let args: Args = Docopt::new(USAGE)
+        .map(|d| d.version(Some(format!("Docket {}", env!("CARGO_PKG_VERSION")))))
         .and_then(|d| d.deserialize())
         .unwrap_or_else(|e| e.exit());
-
-    if args.flag_version {
-        println!("Docket version {}", env!("CARGO_PKG_VERSION"));
-    }
 
     let source = path_or_default(args.flag_source, ".");
     let target = path_or_default(args.flag_target, "build/");
