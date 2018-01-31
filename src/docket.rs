@@ -93,6 +93,9 @@ impl Docket {
                 }
             }
         }
+
+        pages.sort();
+
         Ok(Docket {
             title: title.to_string(),
             index: index,
