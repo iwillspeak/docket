@@ -1,6 +1,6 @@
 [package]
 name = "docket"
-version = "0.1.6"
+version = "0.1.7"
 description = "Simple markdown to HTML documentation rendering"
 readme = "README.md"
 license-file = "LICENSE"
