@@ -9,6 +9,7 @@ extern crate log;
 extern crate pulldown_cmark;
 #[macro_use]
 extern crate serde_derive;
+extern crate notify;
 
 mod docket;
 mod page;
@@ -18,9 +19,13 @@ mod index;
 mod renderable;
 mod renderer;
 
-use docopt::*;
-use std::path::PathBuf;
+
 use docket::Docket;
+use docopt::*;
+use notify::{Watcher, RecursiveMode, watcher};
+use std::sync::mpsc::channel;
+use std::time::Duration;
+use std::path::{Path, PathBuf};
 use failure::Error;
 
 /// Usage Information
@@ -36,6 +41,7 @@ Usage: docket [options]
 Options:
   -h --help           Show this screen.
   --version           Show the version.
+  -w, --watch         Watch for changes and re-generate.
   -s, --source=<in>   Documentation directory, default is current directory.
   -t, --target=<out>  Write the output to <out>, default is `./build/`.
 ";
@@ -46,9 +52,16 @@ Options:
 /// program. This is filled in for us by Docopt.
 #[derive(Debug, Deserialize)]
 struct Args {
+    flag_watch: bool,
     flag_source: Option<String>,
     flag_target: Option<String>,
 }
+
+/// On Erorr Behaviour
+///
+/// Chooses what should happen if an error happens when running the build.
+#[derive(PartialEq)]
+enum OnError { Skip, Exit }
 
 /// Path or Default
 ///
@@ -71,9 +84,26 @@ fn main() {
     let source = path_or_default(args.flag_source, ".");
     let target = path_or_default(args.flag_target, "build/");
 
-    if let Err(e) = run(source, target) {
-        eprintln!("Error: {}", e);
-        std::process::exit(-1);
+    if args.flag_watch {
+        let (tx, rx) = channel();
+
+        let mut watcher = watcher(tx, Duration::from_secs(2))
+            .expect("could not create file watcher");
+
+        watcher
+            .watch(&source, RecursiveMode::NonRecursive)
+            .unwrap();
+
+        loop {
+            run(&source, &target, OnError::Skip);
+            println!("Watching for changes.");
+            match rx.recv() {
+                Ok(_) => println!("Rebuilding..."),
+                Err(e) => eprintln!("Watcher error: {}", e)
+            }
+        }
+    } else {
+        run(&source, &target, OnError::Exit);
     }
 }
 
@@ -81,8 +111,18 @@ fn main() {
 ///
 /// The main work of rendering the documentation. Separated into a
 /// different function so we can use the `?` operator.
-fn run(source: PathBuf, target: PathBuf) -> Result<(), Error> {
-    Docket::new(&source)?.render(&target)
+fn run(source: &Path, target: &Path, on_err: OnError) {
+    if let Err(e) = build(source, target) {
+        eprintln!("Error: {}", e);
+        if on_err == OnError::Exit {
+            std::process::exit(-1);
+        }
+    }
+}
+
+/// Do the Build
+fn build(source: &Path, target: &Path) -> Result<(), Error> {
+    Docket::new(source)?.render(target)
 }
 
 #[cfg(test)]

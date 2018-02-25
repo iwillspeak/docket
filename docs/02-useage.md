@@ -9,6 +9,7 @@ Usage: docket [options]
 
 Options:
   -h --help           Show this screen.
+  -w, --watch         Watch for changes and re-generate.
   -s, --source=<in>   Documentation directory, default is current directory.
   -t, --target=<out>  Write the output to <out>, default is `./build/`.
 ```
