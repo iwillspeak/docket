@@ -51,7 +51,7 @@ impl Renderable for Index {
         for page in self.pages.iter() {
             write!(
                 file,
-                r#"<li><a href="{}">{}</a></li>"#,
+                r#"<li><a href="{}/">{}</a></li>"#,
                 page.slug, page.title
             )?;
         }
