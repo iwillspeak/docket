@@ -11,6 +11,7 @@ extern crate pulldown_cmark;
 extern crate serde_derive;
 extern crate notify;
 
+mod asset;
 mod docket;
 mod page;
 mod util;

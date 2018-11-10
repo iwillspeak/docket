@@ -3,12 +3,11 @@
 use std::path::{Component, Path, PathBuf};
 use pulldown_cmark::{html, Parser};
 use page::Page;
+use asset::Asset;
 use index::Index;
 use renderer::Renderer;
 use util::read_file_to_string;
 use failure::Error;
-use std::io::prelude::*;
-use std::fs::File;
 
 #[derive(Debug, Fail)]
 enum DocketError {
@@ -35,6 +34,9 @@ pub struct Docket {
 
     /// The pages, in order
     pages: Vec<PathBuf>,
+
+    /// The Assets Files
+    assets: Vec<Asset>,
 }
 
 /// The raw stylesheet contents
@@ -77,10 +79,23 @@ impl Docket {
         let mut index = None;
         let mut footer = None;
         let mut pages = Vec::new();
+        let mut assets = vec![
+            Asset::internal("style.css", &STYLE)
+        ];
 
         for entry in doc_path.read_dir()? {
             let entry = entry?;
             let path = entry.path();
+            if !path.is_file() {
+                // We only support file assets at the moment
+                continue;
+            }
+
+            let name = path.file_name().unwrap().to_string_lossy();
+            if name == "titlle" {
+                continue;
+            }
+
             if let Some(ext) = path.extension() {
                 let extension = ext.to_string_lossy();
                 match extension.as_ref() {
@@ -89,8 +104,10 @@ impl Docket {
                         ref p if has_stem(&p, "index") => index = Some(p.to_owned()),
                         _ => pages.push(path.clone()),
                     },
-                    _ => (),
+                    _ => assets.push(Asset::path(path.clone())),
                 }
+            } else {
+                assets.push(Asset::path(path.clone()));
             }
         }
 
@@ -101,6 +118,7 @@ impl Docket {
             index: index,
             footer: footer,
             pages: pages,
+            assets: assets,
         })
     }
 
@@ -123,7 +141,9 @@ impl Docket {
 
         renderer.render(&index, &output)?;
 
-        copy_asset(&STYLE, &output.join("style.css"))?;
+        for asset in self.assets {
+            asset.copy_to(&output)?;
+        }
 
         Ok(())
     }
@@ -138,16 +158,6 @@ impl Docket {
         }
         footer
     }
-}
-
-/// Copy Asset to Output Directory
-///
-/// Creates a new file in the output directory and writes the given
-/// string to it.
-fn copy_asset(content: &str, path: &Path) -> Result<(), Error> {
-    let mut file = File::create(&path)?;
-    write!(file, "{}", content)?;
-    Ok(())
 }
 
 /// Checks if this is the expected file
