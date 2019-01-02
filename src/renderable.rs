@@ -20,8 +20,8 @@ pub trait Renderable {
     fn write_header<T: Write>(&self, f: &mut T, title: &str) -> io::Result<()>;
 
     /// Write the body to the output file.
-    fn write_body<T: Write>(&self, &mut T) -> io::Result<()>;
+    fn write_body<T: Write>(&self, _: &mut T) -> io::Result<()>;
 
     /// Path from this renderbabel to the Root
-    fn path_to_root(&self) -> Cow<str>;
+    fn path_to_root(&self) -> Cow<'_, str>;
 }

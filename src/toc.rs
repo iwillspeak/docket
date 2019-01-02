@@ -1,6 +1,6 @@
 use pulldown_cmark::*;
 use std::borrow::Cow;
-use util;
+use crate::util;
 use std::iter::Peekable;
 
 /// # A single ement in the TOC

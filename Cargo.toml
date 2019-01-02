@@ -7,6 +7,7 @@ license-file = "LICENSE"
 homepage = "https://iwillspeak.github.io/docket"
 repository = "https://github.com/iwillspeak/docket"
 authors = ["Will Speak <lithiumflame@gmail.com>"]
+edition = "2018"
 
 [dependencies]
 pulldown-cmark = "0.2"

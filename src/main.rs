@@ -1,15 +1,15 @@
 //! Markdown to HTML Documentation Generator
 
-extern crate docopt;
-extern crate env_logger;
+
+use env_logger;
 #[macro_use]
 extern crate failure;
 #[macro_use]
 extern crate log;
-extern crate pulldown_cmark;
+
 #[macro_use]
 extern crate serde_derive;
-extern crate notify;
+
 
 mod asset;
 mod docket;
@@ -21,7 +21,7 @@ mod renderable;
 mod renderer;
 
 
-use docket::Docket;
+use crate::docket::Docket;
 use docopt::*;
 use notify::{Watcher, RecursiveMode, watcher};
 use std::sync::mpsc::channel;

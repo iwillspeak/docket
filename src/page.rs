@@ -3,9 +3,9 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::borrow::Cow;
 use pulldown_cmark::*;
-use renderable::Renderable;
-use util;
-use toc::*;
+use crate::renderable::Renderable;
+use crate::util;
+use crate::toc::*;
 
 /// Page to be Rendered
 pub struct Page<'a> {
@@ -101,14 +101,14 @@ impl<'a> Renderable for Page<'a> {
         render_tree(self.toc.iter(), &toc, file)
     }
 
-    fn path_to_root(&self) -> Cow<str> {
+    fn path_to_root(&self) -> Cow<'_, str> {
         "..".into()
     }
 }
 
 impl<'a> Page<'a> {
     pub fn new(path: &'a Path) -> Self {
-        let source = ::util::read_file_to_string(path);
+        let source = crate::util::read_file_to_string(path);
         let events = Parser::new(&source).collect::<Vec<_>>();
         let mut toc = parse_toc(events.into_iter());
         let mut title = path.file_stem().unwrap().to_string_lossy().to_string();

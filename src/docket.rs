@@ -2,11 +2,11 @@
 
 use std::path::{Component, Path, PathBuf};
 use pulldown_cmark::{html, Parser};
-use page::Page;
-use asset::Asset;
-use index::Index;
-use renderer::Renderer;
-use util::read_file_to_string;
+use crate::page::Page;
+use crate::asset::Asset;
+use crate::index::Index;
+use crate::renderer::Renderer;
+use crate::util::read_file_to_string;
 use failure::Error;
 
 #[derive(Debug, Fail)]

@@ -1,10 +1,10 @@
 use std::io::{self, Write};
 use std::borrow::Cow;
 use std::path::PathBuf;
-use renderable::Renderable;
-use page::PageInfo;
+use crate::renderable::Renderable;
+use crate::page::PageInfo;
 use pulldown_cmark::{html, Parser};
-use util::read_file_to_string;
+use crate::util::read_file_to_string;
 
 pub struct Index {
     /// The project title
@@ -60,7 +60,7 @@ impl Renderable for Index {
         Ok(())
     }
 
-    fn path_to_root(&self) -> Cow<str> {
+    fn path_to_root(&self) -> Cow<'_, str> {
         ".".into()
     }
 }
