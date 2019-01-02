@@ -1,11 +1,11 @@
-use std::io::prelude::*;
-use std::io;
-use std::path::{Path, PathBuf};
-use std::borrow::Cow;
-use pulldown_cmark::*;
 use crate::renderable::Renderable;
-use crate::util;
 use crate::toc::*;
+use crate::util;
+use pulldown_cmark::*;
+use std::borrow::Cow;
+use std::io;
+use std::io::prelude::*;
+use std::path::{Path, PathBuf};
 
 /// Page to be Rendered
 pub struct Page<'a> {
@@ -32,8 +32,8 @@ fn render_tree<'a, W: Write, I: Iterator<Item = &'a TocElement>>(
     w: &mut W,
 ) -> io::Result<()> {
     for e in tree {
-        match e {
-            &TocElement::Heading(ref h, ref children) => {
+        match *e {
+            TocElement::Heading(ref h, ref children) => {
                 write!(
                     w,
                     "<h{0} id=\"{1}\"><a href=\"#{1}\">{2}</a></h{0}>",
@@ -41,10 +41,10 @@ fn render_tree<'a, W: Write, I: Iterator<Item = &'a TocElement>>(
                 )?;
                 render_tree(children.iter(), toc, w)?;
             }
-            &TocElement::Html(ref html) => {
+            TocElement::Html(ref html) => {
                 write!(w, "{}", html)?;
             }
-            &TocElement::TocReference => {
+            TocElement::TocReference => {
                 write!(w, "{}", toc)?;
             }
         }
@@ -61,7 +61,7 @@ where
 
     rendered.push_str("<ol>");
     for e in tree {
-        if let &TocElement::Heading(ref h, ref children) = e {
+        if let TocElement::Heading(ref h, ref children) = *e {
             if h.level > depth {
                 continue;
             }
@@ -83,7 +83,7 @@ impl<'a> Renderable for Page<'a> {
         util::slugify_path(self.path)
     }
 
-    fn get_title<'t>(&'t self) -> Cow<'t, str> {
+    fn get_title(&self) -> Cow<'_, str> {
         Cow::Borrowed(&self.title)
     }
 
@@ -122,10 +122,6 @@ impl<'a> Page<'a> {
 
         debug!("TOC: {:?}", toc);
 
-        Page {
-            path: path,
-            title: title,
-            toc: toc,
-        }
+        Page { path, title, toc }
     }
 }

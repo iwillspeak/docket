@@ -1,8 +1,8 @@
-use std::path::Path;
-use std::io::prelude::*;
-use std::fs::{create_dir_all, File};
-use crate::renderable::Renderable;
 use crate::page::PageInfo;
+use crate::renderable::Renderable;
+use std::fs::{create_dir_all, File};
+use std::io::prelude::*;
+use std::path::Path;
 
 use failure::Error;
 
@@ -71,7 +71,7 @@ impl Renderer {
 
         Ok(PageInfo {
             title: title.into(),
-            slug: slug,
+            slug,
             path: output_path,
         })
     }

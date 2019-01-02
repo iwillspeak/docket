@@ -5,10 +5,10 @@
 //! 'bulitin' assets, such as the CSS which is bundled with Docket
 //! itself and on-disk assets from the source directory.
 
-use std::path::{Path, PathBuf};
-use std::io::prelude::*;
-use std::fs::{self, File};
 use failure::Error;
+use std::fs::{self, File};
+use std::io::prelude::*;
+use std::path::{Path, PathBuf};
 
 /// Defines a Documentation Asset
 ///
@@ -47,10 +47,7 @@ impl Asset {
     ///  * `name` - The name of the file to create in the output
     ///  * `contents` - The contents to fill the file with
     pub fn internal(name: &'static str, contents: &'static str) -> Self {
-        Asset::Internal(InternalAsset{
-            name: name,
-            contents: contents,
-        })
+        Asset::Internal(InternalAsset { name, contents })
     }
 
     /// Create a Path Asset

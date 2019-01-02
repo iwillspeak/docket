@@ -1,10 +1,10 @@
-use std::io::{self, Write};
-use std::borrow::Cow;
-use std::path::PathBuf;
-use crate::renderable::Renderable;
 use crate::page::PageInfo;
-use pulldown_cmark::{html, Parser};
+use crate::renderable::Renderable;
 use crate::util::read_file_to_string;
+use pulldown_cmark::{html, Parser};
+use std::borrow::Cow;
+use std::io::{self, Write};
+use std::path::PathBuf;
 
 pub struct Index {
     /// The project title
@@ -22,7 +22,7 @@ impl Renderable for Index {
         "".into()
     }
 
-    fn get_title<'t>(&'t self) -> Cow<'t, str> {
+    fn get_title(&self) -> Cow<'_, str> {
         (&self.title[..]).into()
     }
 
@@ -66,11 +66,13 @@ impl Renderable for Index {
 }
 
 impl Index {
-    pub fn new(title: String, md_source: Option<PathBuf>, pages: Vec<PageInfo>) -> Self {
-        Index {
-            title: title,
-            path: md_source,
-            pages: pages,
-        }
+    /// Create a New Index Page
+    ///
+    /// # Parameters
+    ///  * `title` - The title of the index page
+    ///  * `path` - The path to ths Markdown source
+    ///  * `pages` - The pages to link to from this index
+    pub fn new(title: String, path: Option<PathBuf>, pages: Vec<PageInfo>) -> Self {
+        Index { title, path, pages }
     }
 }

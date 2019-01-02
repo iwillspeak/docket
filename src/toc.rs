@@ -1,6 +1,6 @@
+use crate::util;
 use pulldown_cmark::*;
 use std::borrow::Cow;
-use crate::util;
 use std::iter::Peekable;
 
 /// # A single ement in the TOC
@@ -53,7 +53,7 @@ where
         if let Some(e) = parser.next() {
             match e {
                 Event::Start(Tag::Header(_)) => {
-                    if current.len() > 0 {
+                    if !current.is_empty() {
                         toc.push(TocElement::Html(render_to_string(current.drain(..))));
                     }
                 }
@@ -83,7 +83,7 @@ where
                 // longer streams of text
                 Event::Text(ref t) if t == "[TOC]" => {
                     if let Some(&Event::Start(Tag::Paragraph)) = current.last() {
-                        if current.len() > 0 {
+                        if !current.is_empty() {
                             toc.push(TocElement::Html(render_to_string(current.drain(..))));
                         }
                         toc.push(TocElement::TocReference);
@@ -98,7 +98,7 @@ where
         }
     }
 
-    if current.len() > 0 {
+    if !current.is_empty() {
         let rendered = render_to_string(current.into_iter());
         toc.push(TocElement::Html(rendered));
     }
@@ -114,7 +114,7 @@ where
     I: Iterator<Item = Event<'a>>,
 {
     let mut rendered = String::new();
-    html::push_html(&mut rendered, events.into_iter());
+    html::push_html(&mut rendered, events);
     rendered
 }
 
@@ -124,15 +124,16 @@ impl Heading {
         I: Iterator<Item = Event<'a>>,
     {
         let mut slug = String::new();
-        let contents = render_to_string(events.inspect(|e| match e {
-            &Event::Text(ref t) => slug.push_str(&t),
-            _ => (),
+        let contents = render_to_string(events.inspect(|e| {
+            if let Event::Text(ref t) = *e {
+                slug.push_str(&t)
+            }
         }));
         let slug = util::slugify(&slug);
         Heading {
-            level: level,
-            contents: contents,
-            slug: slug,
+            level,
+            contents,
+            slug,
         }
     }
 }
@@ -145,9 +146,9 @@ mod test {
     fn h(level: i32, contents: &str) -> Heading {
         let slug = util::slugify(contents);
         Heading {
-            level: level,
+            level,
             contents: contents.into(),
-            slug: slug,
+            slug,
         }
     }
 

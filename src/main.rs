@@ -1,6 +1,5 @@
 //! Markdown to HTML Documentation Generator
 
-
 use env_logger;
 #[macro_use]
 extern crate failure;
@@ -10,31 +9,29 @@ extern crate log;
 #[macro_use]
 extern crate serde_derive;
 
-
 mod asset;
 mod docket;
-mod page;
-mod util;
-mod toc;
 mod index;
+mod page;
 mod renderable;
 mod renderer;
-
+mod toc;
+mod util;
 
 use crate::docket::Docket;
 use docopt::*;
-use notify::{Watcher, RecursiveMode, watcher};
+use failure::Error;
+use notify::{watcher, RecursiveMode, Watcher};
+use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::time::Duration;
-use std::path::{Path, PathBuf};
-use failure::Error;
 
 /// Usage Information
 ///
 /// This is a [Docopt] compliant usage description of this program.
 ///
 ///  [Docopt]: http://docopt.org/
-const USAGE: &'static str = "
+const USAGE: &str = "
 Docket Documentation Generator
 
 Usage: docket [options]
@@ -61,8 +58,11 @@ struct Args {
 /// On Erorr Behaviour
 ///
 /// Chooses what should happen if an error happens when running the build.
-#[derive(PartialEq)]
-enum OnError { Skip, Exit }
+#[derive(PartialEq, Copy, Clone)]
+enum OnError {
+    Skip,
+    Exit,
+}
 
 /// Path or Default
 ///
@@ -71,11 +71,11 @@ enum OnError { Skip, Exit }
 fn path_or_default(maybe_path: Option<String>, default: &str) -> PathBuf {
     maybe_path
         .map({ |p| PathBuf::from(p) })
-        .unwrap_or(default.to_owned().into())
+        .unwrap_or_else(|| default.to_owned().into())
 }
 
 fn main() {
-    let _ = env_logger::init();
+    env_logger::init();
 
     let args: Args = Docopt::new(USAGE)
         .map(|d| d.version(Some(format!("Docket {}", env!("CARGO_PKG_VERSION")))))
@@ -88,19 +88,17 @@ fn main() {
     if args.flag_watch {
         let (tx, rx) = channel();
 
-        let mut watcher = watcher(tx, Duration::from_secs(2))
-            .expect("could not create file watcher");
+        let mut watcher =
+            watcher(tx, Duration::from_secs(2)).expect("could not create file watcher");
 
-        watcher
-            .watch(&source, RecursiveMode::NonRecursive)
-            .unwrap();
+        watcher.watch(&source, RecursiveMode::NonRecursive).unwrap();
 
         loop {
             run(&source, &target, OnError::Skip);
             println!("Watching for changes.");
             match rx.recv() {
                 Ok(_) => println!("Rebuilding..."),
-                Err(e) => eprintln!("Watcher error: {}", e)
+                Err(e) => eprintln!("Watcher error: {}", e),
             }
         }
     } else {
@@ -129,8 +127,8 @@ fn build(source: &Path, target: &Path) -> Result<(), Error> {
 #[cfg(test)]
 mod test {
 
-    use std::path::Path;
     use super::*;
+    use std::path::Path;
 
     #[test]
     fn path_or_default_with_valid_argument() {

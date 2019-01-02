@@ -1,5 +1,5 @@
-use std::io::{self, Write};
 use std::borrow::Cow;
+use std::io::{self, Write};
 
 /// Defines a Renderable component
 ///
@@ -14,7 +14,7 @@ pub trait Renderable {
 
     /// Get the tilte of the page, so that rendering can place it in
     /// the <head>
-    fn get_title<'a>(&'a self) -> Cow<'a, str>;
+    fn get_title(&self) -> Cow<'_, str>;
 
     /// Write the heading to the output file.
     fn write_header<T: Write>(&self, f: &mut T, title: &str) -> io::Result<()>;

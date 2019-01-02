@@ -1,13 +1,13 @@
 #![deny(missing_docs)]
 
-use std::path::{Component, Path, PathBuf};
-use pulldown_cmark::{html, Parser};
-use crate::page::Page;
 use crate::asset::Asset;
 use crate::index::Index;
+use crate::page::Page;
 use crate::renderer::Renderer;
 use crate::util::read_file_to_string;
 use failure::Error;
+use pulldown_cmark::{html, Parser};
+use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Fail)]
 enum DocketError {
@@ -52,12 +52,14 @@ impl Docket {
     ///
     /// The path to search for documentation. Markdown files in this
     /// directory will be used for documentation.
+    #[allow(clippy::new_ret_no_self)]
     pub fn new(doc_path: &Path) -> Result<Self, Error> {
         trace!("Searching for docs in {:?}", doc_path);
         if !doc_path.is_dir() {
             return Err(DocketError::PathNotDirectory {
                 path: doc_path.to_owned(),
-            }.into());
+            }
+            .into());
         }
 
         let title_file = doc_path.join("title");
@@ -79,9 +81,7 @@ impl Docket {
         let mut index = None;
         let mut footer = None;
         let mut pages = Vec::new();
-        let mut assets = vec![
-            Asset::internal("style.css", &STYLE)
-        ];
+        let mut assets = vec![Asset::internal("style.css", &STYLE)];
 
         for entry in doc_path.read_dir()? {
             let entry = entry?;
@@ -115,10 +115,10 @@ impl Docket {
 
         Ok(Docket {
             title: title.to_string(),
-            index: index,
-            footer: footer,
-            pages: pages,
-            assets: assets,
+            index,
+            footer,
+            pages,
+            assets,
         })
     }
 
@@ -131,7 +131,8 @@ impl Docket {
 
         let renderer = Renderer::new(self.title.clone(), footer);
 
-        let rendered_pages: Vec<_> = self.pages
+        let rendered_pages: Vec<_> = self
+            .pages
             .iter()
             .map(|path| Page::new(&path))
             .map(|p| renderer.render(&p, &output))
