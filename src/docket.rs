@@ -8,6 +8,7 @@ use crate::util::read_file_to_string;
 use failure::Error;
 use pulldown_cmark::{html, Parser};
 use std::path::{Component, Path, PathBuf};
+use rayon::prelude::*;
 
 #[derive(Debug, Fail)]
 enum DocketError {
@@ -133,7 +134,7 @@ impl Docket {
 
         let rendered_pages: Vec<_> = self
             .pages
-            .iter()
+            .par_iter()
             .map(|path| Page::new(&path))
             .map(|p| renderer.render(&p, &output))
             .collect::<Result<Vec<_>, _>>()?;
