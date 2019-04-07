@@ -1,0 +1,6 @@
+pool:
+  vmImage: 'ubuntu-16.04'
+container: 'rust:latest'
+steps:
+  - script: cargo test --all
+    displayName: Cargo test
