@@ -1,6 +1,5 @@
 use crate::util;
 use pulldown_cmark::*;
-use std::borrow::Cow;
 use std::iter::Peekable;
 
 /// # A single ement in the TOC
@@ -68,7 +67,7 @@ where
                 Event::Text(ref t) if t.starts_with(":::") => {
                     let last = current.pop();
                     if let Some(event) = last {
-                        if let Event::Start(Tag::CodeBlock(Cow::Borrowed(""))) = event {
+                        if let Event::Start(Tag::CodeBlock(_)) = event {
                             current
                                 .push(Event::Start(Tag::CodeBlock(String::from(&t[3..]).into())));
                         } else {
@@ -81,7 +80,7 @@ where
                 // at the start of a new paragraph. This allows the
                 // escaping of the prhase with code blocks and within
                 // longer streams of text
-                Event::Text(ref t) if t == "[TOC]" => {
+                Event::Text(ref t) if t.as_ref() == "[TOC]" => {
                     if let Some(&Event::Start(Tag::Paragraph)) = current.last() {
                         if !current.is_empty() {
                             toc.push(TocElement::Html(render_to_string(current.drain(..))));
