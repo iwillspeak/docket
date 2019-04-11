@@ -80,14 +80,13 @@ where
                 // at the start of a new paragraph. This allows the
                 // escaping of the prhase with code blocks and within
                 // longer streams of text
-                Event::Text(ref t) if t.as_ref() == "[TOC]" => {
-                    if let Some(&Event::Start(Tag::Paragraph)) = current.last() {
-                        if !current.is_empty() {
-                            toc.push(TocElement::Html(render_to_string(current.drain(..))));
-                        }
+                Event::Text(ref t) if t.as_ref() == "]" => {
+                    if !current.is_empty() && in_toc(&current) {
+                        toc.push(TocElement::Html(render_to_string(current.drain(..current.len() - 2))));
+                        current.clear();
                         toc.push(TocElement::TocReference);
                     } else {
-                        current.push(Event::Text("[TOC]".into()))
+                        current.push(e)
                     }
                 }
                 e => current.push(e),
@@ -103,6 +102,30 @@ where
     }
 
     toc
+}
+
+/// Check if we have just seen a `<p>`, `[`, and `TOC`
+fn in_toc(current: &[Event]) -> bool {
+    let idx = current.len() - 1;
+    if let Some(Event::Text(ref toc)) = current.get(idx) {
+        if toc.as_ref() != "TOC" {
+            return false;
+        }
+    } else {
+        return false
+    }
+    if let Some(Event::Text(ref toc)) = current.get(idx - 1) {
+        if toc.as_ref() != "[" {
+            return false;
+        }
+    } else {
+        return false
+    }
+    if let Some(Event::Start(Tag::Paragraph)) = current.get(idx - 2) {
+        true
+    } else {
+        false
+    }
 }
 
 /// # Render Pulldown Events to a String
