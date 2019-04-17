@@ -82,7 +82,9 @@ where
                 // longer streams of text
                 Event::Text(ref t) if t.as_ref() == "]" => {
                     if !current.is_empty() && in_toc(&current) {
-                        toc.push(TocElement::Html(render_to_string(current.drain(..current.len() - 2))));
+                        toc.push(TocElement::Html(render_to_string(
+                            current.drain(..current.len() - 2),
+                        )));
                         current.clear();
                         toc.push(TocElement::TocReference);
                     } else {
@@ -112,14 +114,14 @@ fn in_toc(current: &[Event]) -> bool {
             return false;
         }
     } else {
-        return false
+        return false;
     }
     if let Some(Event::Text(ref toc)) = current.get(idx - 1) {
         if toc.as_ref() != "[" {
             return false;
         }
     } else {
-        return false
+        return false;
     }
     if let Some(Event::Start(Tag::Paragraph)) = current.get(idx - 2) {
         true

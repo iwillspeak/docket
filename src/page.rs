@@ -1,6 +1,7 @@
 use crate::renderable::Renderable;
 use crate::toc::*;
 use crate::util;
+use log::debug;
 use pulldown_cmark::*;
 use std::borrow::Cow;
 use std::io;

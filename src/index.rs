@@ -1,6 +1,7 @@
 use crate::page::PageInfo;
 use crate::renderable::Renderable;
 use crate::util::read_file_to_string;
+use log::debug;
 use pulldown_cmark::{html, Parser};
 use std::borrow::Cow;
 use std::io::{self, Write};

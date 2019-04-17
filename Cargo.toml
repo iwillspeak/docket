@@ -1,6 +1,6 @@
 [package]
 name = "docket"
-version = "0.2.5"
+version = "0.3.0"
 description = "Simple markdown to HTML documentation rendering"
 readme = "README.md"
 license-file = "LICENSE"
@@ -11,9 +11,8 @@ edition = "2018"
 
 [dependencies]
 pulldown-cmark = "0.4"
-docopt = "1.0"
-serde = "1.0"
-serde_derive = "1.0"
+docopt = "1.1"
+serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
 env_logger = "0.6"
 failure = "0.1"

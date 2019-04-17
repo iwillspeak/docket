@@ -6,9 +6,11 @@ use crate::page::Page;
 use crate::renderer::Renderer;
 use crate::util::read_file_to_string;
 use failure::Error;
+use failure::Fail;
+use log::trace;
 use pulldown_cmark::{html, Parser};
-use std::path::{Component, Path, PathBuf};
 use rayon::prelude::*;
+use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Fail)]
 enum DocketError {

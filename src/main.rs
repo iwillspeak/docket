@@ -1,14 +1,5 @@
 //! Markdown to HTML Documentation Generator
 
-use env_logger;
-#[macro_use]
-extern crate failure;
-#[macro_use]
-extern crate log;
-
-#[macro_use]
-extern crate serde_derive;
-
 mod asset;
 mod docket;
 mod index;
@@ -20,8 +11,10 @@ mod util;
 
 use crate::docket::Docket;
 use docopt::*;
+use env_logger;
 use failure::Error;
 use notify::{watcher, RecursiveMode, Watcher};
+use serde::Deserialize;
 use std::path::{Path, PathBuf};
 use std::sync::mpsc::channel;
 use std::time::Duration;
