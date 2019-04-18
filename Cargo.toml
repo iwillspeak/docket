@@ -10,7 +10,7 @@ authors = ["Will Speak <lithiumflame@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-pulldown-cmark = "0.4"
+pulldown-cmark = { version= "0.4", default_features = false }
 docopt = "1.1"
 serde = { version = "1.0", features = ["derive"] }
 log = "0.4"
