@@ -13,11 +13,8 @@ use crate::docket::Docket;
 use docopt::*;
 use env_logger;
 use failure::Error;
-use notify::{watcher, RecursiveMode, Watcher};
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
-use std::sync::mpsc::channel;
-use std::time::Duration;
 
 /// Usage Information
 ///
@@ -52,6 +49,7 @@ struct Args {
 ///
 /// Chooses what should happen if an error happens when running the build.
 #[derive(PartialEq, Copy, Clone)]
+#[cfg_attr(not(watch), allow(dead_code))]
 enum OnError {
     Skip,
     Exit,
@@ -79,21 +77,30 @@ fn main() {
     let target = path_or_default(args.flag_target, "build/");
 
     if args.flag_watch {
-        let (tx, rx) = channel();
+        #[cfg(watch)]
+        {
+            use notify::{watcher, RecursiveMode, Watcher};
+            use std::sync::mpsc::channel;
+            use std::time::Duration;
 
-        let mut watcher =
-            watcher(tx, Duration::from_secs(2)).expect("could not create file watcher");
+            let (tx, rx) = channel();
 
-        watcher.watch(&source, RecursiveMode::NonRecursive).unwrap();
+            let mut watcher =
+                watcher(tx, Duration::from_secs(2)).expect("could not create file watcher");
 
-        loop {
-            run(&source, &target, OnError::Skip);
-            println!("Watching for changes.");
-            match rx.recv() {
-                Ok(_) => println!("Rebuilding..."),
-                Err(e) => eprintln!("Watcher error: {}", e),
+            watcher.watch(&source, RecursiveMode::NonRecursive).unwrap();
+
+            loop {
+                run(&source, &target, OnError::Skip);
+                println!("Watching for changes.");
+                match rx.recv() {
+                    Ok(_) => println!("Rebuilding..."),
+                    Err(e) => eprintln!("Watcher error: {}", e),
+                }
             }
         }
+        #[cfg(not(watch))]
+        eprintln!("Watch not supported.");
     } else {
         run(&source, &target, OnError::Exit);
     }
