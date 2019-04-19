@@ -17,4 +17,11 @@ log = "0.4"
 env_logger = "0.6"
 failure = "0.1"
 notify = "4.0"
-rayon = "1.0"
+rayon = { version = "1.0", optional = true }
+
+[features]
+
+default = [ "par_render" ]
+
+# Parallel page rendering uses the rayon crate
+par_render = [ "rayon" ]

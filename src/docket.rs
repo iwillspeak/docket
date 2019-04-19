@@ -9,7 +9,6 @@ use failure::Error;
 use failure::Fail;
 use log::trace;
 use pulldown_cmark::{html, Parser};
-use rayon::prelude::*;
 use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug, Fail)]
@@ -134,12 +133,10 @@ impl Docket {
 
         let renderer = Renderer::new(self.title.clone(), footer);
 
-        let rendered_pages: Vec<_> = self
-            .pages
-            .par_iter()
-            .map(|path| Page::new(&path))
-            .map(|p| renderer.render(&p, &output))
-            .collect::<Result<Vec<_>, _>>()?;
+        let rendered_pages = map_maybe_par(self.pages, |p| {
+            let page = Page::new(&p);
+            renderer.render(&page, &output)
+        })?;
 
         let index = Index::new(self.title, self.index, rendered_pages);
 
@@ -162,6 +159,26 @@ impl Docket {
         }
         footer
     }
+}
+
+/// Map a collection, using Rayon.
+#[cfg(par_render)]
+fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>, Error>
+where
+    T: Sync,
+    F: Fn(T) -> Result<U, Error> + Send + Sync,
+    U: Send,
+{
+    use rayon::prelude::*;
+    input.par_iter().map(f).collect()
+}
+
+#[cfg(not(par_render))]
+fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>, Error>
+where
+    F: Fn(T) -> Result<U, Error>,
+{
+    input.into_iter().map(f).collect()
 }
 
 /// Checks if this is the expected file
