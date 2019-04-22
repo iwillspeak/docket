@@ -32,17 +32,19 @@ def foo():
     pass
 </code></pre>
 <p>In addition the first line of the code block can specify a type hint if it begins with <code>:::</code>:</p>
-<pre><code class="language-nohighlight">    :::rust
+<pre><code class="language-nohighlight">    :::c
+	#include &lt;stdio.h&gt;
         
-    fn main() {
-        println!(&quot;hello world!&quot;);
+    void main() {
+        printf(&quot;hello world!&quot;);
     }
 </code></pre>
 <p>Which renders as:</p>
-<pre><code class="language-rust
-">    
-fn main() {
-    println!(&quot;hello world!&quot;);
+<pre><code class="language-c
+">#include &lt;stdio.h&gt;
+    
+void main() {
+    printf(&quot;hello world!&quot;);
 }
 </code></pre>
 <footer></footer></body></html>
