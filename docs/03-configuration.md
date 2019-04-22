@@ -46,14 +46,29 @@ Code blocks are highlighted with [`highlight.js`](https://highlightjs.org). By d
         pass
     ```
 
+Which renders as:
+
+```python
+def foo():
+    pass
+```
+
 In addition the first line of the code block can specify a type hint if it begins with `:::`:
 
 ```nohighlight
-    :::rust
+    :::c
+    #include <stdio.h>
         
-    fn main() {
-        println!("hello world!");
+    void main() {
+        printf("hello world!");
     }
 ```
 
+Which renders as:
 
+    :::c
+    #include <stdio.h>
+        
+    void main() {
+        printf("hello world!");
+    }
