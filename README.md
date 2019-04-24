@@ -11,9 +11,16 @@ Simple markdown to HTML documentation rendering. Docket aims to be a Rust clone 
 * Markdown rendering with `pulldown-cmark`.
 * Zero-configuration.
 
-## Getting Started
+## Installation
 
 Docket can be installed with cargo via `cargo install docket`. Once installed you should be able to run it form the command line as `docket`.
+
+Docket has two Cargo features which are enabled by default. You can disable them with `--no-default-features` when installing if you don't need them to save some time.
+
+ * `watch` - Support for watching files and re-generating the output folder when changes are made.
+ * `par_render` - Support for rendering pages in parallel using the Rayon crate.
+
+## Getting Started
 
 To begin creating your documentation create a new `docs/` folder at the root of your repository. Add a file called `index.md` with a short markdown description of the project. Add pages by creating new markdown files in the `docs/` folder. Each page should have a level-1 heading at the beginning which is treated as the title of the page. 
 
