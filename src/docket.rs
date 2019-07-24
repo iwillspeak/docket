@@ -162,18 +162,18 @@ impl Docket {
 }
 
 /// Map a collection, using Rayon.
-#[cfg(par_render)]
+#[cfg(feature="par_render")]
 fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>, Error>
 where
     T: Sync,
-    F: Fn(T) -> Result<U, Error> + Send + Sync,
+    F: Fn(&T) -> Result<U, Error> + Send + Sync,
     U: Send,
 {
     use rayon::prelude::*;
-    input.par_iter().map(f).collect()
+    input.into_par_iter().map(f).collect()
 }
 
-#[cfg(not(par_render))]
+#[cfg(not(feature="par_render"))]
 fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>, Error>
 where
     F: Fn(T) -> Result<U, Error>,

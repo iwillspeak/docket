@@ -45,11 +45,11 @@ struct Args {
     flag_target: Option<String>,
 }
 
-/// On Erorr Behaviour
+/// On Error Behaviour
 ///
 /// Chooses what should happen if an error happens when running the build.
 #[derive(PartialEq, Copy, Clone)]
-#[cfg_attr(not(watch), allow(dead_code))]
+#[cfg_attr(not(feature="watch"), allow(dead_code))]
 enum OnError {
     Skip,
     Exit,
@@ -77,7 +77,7 @@ fn main() {
     let target = path_or_default(args.flag_target, "build/");
 
     if args.flag_watch {
-        #[cfg(watch)]
+        #[cfg(feature="watch")]
         {
             use notify::{watcher, RecursiveMode, Watcher};
             use std::sync::mpsc::channel;
@@ -99,7 +99,7 @@ fn main() {
                 }
             }
         }
-        #[cfg(not(watch))]
+        #[cfg(not(feature="watch"))]
         eprintln!("Watch not supported.");
     } else {
         run(&source, &target, OnError::Exit);
