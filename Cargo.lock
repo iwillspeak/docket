@@ -111,7 +111,7 @@ dependencies = [
 
 [[package]]
 name = "docket"
-version = "0.4.0"
+version = "0.4.1"
 dependencies = [
  "docopt 1.1.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "env_logger 0.6.1 (registry+https://github.com/rust-lang/crates.io-index)",
