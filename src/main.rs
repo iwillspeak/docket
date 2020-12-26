@@ -49,7 +49,7 @@ struct Args {
 ///
 /// Chooses what should happen if an error happens when running the build.
 #[derive(PartialEq, Copy, Clone)]
-#[cfg_attr(not(feature="watch"), allow(dead_code))]
+#[cfg_attr(not(feature = "watch"), allow(dead_code))]
 enum OnError {
     Skip,
     Exit,
@@ -61,7 +61,7 @@ enum OnError {
 /// the default if none is provided.
 fn path_or_default(maybe_path: Option<String>, default: &str) -> PathBuf {
     maybe_path
-        .map({ |p| PathBuf::from(p) })
+        .map(PathBuf::from)
         .unwrap_or_else(|| default.to_owned().into())
 }
 
@@ -77,7 +77,7 @@ fn main() {
     let target = path_or_default(args.flag_target, "build/");
 
     if args.flag_watch {
-        #[cfg(feature="watch")]
+        #[cfg(feature = "watch")]
         {
             use notify::{watcher, RecursiveMode, Watcher};
             use std::sync::mpsc::channel;
@@ -99,7 +99,7 @@ fn main() {
                 }
             }
         }
-        #[cfg(not(feature="watch"))]
+        #[cfg(not(feature = "watch"))]
         eprintln!("Watch not supported.");
     } else {
         run(&source, &target, OnError::Exit);
