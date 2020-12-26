@@ -41,14 +41,14 @@ When placed on its own in a paragraph `[TOC]` is replaced with a rendered tree b
 Code blocks are highlighted with [`highlight.js`](https://highlightjs.org). By default the type of each block is inferred automatically. Fenced code blocks can be used to add a hint about the type of code:
 
     :::nohighlight
-    ```python
+    ```py
     def foo():
         pass
     ```
 
 Which renders as:
 
-```python
+```py
 def foo():
     pass
 ```
