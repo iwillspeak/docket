@@ -73,6 +73,24 @@ h4 a, h5 a, h6 a {
 	color: black;
 }
 
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+thead {
+	border-bottom: 1px solid #00BCD4;
+}
+
+td {
+	border-bottom: 1px solid #EFEFEF;
+}
+
+th, td {
+	padding: 10px 0;
+	text-align: left;
+}
+
 code {
 	font-family: Monospace;
 	background-color: #ccf9ff;

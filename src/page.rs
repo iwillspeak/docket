@@ -110,7 +110,11 @@ impl<'a> Renderable for Page<'a> {
 impl<'a> Page<'a> {
     pub fn new(path: &'a Path) -> Self {
         let source = crate::util::read_file_to_string(path);
-        let events = Parser::new(&source).collect::<Vec<_>>();
+        let events = Parser::new_ext(
+            &source,
+            Options::ENABLE_TABLES | Options::ENABLE_FOOTNOTES | Options::ENABLE_TASKLISTS,
+        )
+        .collect::<Vec<_>>();
         let mut toc = parse_toc(events.into_iter());
         let mut title = path.file_stem().unwrap().to_string_lossy().to_string();
 

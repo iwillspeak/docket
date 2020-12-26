@@ -72,3 +72,42 @@ Which renders as:
     void main() {
         printf("hello world!");
     }
+
+### Tables
+
+Tables are supported. Markdown tables are defined with `|` and `---` using the
+GFM tables extension.
+
+```markdown
+Hello | Wolrd
+------| -----
+TESt | thing
+123 | `123`
+more | *stuff*
+test | sfasf
+```
+
+Which renders as:
+
+Hello | Wolrd
+------| -----
+TESt | thing
+123 | `123`
+more | *stuff*
+test | sfasf
+
+### Task Lists
+
+Task lists are supported with the syntax from GFM.
+
+```
+ * [ ] Milk
+ * [x] Eggs
+ * [x] Flour
+```
+
+Which renders as:
+
+ * [ ] Milk
+ * [x] Eggs
+ * [x] Flour
