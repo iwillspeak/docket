@@ -1,6 +1,10 @@
 use crate::util;
+use log::debug;
 use pulldown_cmark::*;
 use std::iter::Peekable;
+use syntect::{
+    self, highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet,
+};
 
 /// # A single ement in the TOC
 ///
@@ -42,6 +46,14 @@ where
 {
     let mut toc = Vec::new();
     let mut current = Vec::new();
+    let mut in_source = None;
+    let mut buffered_source = String::new();
+
+    let ss = SyntaxSet::load_defaults_newlines();
+    // for syn in ss.syntaxes() {
+    //     debug!("Loaded syntax: {0} ({1:?})", syn.name, syn.file_extensions);
+    // }
+    let ts = ThemeSet::load_defaults();
 
     loop {
         if let Some(&Event::Start(Tag::Header(i))) = parser.peek() {
@@ -62,20 +74,36 @@ where
                         parse_toc_at(parser, i),
                     ));
                 }
-                // Replace code blocks which start with `:::`-lines
-                // with ones containing the appropriate type.
-                Event::Text(ref t) if t.starts_with(":::") => {
-                    let last = current.pop();
-                    if let Some(event) = last {
-                        if let Event::Start(Tag::CodeBlock(_)) = event {
-                            current
-                                .push(Event::Start(Tag::CodeBlock(String::from(&t[3..]).into())));
-                        } else {
-                            current.push(event);
-                            current.push(Event::Text(t.clone()));
-                        }
+                // For code blocks track entering and exiting code blocks
+                // and render the syntax when we exit.
+                Event::Start(Tag::CodeBlock(source_type)) => {
+                    in_source = Some(source_type);
+                }
+                Event::End(Tag::CodeBlock(n)) => {
+                    let name = in_source.unwrap_or(n);
+                    let syntax = ss
+                        .find_syntax_by_extension(&name)
+                        .or_else(|| ss.find_syntax_by_name(&name))
+                        .unwrap_or_else(|| ss.find_syntax_plain_text());
+                    debug!("source name: {0}, syntax: {1:?}", name, syntax.name);
+                    let theme = &ts.themes["InspiredGitHub"];
+                    let highlighted =
+                        highlighted_html_for_string(&buffered_source, &ss, &syntax, theme);
+                    current.push(Event::Html(highlighted.into()));
+                    // Rset our state
+                    buffered_source.clear();
+                    in_source = None;
+                }
+                Event::Text(ref t) if in_source.is_some() => {
+                    // Replace code blocks which start with `:::`-lines
+                    // with ones containing the appropriate type.
+                    if buffered_source.len() == 0 && t.starts_with(":::") {
+                        in_source = Some(String::from(t[3..].trim()).into());
+                    } else {
+                        buffered_source += t;
                     }
                 }
+
                 // Replace references to the TOC, but only if they are
                 // at the start of a new paragraph. This allows the
                 // escaping of the prhase with code blocks and within
