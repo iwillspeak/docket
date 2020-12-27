@@ -2,15 +2,16 @@
 
 mod asset;
 mod docket;
+mod highlight;
 mod index;
 mod page;
 mod renderable;
 mod renderer;
 mod toc;
 mod util;
-mod highlight;
 
-#[macro_use]extern crate lazy_static;
+#[macro_use]
+extern crate lazy_static;
 use crate::docket::Docket;
 use docopt::*;
 use env_logger;

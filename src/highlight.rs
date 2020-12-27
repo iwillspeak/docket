@@ -1,8 +1,8 @@
-use std::io::Write;
+use std::{env, io::Write};
 
-use pulldown_cmark::{CowStr, Event};
+use pulldown_cmark::Event;
 
-pub (crate) trait Highlighter {
+pub(crate) trait Highlighter {
     /// # Highlight a Code Block
     ///
     /// Returns a list of the events to emit to the TOC to represent the block.
@@ -12,45 +12,38 @@ pub (crate) trait Highlighter {
     fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()>;
 }
 
-pub use syntect_hl::SyntectHighlighter;
 pub use js_hl::HighlightJsHighlighter;
+pub use syntect_hl::SyntectHighlighter;
 
-mod syntect_hl
-{
+mod syntect_hl {
     use std::io::Write;
 
     use log::debug;
-    use pulldown_cmark::{CowStr, Event};
+    use pulldown_cmark::Event;
     use syntect::{
         self, highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet,
     };
 
     use super::Highlighter;
-    
-    pub struct SyntectHighlighter
-    {
+
+    pub struct SyntectHighlighter {
         ss: SyntaxSet,
         ts: ThemeSet,
     }
 
-    impl SyntectHighlighter
-    {
+    impl SyntectHighlighter {
         /// # Create a New Highlighter
-        pub fn new() -> Self
-        {
+        pub fn new() -> Self {
             let ss = SyntaxSet::load_defaults_newlines();
             let ts = ThemeSet::load_defaults();
-            SyntectHighlighter {
-                ss, ts
-            }
+            SyntectHighlighter { ss, ts }
         }
     }
 
-    impl Highlighter for SyntectHighlighter
-    {
-        fn hl_codeblock(&self, name: &str, block: &str) -> Vec<Event>
-        {
-            let syntax = self.ss
+    impl Highlighter for SyntectHighlighter {
+        fn hl_codeblock(&self, name: &str, block: &str) -> Vec<Event> {
+            let syntax = self
+                .ss
                 .find_syntax_by_extension(&name)
                 .or_else(|| self.ss.find_syntax_by_name(&name))
                 .unwrap_or_else(|| self.ss.find_syntax_plain_text());
@@ -58,16 +51,16 @@ mod syntect_hl
             debug!("source name: {0}, syntax: {1:?}", name, syntax.name);
 
             let theme = &self.ts.themes["InspiredGitHub"];
-            let highlighted =
-                highlighted_html_for_string(&block, &self.ss, &syntax, theme);
-            vec![ Event::Html(highlighted.into()) ]
+            let highlighted = highlighted_html_for_string(&block, &self.ss, &syntax, theme);
+            vec![Event::Html(highlighted.into())]
         }
-        fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()> { Ok(()) }
+        fn write_header(&self, _out: &mut dyn Write) -> std::io::Result<()> {
+            Ok(())
+        }
     }
 }
 
-mod js_hl
-{
+mod js_hl {
     use std::io::Write;
 
     use pulldown_cmark::{CowStr, Event, Tag};
@@ -76,13 +69,13 @@ mod js_hl
 
     pub struct HighlightJsHighlighter();
 
-    impl HighlightJsHighlighter
-    {
-        pub fn new() -> Self { HighlightJsHighlighter() }
+    impl HighlightJsHighlighter {
+        pub const fn new() -> Self {
+            HighlightJsHighlighter()
+        }
     }
 
-    impl Highlighter for HighlightJsHighlighter
-    {
+    impl Highlighter for HighlightJsHighlighter {
         fn hl_codeblock(&self, name: &str, block: &str) -> Vec<Event> {
             let name: CowStr = String::from(name).into();
             vec![
@@ -106,14 +99,17 @@ mod js_hl
 }
 
 lazy_static! {
-    static ref GLOBAL_HL: SyntectHighlighter = {
-        SyntectHighlighter::new()
-    };
+    static ref GLOBAL_SYNTECT_HL: SyntectHighlighter = { SyntectHighlighter::new() };
 }
 
 /// # Get the Active Highlighter
 ///
 /// Returns a reference to a shared highlighter.
-pub(crate) fn get_hilighter() -> &'static SyntectHighlighter {
-    &GLOBAL_HL 
+pub(crate) fn get_hilighter() -> &'static dyn Highlighter {
+    static GLOBAL_JS_HL: HighlightJsHighlighter = HighlightJsHighlighter::new();
+    if env::var("DOCKET_FORCE_JS_HL").is_ok() {
+        &GLOBAL_JS_HL
+    } else {
+        &*GLOBAL_SYNTECT_HL
+    }
 }
