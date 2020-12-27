@@ -1,4 +1,4 @@
-use std::{env, io::Write};
+use std::io::Write;
 
 use pulldown_cmark::Event;
 
@@ -13,8 +13,10 @@ pub(crate) trait Highlighter {
 }
 
 pub use js_hl::HighlightJsHighlighter;
+#[cfg(syntect_hl)]
 pub use syntect_hl::SyntectHighlighter;
 
+#[cfg(syntect_hl)]
 mod syntect_hl {
     use std::io::Write;
 
@@ -98,6 +100,7 @@ mod js_hl {
     }
 }
 
+#[cfg(syntect_hl)]
 lazy_static! {
     static ref GLOBAL_SYNTECT_HL: SyntectHighlighter = { SyntectHighlighter::new() };
 }
@@ -107,9 +110,9 @@ lazy_static! {
 /// Returns a reference to a shared highlighter.
 pub(crate) fn get_hilighter() -> &'static dyn Highlighter {
     static GLOBAL_JS_HL: HighlightJsHighlighter = HighlightJsHighlighter::new();
-    if env::var("DOCKET_FORCE_JS_HL").is_ok() {
-        &GLOBAL_JS_HL
-    } else {
-        &*GLOBAL_SYNTECT_HL
+    #[cfg(syntect_hl)]
+    if std::env::var("DOCKET_FORCE_JS_HL").is_err() {
+        return &*GLOBAL_SYNTECT_HL
     }
+    &GLOBAL_JS_HL
 }

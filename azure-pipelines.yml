@@ -4,3 +4,5 @@ container: 'rust:latest'
 steps:
   - script: cargo test --all
     displayName: Cargo test
+  - script: cargo test --all --no-default-features
+    displayName: Cargo test no features
