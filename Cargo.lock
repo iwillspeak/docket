@@ -179,6 +179,7 @@ dependencies = [
  "docopt",
  "env_logger",
  "failure",
+ "lazy_static",
  "log",
  "notify",
  "pulldown-cmark",

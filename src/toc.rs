@@ -1,10 +1,9 @@
 use crate::util;
-use log::debug;
+use crate::highlight;
+use highlight::Highlighter;
 use pulldown_cmark::*;
 use std::iter::Peekable;
-use syntect::{
-    self, highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet,
-};
+
 
 /// # A single ement in the TOC
 ///
@@ -36,24 +35,23 @@ pub struct Heading {
 }
 
 /// Parse a TOC tree from the headers in the markdown document
-pub fn parse_toc<'a, P: Iterator<Item = Event<'a>>>(parser: P) -> Vec<TocElement> {
-    parse_toc_at(&mut parser.peekable(), 0)
+pub fn parse_toc<'a, P>(parser: P) -> Vec<TocElement>
+where
+    P: Iterator<Item = Event<'a>>,
+{
+    let hl = highlight::get_hilighter();
+    parse_toc_at(hl, &mut parser.peekable(), 0)
 }
 
-fn parse_toc_at<'a, P>(parser: &mut Peekable<P>, header_level: i32) -> Vec<TocElement>
+fn parse_toc_at<'a, H, P>(hl: &H, parser: &mut Peekable<P>, header_level: i32) -> Vec<TocElement>
 where
+    H: Highlighter,
     P: Iterator<Item = Event<'a>>,
 {
     let mut toc = Vec::new();
     let mut current = Vec::new();
     let mut in_source = None;
     let mut buffered_source = String::new();
-
-    let ss = SyntaxSet::load_defaults_newlines();
-    // for syn in ss.syntaxes() {
-    //     debug!("Loaded syntax: {0} ({1:?})", syn.name, syn.file_extensions);
-    // }
-    let ts = ThemeSet::load_defaults();
 
     loop {
         if let Some(&Event::Start(Tag::Header(i))) = parser.peek() {
@@ -71,9 +69,10 @@ where
                 Event::End(Tag::Header(i)) => {
                     toc.push(TocElement::Heading(
                         Heading::from_events(i, current.drain(..)),
-                        parse_toc_at(parser, i),
+                        parse_toc_at(hl, parser, i),
                     ));
                 }
+
                 // For code blocks track entering and exiting code blocks
                 // and render the syntax when we exit.
                 Event::Start(Tag::CodeBlock(source_type)) => {
@@ -81,15 +80,9 @@ where
                 }
                 Event::End(Tag::CodeBlock(n)) => {
                     let name = in_source.unwrap_or(n);
-                    let syntax = ss
-                        .find_syntax_by_extension(&name)
-                        .or_else(|| ss.find_syntax_by_name(&name))
-                        .unwrap_or_else(|| ss.find_syntax_plain_text());
-                    debug!("source name: {0}, syntax: {1:?}", name, syntax.name);
-                    let theme = &ts.themes["InspiredGitHub"];
-                    let highlighted =
-                        highlighted_html_for_string(&buffered_source, &ss, &syntax, theme);
-                    current.push(Event::Html(highlighted.into()));
+
+                    current.extend(hl.hl_codeblock(&name, &buffered_source));
+
                     // Rset our state
                     buffered_source.clear();
                     in_source = None;
