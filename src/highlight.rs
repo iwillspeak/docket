@@ -88,13 +88,15 @@ mod js_hl {
         }
 
         fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()> {
+            const HLJS_VERSION: &str = "10.5.0";
             write!(
                 out,
                 r#"
                 <link rel="stylesheet"
-                  href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
-                <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-                <script>hljs.initHighlightingOnLoad();</script>"#
+                  href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/{0}/styles/default.min.css">
+                <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/{0}/highlight.min.js"></script>
+                <script>hljs.initHighlightingOnLoad();</script>"#,
+                HLJS_VERSION
             )
         }
     }
