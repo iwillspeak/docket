@@ -92,14 +92,21 @@ th, td {
 }
 
 code {
+	border: 1px solid #00BCD4;
+}
+
+code, pre {
 	font-family: Monospace;
 	background-color: #ccf9ff;
-	border: 1px solid #00BCD4;
 	border-radius: 2px;
 	padding: 1px 7px;
 }
 
 pre > code {
+	border: none;
+}
+
+pre {
 	margin: 1em 0;
 	border-top: none;
 	border-right: none;

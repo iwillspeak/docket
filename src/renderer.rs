@@ -1,5 +1,5 @@
-use crate::{highlight::{self, Highlighter}, page::PageInfo};
 use crate::renderable::Renderable;
+use crate::{highlight, page::PageInfo};
 use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
 use std::path::Path;
@@ -55,10 +55,11 @@ impl Renderer {
                     <meta charset="UTF-8"> 
                     <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
                     <link rel="stylesheet" href="{}">"#,
-                            title, style_path,
+            title, style_path,
         )?;
         highlight::get_hilighter().write_header(&mut file)?;
-        write!(file,
+        write!(
+            file,
             r#"
               </head>
             <body>"#

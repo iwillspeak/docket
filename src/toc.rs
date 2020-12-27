@@ -1,9 +1,8 @@
-use crate::util;
 use crate::highlight;
+use crate::util;
 use highlight::Highlighter;
 use pulldown_cmark::*;
 use std::iter::Peekable;
-
 
 /// # A single ement in the TOC
 ///
@@ -43,9 +42,12 @@ where
     parse_toc_at(hl, &mut parser.peekable(), 0)
 }
 
-fn parse_toc_at<'a, H, P>(hl: &H, parser: &mut Peekable<P>, header_level: i32) -> Vec<TocElement>
+fn parse_toc_at<'a, P>(
+    hl: &dyn Highlighter,
+    parser: &mut Peekable<P>,
+    header_level: i32,
+) -> Vec<TocElement>
 where
-    H: Highlighter,
     P: Iterator<Item = Event<'a>>,
 {
     let mut toc = Vec::new();
