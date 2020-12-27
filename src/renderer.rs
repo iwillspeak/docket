@@ -1,4 +1,4 @@
-use crate::page::PageInfo;
+use crate::{highlight::{self, Highlighter}, page::PageInfo};
 use crate::renderable::Renderable;
 use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
@@ -49,19 +49,19 @@ impl Renderer {
         write!(
             file,
             r#"<html>
-  <head>
-    <title>{}</title>
-    <meta name="viewport" content="width=700">
-    <meta charset="UTF-8"> 
-    <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
-    <link rel="stylesheet"
-      href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css">
-    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
-    <link rel="stylesheet" href="{}">
-    <script>hljs.initHighlightingOnLoad();</script>
-  </head>
-  <body>"#,
-            title, style_path,
+                <head>
+                    <title>{}</title>
+                    <meta name="viewport" content="width=700">
+                    <meta charset="UTF-8"> 
+                    <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
+                    <link rel="stylesheet" href="{}">"#,
+                            title, style_path,
+        )?;
+        highlight::get_hilighter().write_header(&mut file)?;
+        write!(file,
+            r#"
+              </head>
+            <body>"#
         )?;
 
         renderable.write_header(&mut file, &self.title)?;
