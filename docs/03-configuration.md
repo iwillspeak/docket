@@ -39,9 +39,13 @@ When placed on its own in a paragraph `[TOC]` is replaced with a rendered tree b
 ### Highlighting
 
 Code blocks are highlighted with [Syntect](https://crates.io/crates/syntect) or
-[`highlight.js`](https://highlightjs.org). Syntect is the default. By default
-the type of each block is inferred automatically. Fenced code blocks can be used
-to add a hint about the type of code:
+[`highlight.js`](https://highlightjs.org). Syntect is the default. Syntect can
+be disabled at compile / install time by not including the `syntect-hl` feature,
+or at documentation build time by setting the `DOCKET_FORCE_JS_HL` environment
+variable. 
+
+By default the type of each block is inferred automatically. Fenced code blocks
+can be used to add a hint about the type of code:
 
     :::nohighlight
     ```py
