@@ -73,15 +73,40 @@ h4 a, h5 a, h6 a {
 	color: black;
 }
 
+table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+thead {
+	border-bottom: 1px solid #00BCD4;
+}
+
+td {
+	border-bottom: 1px solid #EFEFEF;
+}
+
+th, td {
+	padding: 10px 0;
+	text-align: left;
+}
+
 code {
+	border: 1px solid #00BCD4;
+}
+
+code, pre {
 	font-family: Monospace;
 	background-color: #ccf9ff;
-	border: 1px solid #00BCD4;
 	border-radius: 2px;
 	padding: 1px 7px;
 }
 
 pre > code {
+	border: none;
+}
+
+pre {
 	margin: 1em 0;
 	border-top: none;
 	border-right: none;
