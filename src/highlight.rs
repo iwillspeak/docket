@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use log::debug;
 use pulldown_cmark::Event;
 
 pub(crate) trait Highlighter {
@@ -13,10 +14,10 @@ pub(crate) trait Highlighter {
 }
 
 pub use js_hl::HighlightJsHighlighter;
-#[cfg(syntect_hl)]
+#[cfg(feature="syntect-hl")]
 pub use syntect_hl::SyntectHighlighter;
 
-#[cfg(syntect_hl)]
+#[cfg(feature="syntect-hl")]
 mod syntect_hl {
     use std::io::Write;
 
@@ -102,9 +103,9 @@ mod js_hl {
     }
 }
 
-#[cfg(syntect_hl)]
+#[cfg(feature="syntect-hl")]
 lazy_static! {
-    static ref GLOBAL_SYNTECT_HL: SyntectHighlighter = { SyntectHighlighter::new() };
+    static ref GLOBAL_SYNTECT_HL: SyntectHighlighter = SyntectHighlighter::new();
 }
 
 /// # Get the Active Highlighter
@@ -112,9 +113,11 @@ lazy_static! {
 /// Returns a reference to a shared highlighter.
 pub(crate) fn get_hilighter() -> &'static dyn Highlighter {
     static GLOBAL_JS_HL: HighlightJsHighlighter = HighlightJsHighlighter::new();
-    #[cfg(syntect_hl)]
+    #[cfg(feature="syntect-hl")]
     if std::env::var("DOCKET_FORCE_JS_HL").is_err() {
+        debug!("Using syntect for highlighting.");
         return &*GLOBAL_SYNTECT_HL
     }
+    debug!("Using Javascript highlighter.");
     &GLOBAL_JS_HL
 }

@@ -10,7 +10,7 @@ mod renderer;
 mod toc;
 mod util;
 
-#[cfg(syntect_hl)]
+#[cfg(feature="syntect-hl")]
 #[macro_use]
 extern crate lazy_static;
 use crate::docket::Docket;
