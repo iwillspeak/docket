@@ -57,7 +57,7 @@
                 });
 
                 // Order them by the score.
-                found.sort(f => f.score);
+                found.sort((a, b) => a.score < b.score);
 
                 displayResults(found.map(f => f.page));
             }
