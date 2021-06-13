@@ -4,6 +4,7 @@ use crate::util::read_file_to_string;
 use log::debug;
 use pulldown_cmark::{html, Parser};
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
@@ -45,6 +46,9 @@ impl Renderable for Index {
             write!(file, "{}", rendered)?;
         }
 
+        // Placehoder for the JS search
+        write!(file, r#"<div id="docket-search"></div>"#)?;
+
         // List of pages in the index
         debug!("listing pages in index");
         write!(file, "<h2>Table of Contents</h2>")?;
@@ -63,6 +67,10 @@ impl Renderable for Index {
 
     fn path_to_root(&self) -> Cow<'_, str> {
         ".".into()
+    }
+
+    fn get_search_index(&self) -> Option<HashMap<String, i32>> {
+        None
     }
 }
 

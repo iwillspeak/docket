@@ -42,6 +42,7 @@ impl Renderer {
         create_dir_all(&output_dir)?;
 
         let style_path = format!("{}/style.css", renderable.path_to_root());
+        let script_path = format!("{}/search.js", renderable.path_to_root());
 
         let mut file = File::create(&output_path)?;
 
@@ -54,8 +55,9 @@ impl Renderer {
                     <meta name="viewport" content="width=700">
                     <meta charset="UTF-8"> 
                     <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
-                    <link rel="stylesheet" href="{}">"#,
-            title, style_path,
+                    <link rel="stylesheet" href="{}">
+                    <script src="{}"></script>"#,
+            title, style_path, script_path
         )?;
         highlight::get_hilighter().write_header(&mut file)?;
         write!(
@@ -75,6 +77,7 @@ impl Renderer {
             title: title.into(),
             slug,
             path: output_path,
+            search_index: renderable.get_search_index(),
         })
     }
 }

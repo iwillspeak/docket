@@ -27,12 +27,12 @@ h4 {
 	font-size: 24px;
 }
 
-ol.index-toc {
+ol.index-toc, ul.search-results {
 	list-style-type: none;
 	padding-left: 0;
 }
 
-ol.index-toc li {
+ol.index-toc li, ul.search-results li {
 	margin-top: 0.2em;
 }
 
@@ -121,4 +121,22 @@ footer {
 	color: #555;
 	text-align: center;
 	border-top: 1px solid #EFEFEF;
+}
+
+#docket-search form {
+	text-align: center;
+	margin: 15px auto;
+}
+
+#docket-search form #query {
+	padding: 5px;
+    border-top-left-radius: 15px;
+    border-bottom-left-radius: 15px;
+    width: 80%;
+}
+
+#docket-search form button {
+	padding: 5px;
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
 }

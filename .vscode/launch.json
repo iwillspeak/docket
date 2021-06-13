@@ -5,7 +5,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "lldb-mi",
+            "type": "lldb",
             "request": "launch",
             "name": "Debug executable 'docket'",
             "cargo": {
@@ -19,10 +19,8 @@
                     "kind": "bin"
                 }
             },
-            "target": "target/debug/docket",
-            "arguments": "-s docs/",
+            "args": "-s docs/",
             "cwd": "${workspaceFolder}",
-            "valuesFormatting": "parseText"
         },
         {
             "type": "lldb",
