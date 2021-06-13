@@ -60,14 +60,19 @@
                 displayResults(found.map(f => f.page));
             }
 
-            // TODO: watch keypresses on the search box for search-while-type
             searchForm.addEventListener('submit', function (event) {
                 event.preventDefault();
                 doSearch(searchBox.value);
             });
 
+            let timer = null;
             searchBox.addEventListener('keyup', function (event) {
-                doSearch(searchBox.value);
+                if (timer == null) {
+                    timer = setTimeout(function () {
+                        timer = null;
+                        doSearch(searchBox.value);
+                    }, 500);
+                }
             })
         });
 })(window, document)
