@@ -22,7 +22,7 @@
                     searchResults.innerHTML = "<h3>No results</h3>";
                 } else {
                     searchResults.innerHTML =
-                        `<h3>${results.length} files match:</h3><ul class="search-results">`
+                        `<h3>${results.length} results</h3><ul class="search-results">`
                         + results.map(searchEntryForResult).join('') + '</ul>';
                 }
             }
