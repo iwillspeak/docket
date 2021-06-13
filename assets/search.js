@@ -35,7 +35,9 @@
                     return;
                 }
 
-                let terms = query.split(/[^\w]/);
+                let terms = query.split(/[^\w]/)
+                    .map(term => term.trim().toLowerCase())
+                    .filter(term => term.length > 0);
                 let found = []
 
                 searchIndex.forEach(page => {
