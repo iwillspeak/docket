@@ -1,4 +1,5 @@
 use std::borrow::Cow;
+use std::collections::HashMap;
 use std::io::{self, Write};
 
 /// Defines a Renderable component
@@ -24,4 +25,7 @@ pub trait Renderable {
 
     /// Path from this renderbabel to the Root
     fn path_to_root(&self) -> Cow<'_, str>;
+
+    // Get the search index for this renderable, if any.
+    fn get_search_index(&self) -> Option<HashMap<String, i32>>;
 }

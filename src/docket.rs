@@ -4,6 +4,7 @@ use crate::asset::Asset;
 use crate::index::Index;
 use crate::page::Page;
 use crate::renderer::Renderer;
+use crate::search;
 use crate::util::read_file_to_string;
 use failure::Error;
 use failure::Fail;
@@ -45,7 +46,13 @@ pub struct Docket {
 ///
 /// This string is written to the assets file `style.css` and
 /// referenced from each rendered page.
-static STYLE: &'static str = include_str!("../style.css");
+static STYLE: &'static str = include_str!("../assets/style.css");
+
+/// The raw js used for our search
+///
+/// This asset is baked into the `docket` exectuable and written to the assets
+/// directory just as `style.css` is.
+static SEARCH_JS: &'static str = include_str!("../assets/search.js");
 
 impl Docket {
     /// Create a Docket Instance
@@ -83,7 +90,10 @@ impl Docket {
         let mut index = None;
         let mut footer = None;
         let mut pages = Vec::new();
-        let mut assets = vec![Asset::internal("style.css", &STYLE)];
+        let mut assets = vec![
+            Asset::internal("style.css", &STYLE),
+            Asset::internal("search.js", &SEARCH_JS),
+        ];
 
         for entry in doc_path.read_dir()? {
             let entry = entry?;
@@ -137,6 +147,8 @@ impl Docket {
             let page = Page::new(&p);
             renderer.render(&page, &output)
         })?;
+
+        search::write_search_indices(&output, rendered_pages.iter())?;
 
         let index = Index::new(self.title, self.index, rendered_pages);
 
