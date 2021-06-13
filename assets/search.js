@@ -62,11 +62,6 @@
                 displayResults(found.map(f => f.page));
             }
 
-            searchForm.addEventListener('submit', function (event) {
-                event.preventDefault();
-                doSearch(searchBox.value);
-            });
-
             let timer = null;
             searchBox.addEventListener('keyup', function (event) {
                 if (timer == null) {
@@ -75,6 +70,15 @@
                         doSearch(searchBox.value);
                     }, 500);
                 }
-            })
+            });
+
+            searchForm.addEventListener('submit', function (event) {
+                event.preventDefault();
+                if (timer !== null) {
+                    clearTimeout(timer);
+                    timer = null;
+                }
+                doSearch(searchBox.value);
+            });
         });
 })(window, document)
