@@ -90,7 +90,6 @@ where
     for element in toc {
         match element {
             TocElement::Heading(header, children) => {
-                dbg!(header);
                 search::add_terms_to_index(&header.contents, index);
                 build_toc_search_index(children.iter(), index);
             }
@@ -169,7 +168,6 @@ impl<'a> Page<'a> {
         let mut index = HashMap::new();
         search::add_terms_to_index(&self.title, &mut index);
         build_toc_search_index(self.toc.iter(), &mut index);
-        dbg!(&index);
         index
     }
 }
