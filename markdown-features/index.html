@@ -1,0 +1,80 @@
+<html>
+                <head>
+                    <title>Markdown Features</title>
+                    <meta name="viewport" content="width=700">
+                    <meta charset="UTF-8"> 
+                    <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
+                    <link rel="stylesheet" href="../style.css">
+                    <script src="../search.js"></script>
+              </head>
+            <body><header class="page-heading"><h1><a href="#">Markdown Features</h1><a class="home-link" href="../">docket</a></header><p>Markdown rendering is based on the <a href="http://commonmark.org">CommonMark</a> spec and rendered by <a href="https://crates.io/crates/pulldown-cmark"><code>Pulldown</code></a>. There are, however, a few extensions.</p>
+<h2 id="Tree-of-Contents"><a href="#Tree-of-Contents">Tree of Contents</a></h2><p>When placed on its own in a paragraph <code>[TOC]</code> is replaced with a rendered tree based on the headings within the current page.</p>
+<h2 id="Highlighting"><a href="#Highlighting">Highlighting</a></h2><p>Code blocks are highlighted with <a href="https://crates.io/crates/syntect">Syntect</a> or
+<a href="https://highlightjs.org"><code>highlight.js</code></a>. Syntect is the default. Syntect can
+be disabled at compile / install time by not including the <code>syntect-hl</code> feature,
+or at documentation build time by setting the <code>DOCKET_FORCE_JS_HL</code> environment
+variable. </p>
+<p>By default the type of each block is inferred automatically. Fenced code blocks
+can be used to add a hint about the type of code:</p>
+<pre style="background-color:#ffffff;">
+<span style="color:#323232;">```py
+</span><span style="color:#323232;">def foo():
+</span><span style="color:#323232;">    pass
+</span><span style="color:#323232;">```
+</span></pre>
+<p>Which renders as:</p>
+<pre style="background-color:#ffffff;">
+<span style="font-weight:bold;color:#a71d5d;">def </span><span style="font-weight:bold;color:#323232;">foo</span><span style="color:#323232;">():
+</span><span style="color:#323232;">    </span><span style="font-weight:bold;color:#a71d5d;">pass
+</span></pre>
+<p>In addition the first line of the code block can specify a type hint if it begins with <code>:::</code>:</p>
+<pre style="background-color:#ffffff;">
+<span style="color:#323232;">    :::c
+</span><span style="color:#323232;">    #include &lt;stdio.h&gt;
+</span><span style="color:#323232;">        
+</span><span style="color:#323232;">    void main() {
+</span><span style="color:#323232;">        printf(&quot;hello world!&quot;);
+</span><span style="color:#323232;">    }
+</span></pre>
+<p>Which renders as:</p>
+<pre style="background-color:#ffffff;">
+<span style="font-weight:bold;color:#a71d5d;">#include </span><span style="color:#183691;">&lt;stdio.h&gt;
+</span><span style="color:#323232;">    
+</span><span style="font-weight:bold;color:#a71d5d;">void </span><span style="font-weight:bold;color:#795da3;">main</span><span style="color:#323232;">() {
+</span><span style="color:#323232;">    </span><span style="color:#62a35c;">printf</span><span style="color:#323232;">(</span><span style="color:#183691;">&quot;hello world!&quot;</span><span style="color:#323232;">);
+</span><span style="color:#323232;">}
+</span></pre>
+<h2 id="Tables"><a href="#Tables">Tables</a></h2><p>Tables are supported. Markdown tables are defined with <code>|</code> and <code>---</code> using the
+GFM tables extension.</p>
+<pre style="background-color:#ffffff;">
+<span style="color:#323232;">Hello | Wolrd
+</span><span style="color:#323232;">------| -----
+</span><span style="color:#323232;">TESt | thing
+</span><span style="color:#323232;">123 | </span><span style="color:#a71d5d;">`</span><span style="color:#323232;">123</span><span style="color:#a71d5d;">`
+</span><span style="color:#323232;">more | </span><span style="font-style:italic;color:#a71d5d;">*</span><span style="font-style:italic;color:#323232;">stuff</span><span style="font-style:italic;color:#a71d5d;">*
+</span><span style="color:#323232;">test | sfasf
+</span></pre>
+<p>Which renders as:</p>
+<table><thead><tr><th>Hello </th><th>Wolrd</th></tr></thead><tbody>
+<tr><td>TESt </td><td>thing</td></tr>
+<tr><td>123 </td><td><code>123</code></td></tr>
+<tr><td>more </td><td><em>stuff</em></td></tr>
+<tr><td>test </td><td>sfasf</td></tr>
+</tbody></table>
+<h2 id="Task-Lists"><a href="#Task-Lists">Task Lists</a></h2><p>Task lists are supported with the syntax from GFM.</p>
+<pre style="background-color:#ffffff;">
+<span style="color:#323232;"> * [ ] Milk
+</span><span style="color:#323232;"> * [x] Eggs
+</span><span style="color:#323232;"> * [x] Flour
+</span></pre>
+<p>Which renders as:</p>
+<ul>
+<li><input disabled="" type="checkbox"/>
+Milk</li>
+<li><input disabled="" type="checkbox" checked=""/>
+Eggs</li>
+<li><input disabled="" type="checkbox" checked=""/>
+Flour</li>
+</ul>
+<footer><p><a href="https://github.com/iwillspeak/docket">iwillspeak/docket</a> is open source software.</p>
+</footer></body></html>
