@@ -27,5 +27,5 @@ To begin creating your documentation create a new `docs/` folder at the root of 
 
 To render the HTML output change to the `docs/` folder and run `docket`. This should create a new `docs/build/` folder containing the rendered site; ready to be published to a web-server or served with GitHub Pages. For more information about setup and configuration [check out the docs](https://iwillspeak.github.io/docket/).
 
- [build_badge_image]: https://dev.azure.com/iwillspeak/GitHub/_apis/build/status/iwillspeak.docket?branchName=master
- [build_info]: https://dev.azure.com/iwillspeak/GitHub/_build/latest?definitionId=1&branchName=master
+ [build_badge_image]: https://dev.azure.com/iwillspeak/GitHub/_apis/build/status/iwillspeak.docket?branchName=main
+ [build_info]: https://dev.azure.com/iwillspeak/GitHub/_build/latest?definitionId=1&branchName=main
