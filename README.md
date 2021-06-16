@@ -9,6 +9,7 @@ Simple markdown to HTML documentation rendering. Docket aims to be a Rust clone 
 * Binary which can be installed with `cargo install`
 * Command line argument parsing with [Docopt](https://docs.rs/docopt/0.8.1/docopt/)
 * Markdown rendering with `pulldown-cmark`.
+* Javascript powered search.
 * Zero-configuration.
 
 ## Installation

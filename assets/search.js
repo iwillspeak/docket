@@ -13,15 +13,20 @@ fetch("./search_index.json")
         }
 
         
-        searchForm.innerHTML = '<h2>Search</h2><form target="none"><input id="query" autofocus="" placeholder="enter your search" type="search"><button action="submit">Search</button></form><div id="docket-search-results"></div>';
+        searchForm.innerHTML = `<h2>Search</h2>
+        <form target="none">
+            <input id="query" autofocus="" placeholder="enter your search" type="search">
+            <button action="submit">Search</button>
+        </form>
+        <div id="docket-search-results"></div>`;
         const searchBox = searchForm.querySelector('#query');
         const searchResults = searchForm.querySelector('#docket-search-results');
 
-        let searchEntryForResult = function (result) {
+        const searchEntryForResult = result => {
             return `<li><a class="search-result" href="${result.slug}/" >${result.title}</a></li>`;
         }
 
-        let displayResults = function (results) {
+        const displayResults = results => {
             if (results.length == 0) {
                 searchResults.innerHTML = "<h3>No results</h3>";
             } else {
@@ -33,7 +38,7 @@ fetch("./search_index.json")
             }
         }
 
-        let doSearch = function (query) {
+        const doSearch =  query => {
 
             // If the search is empty clean up.
             if (query.trim().length == 0) {
@@ -41,7 +46,7 @@ fetch("./search_index.json")
                 return;
             }
 
-            let terms = query.split(/[^\w]/)
+            let terms = query.split(/\W+/)
                 .map(term => term.trim().toLowerCase())
                 .filter(term => term.length > 0);
             let found = []
@@ -69,16 +74,17 @@ fetch("./search_index.json")
         }
 
         let timer = null;
-        searchBox.addEventListener('keyup', function (event) {
-            if (timer == null) {
-                timer = setTimeout(function () {
-                    timer = null;
-                    doSearch(searchBox.value);
-                }, 500);
+        searchBox.addEventListener('keyup', event => {
+            if (timer !== null) {
+                clearTimeout(timer);
             }
+            timer = setTimeout(() => {
+                timer = null;
+                doSearch(searchBox.value);
+            }, 500);
         });
 
-        searchForm.addEventListener('submit', function (event) {
+        searchForm.addEventListener('submit', event => {
             event.preventDefault();
             if (timer !== null) {
                 clearTimeout(timer);
