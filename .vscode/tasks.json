@@ -3,7 +3,7 @@
 	"tasks": [
 		{
 			"type": "cargo",
-			"subcommand": "build",
+			"command": "build",
 			"problemMatcher": [
 				"$rustc"
 			],
@@ -15,7 +15,7 @@
 		},
 		{
 			"type": "cargo",
-			"subcommand": "test",
+			"command": "test",
 			"problemMatcher": [
 				"$rustc"
 			],
