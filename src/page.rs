@@ -1,10 +1,10 @@
 use crate::renderable::Renderable;
+use crate::search::{TermFrequenciesBuilder, TermFrequenciesIndex};
 use crate::toc::*;
-use crate::{search, util};
+use crate::util;
 use log::debug;
 use pulldown_cmark::*;
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::io;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
@@ -28,7 +28,7 @@ pub struct PageInfo {
     pub path: PathBuf,
 
     /// search terms for this document.
-    pub search_index: Option<HashMap<String, i32>>,
+    pub search_index: Option<TermFrequenciesIndex>,
 }
 
 fn render_tree<'a, W: Write, I: Iterator<Item = &'a TocElement>>(
@@ -83,18 +83,18 @@ where
     rendered
 }
 
-fn build_toc_search_index<'a, I>(toc: I, index: &mut HashMap<String, i32>)
+fn build_toc_search_index<'a, I>(toc: I, index: &mut TermFrequenciesBuilder)
 where
     I: Iterator<Item = &'a TocElement>,
 {
     for element in toc {
         match element {
             TocElement::Heading(header, children) => {
-                search::add_terms_to_index(&header.contents, index);
+                index.add_terms(&header.contents);
                 build_toc_search_index(children.iter(), index);
             }
             TocElement::Html(raw) => {
-                search::add_terms_to_index(raw, index);
+                index.add_terms(raw);
             }
             TocElement::TocReference => (),
         }
@@ -128,7 +128,7 @@ impl<'a> Renderable for Page<'a> {
         "..".into()
     }
 
-    fn get_search_index(&self) -> Option<HashMap<String, i32>> {
+    fn get_search_index(&self) -> Option<TermFrequenciesIndex> {
         Some(self.build_search_index())
     }
 }
@@ -164,11 +164,11 @@ impl<'a> Page<'a> {
         Page { path, title, toc }
     }
 
-    pub fn build_search_index(&'a self) -> HashMap<String, i32> {
-        let mut index = HashMap::new();
-        search::add_terms_to_index(&self.title, &mut index);
+    pub fn build_search_index(&'a self) -> TermFrequenciesIndex {
+        let mut index = TermFrequenciesBuilder::default();
+        index.add_terms(&self.title);
         build_toc_search_index(self.toc.iter(), &mut index);
-        index
+        index.finalise()
     }
 }
 
@@ -183,9 +183,9 @@ mod test {
         let path = PathBuf::from("foo/bar.md");
         let page = Page::from_parts(&path, "Some sample text");
 
-        let index = page.build_search_index();
+        let index = page.build_search_index().into_raw();
         assert_ne!(0, index.len());
-        assert_eq!(1, index.get("some").cloned().unwrap_or_default());
+        assert_eq!(0.33, index.get("some").cloned().unwrap_or_default());
     }
 
     #[test]
@@ -231,11 +231,11 @@ mod test {
         "###,
         );
 
-        let index = page.build_search_index();
+        let index = page.build_search_index().into_raw();
         assert_ne!(0, index.len());
-        assert_eq!(1, index.get("rabbit").cloned().unwrap_or_default());
-        assert_eq!(3, index.get("well").cloned().unwrap_or_default());
-        assert_eq!(1, index.get("distance").cloned().unwrap_or_default());
-        assert_eq!(10, index.get("down").cloned().unwrap_or_default());
+        assert_eq!(1., index.get("rabbit").cloned().unwrap_or_default());
+        assert_eq!(3., index.get("well").cloned().unwrap_or_default());
+        assert_eq!(1., index.get("distance").cloned().unwrap_or_default());
+        assert_eq!(10., index.get("down").cloned().unwrap_or_default());
     }
 }

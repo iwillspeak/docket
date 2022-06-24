@@ -1,10 +1,10 @@
 use crate::page::PageInfo;
 use crate::renderable::Renderable;
+use crate::search::TermFrequenciesIndex;
 use crate::util::read_file_to_string;
 use log::debug;
 use pulldown_cmark::{html, Parser};
 use std::borrow::Cow;
-use std::collections::HashMap;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
@@ -69,7 +69,7 @@ impl Renderable for Index {
         ".".into()
     }
 
-    fn get_search_index(&self) -> Option<HashMap<String, i32>> {
+    fn get_search_index(&self) -> Option<TermFrequenciesIndex> {
         None
     }
 }
