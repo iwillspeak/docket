@@ -22,7 +22,7 @@ mod syntect_hl {
     use std::io::Write;
 
     use log::debug;
-    use pulldown_cmark::Event;
+    use pulldown_cmark::{CowStr, Event, Tag};
     use syntect::{
         self, highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet,
     };
@@ -55,7 +55,17 @@ mod syntect_hl {
 
             let theme = &self.ts.themes["InspiredGitHub"];
             let highlighted = highlighted_html_for_string(&block, &self.ss, &syntax, theme);
-            vec![Event::Html(highlighted.into())]
+            match highlighted {
+                Ok(html) => vec![Event::Html(html.into())],
+                Err(_) => {
+                    let name: CowStr = String::from(name).into();
+                    vec![
+                        Event::Start(Tag::CodeBlock(name.clone())),
+                        Event::Text(String::from(block).into()),
+                        Event::End(Tag::CodeBlock(name)),
+                    ]
+                }
+            }
         }
         fn write_header(&self, _out: &mut dyn Write) -> std::io::Result<()> {
             Ok(())
