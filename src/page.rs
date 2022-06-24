@@ -181,11 +181,15 @@ mod test {
     #[test]
     fn page_has_search_terms() {
         let path = PathBuf::from("foo/bar.md");
-        let page = Page::from_parts(&path, "Some sample text");
+        let page = Page::from_parts(&path, "Some sample text in some text");
 
         let index = page.build_search_index().into_raw();
         assert_ne!(0, index.len());
-        assert_eq!(0.33, index.get("some").cloned().unwrap_or_default());
+        let some_fq = index.get("some").cloned().unwrap_or_default();
+        let sample_fq = index.get("sample").cloned().unwrap_or_default();
+        let text_fq = index.get("text").cloned().unwrap_or_default();
+        assert_eq!(some_fq, text_fq);
+        assert!(some_fq > sample_fq);
     }
 
     #[test]
@@ -233,9 +237,14 @@ mod test {
 
         let index = page.build_search_index().into_raw();
         assert_ne!(0, index.len());
-        assert_eq!(1., index.get("rabbit").cloned().unwrap_or_default());
-        assert_eq!(3., index.get("well").cloned().unwrap_or_default());
-        assert_eq!(1., index.get("distance").cloned().unwrap_or_default());
-        assert_eq!(10., index.get("down").cloned().unwrap_or_default());
+        let rabbit_fq = index.get("rabbit").cloned().unwrap_or_default();
+        assert!(rabbit_fq > 0.0);
+        let well_fq = index.get("well").cloned().unwrap_or_default();
+        assert!(well_fq > rabbit_fq);
+        assert_eq!(
+            index.get("distance").cloned().unwrap_or_default(),
+            rabbit_fq
+        );
+        assert!(index.get("down").cloned().unwrap_or_default() > well_fq);
     }
 }
