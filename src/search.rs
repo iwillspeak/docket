@@ -127,6 +127,6 @@ pub mod test {
         assert_eq!(3, index.iter_terms().count());
         let mut terms: Vec<_> = index.iter_terms().cloned().collect();
         terms.sort();
-        assert_eq!(vec!["a", "test", "string"], terms);
+        assert_eq!(vec!["a", "string", "test"], terms);
     }
 }
