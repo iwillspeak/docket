@@ -10,8 +10,7 @@
 			"group": {
 				"kind": "build",
 				"isDefault": true
-			},
-			"label": "Rust: cargo build - docket"
+			}
 		},
 		{
 			"type": "cargo",
@@ -22,8 +21,14 @@
 			"group": {
 				"kind": "test",
 				"isDefault": true
-			},
-			"label": "Rust: cargo test - docket",
+			}
+		},
+		{
+			"type": "cargo",
+			"command": "fmt",
+			"problemMatcher": [
+				"$rustc"
+			],
 		}
 	]
 }

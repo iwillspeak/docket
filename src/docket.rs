@@ -6,18 +6,29 @@ use crate::page::Page;
 use crate::renderer::Renderer;
 use crate::search;
 use crate::util::read_file_to_string;
-use failure::Error;
-use failure::Fail;
+use crate::Result;
 use log::trace;
 use pulldown_cmark::{html, Parser};
 use std::path::{Component, Path, PathBuf};
 
-#[derive(Debug, Fail)]
+#[derive(Debug)]
 enum DocketError {
     /// Path used to create the docket instance was bad
-    #[fail(display = "Not a directory {:?}", path)]
     PathNotDirectory { path: PathBuf },
 }
+
+impl std::fmt::Display for DocketError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            DocketError::PathNotDirectory { path } => {
+                write!(f, "Not a directory {:?}", path)?;
+                Ok(())
+            }
+        }
+    }
+}
+
+impl std::error::Error for DocketError {}
 
 /// Docket
 ///
@@ -62,7 +73,7 @@ impl Docket {
     /// The path to search for documentation. Markdown files in this
     /// directory will be used for documentation.
     #[allow(clippy::new_ret_no_self)]
-    pub fn new(doc_path: &Path) -> Result<Self, Error> {
+    pub fn new(doc_path: &Path) -> Result<Self> {
         trace!("Searching for docs in {:?}", doc_path);
         if !doc_path.is_dir() {
             return Err(DocketError::PathNotDirectory {
@@ -137,7 +148,7 @@ impl Docket {
     /// Render to Html
     ///
     /// Creates a tree of HTML files in the given `output` directory.
-    pub fn render(self, output: &Path) -> Result<(), Error> {
+    pub fn render(self, output: &Path) -> Result<()> {
         trace!("Rendering docs to {:?} ({:?})", output, self);
         let footer = self.rendered_footer();
 
@@ -175,10 +186,10 @@ impl Docket {
 
 /// Map a collection, using Rayon.
 #[cfg(feature = "par_render")]
-fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>, Error>
+fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>>
 where
     T: Sync,
-    F: Fn(&T) -> Result<U, Error> + Send + Sync,
+    F: Fn(&T) -> Result<U> + Send + Sync,
     U: Send,
 {
     use rayon::prelude::*;
@@ -186,9 +197,9 @@ where
 }
 
 #[cfg(not(feature = "par_render"))]
-fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>, Error>
+fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>>
 where
-    F: Fn(T) -> Result<U, Error>,
+    F: Fn(T) -> Result<U>,
 {
     input.into_iter().map(f).collect()
 }

@@ -5,7 +5,7 @@
 //! 'bulitin' assets, such as the CSS which is bundled with Docket
 //! itself and on-disk assets from the source directory.
 
-use failure::Error;
+use crate::Result;
 use std::fs::{self, File};
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
@@ -62,7 +62,7 @@ impl Asset {
     ///
     /// This method is called to copy a given asset to the output
     /// directory.
-    pub fn copy_to(&self, output: &Path) -> Result<(), Error> {
+    pub fn copy_to(&self, output: &Path) -> Result<()> {
         match self {
             Asset::Internal(int) => {
                 let path = output.join(int.name);

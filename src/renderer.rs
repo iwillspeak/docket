@@ -1,10 +1,9 @@
 use crate::renderable::Renderable;
+use crate::Result;
 use crate::{highlight, page::PageInfo};
 use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
 use std::path::Path;
-
-use failure::Error;
 
 /// Render Context
 ///
@@ -32,7 +31,7 @@ impl Renderer {
     ///
     /// Takes the path to the output directory where the page should
     /// be rendered.
-    pub fn render<T: Renderable>(&self, renderable: &T, path: &Path) -> Result<PageInfo, Error> {
+    pub fn render<T: Renderable>(&self, renderable: &T, path: &Path) -> Result<PageInfo> {
         let slug = renderable.get_slug();
         let title = renderable.get_title();
 

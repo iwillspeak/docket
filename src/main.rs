@@ -17,9 +17,11 @@ extern crate lazy_static;
 use crate::docket::Docket;
 use docopt::*;
 use env_logger;
-use failure::Error;
 use serde::Deserialize;
 use std::path::{Path, PathBuf};
+
+pub type DynError = Box<dyn std::error::Error + Send + Sync>;
+pub type Result<T> = std::result::Result<T, DynError>;
 
 /// Usage Information
 ///
@@ -125,7 +127,7 @@ fn run(source: &Path, target: &Path, on_err: OnError) {
 }
 
 /// Do the Build
-fn build(source: &Path, target: &Path) -> Result<(), Error> {
+fn build(source: &Path, target: &Path) -> Result<()> {
     Docket::new(source)?.render(target)
 }
 

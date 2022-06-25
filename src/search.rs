@@ -1,5 +1,6 @@
 use crate::page::PageInfo;
-use failure::Error;
+
+use crate::Result;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::File;
@@ -83,7 +84,7 @@ struct SearchIndexEntry<'a> {
 }
 
 /// Write the built search indices to the output directory
-pub(crate) fn write_search_indices<'a, I>(output_dir: &Path, pages: I) -> Result<(), Error>
+pub(crate) fn write_search_indices<'a, I>(output_dir: &Path, pages: I) -> Result<()>
 where
     I: Iterator<Item = &'a PageInfo>,
 {
