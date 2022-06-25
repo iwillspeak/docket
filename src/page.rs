@@ -199,42 +199,45 @@ mod test {
             &path,
             r###"
 
-        # Down the Rabbit Hole
-        
-        Either the well was very deep, or she fell very slowly, for she had
-        plenty of time as she went down to look about her, and to wonder what
-        was going to happen next. First, she tried to look down and make out
-        what she was coming to, but it was too dark to see anything; then she
-        looked at the sides of the well and noticed that they were filled with
-        cupboards and book-shelves: here and there she saw maps and pictures
-        hung upon pegs. She took down a jar from one of the shelves as she
-        passed; it was labelled "ORANGE MARMALADE," but to her disappointment it
-        was empty; she did not like to drop the jar for fear of killing
-        somebody underneath, so managed to put it into one of the cupboards as
-        she fell past it.
-        
-        "Well!" thought Alice to herself. "After such a fall as this, I shall
-        think nothing of tumbling down stairs! How brave they'll all think me at
-        home! Why, I wouldn't say anything about it, even if I fell off the top
-        of the house!" (Which was very likely true.)
+# Down the Rabbit Hole
 
-        ### Going Down?
-        
-        Down, down, down. Would the fall _never_ come to an end? "I wonder how
-        many miles I've fallen by this time?" she said aloud. "I must be getting
-        somewhere near the centre of the earth. Let me see: that would be four
-        thousand miles down. I think--" (for, you see, Alice had learnt several
-        things of this sort in her lessons in the schoolroom, and though this
-        was not a _very_ good opportunity for showing off her knowledge, as
-        there was no one to listen to her, still it was good practice to say it
-        over) "--yes, that's about the right distance--but then I wonder what
-        Latitude or Longitude I've got to?" (Alice had no idea what Latitude
-        was, or Longitude either, but thought they were nice grand words to
-        say.)
+Either the well was very deep, or she fell very slowly, for she had
+plenty of time as she went down to look about her, and to wonder what
+was going to happen next. First, she tried to look down and make out
+what she was coming to, but it was too dark to see anything; then she
+looked at the sides of the well and noticed that they were filled with
+cupboards and book-shelves: here and there she saw maps and pictures
+hung upon pegs. She took down a jar from one of the shelves as she
+passed; it was labelled "ORANGE MARMALADE," but to her disappointment it
+was empty; she did not like to drop the jar for fear of killing
+somebody underneath, so managed to put it into one of the cupboards as
+she fell past it.
+
+"Well!" thought Alice to herself. "After such a fall as this, I shall
+think nothing of tumbling down stairs! How brave they'll all think me at
+home! Why, I wouldn't say anything about it, even if I fell off the top
+of the house!" (Which was very likely true.)
+
+### Going Down?
+
+Down, down, down. Would the fall _never_ come to an end? "I wonder how
+many miles I've fallen by this time?" she said aloud. "I must be getting
+somewhere near the centre of the earth. Let me see: that would be four
+thousand miles down. I think--" (for, you see, Alice had learnt several
+things of this sort in her lessons in the schoolroom, and though this
+was not a _very_ good opportunity for showing off her knowledge, as
+there was no one to listen to her, still it was good practice to say it
+over) "--yes, that's about the right distance--but then I wonder what
+Latitude or Longitude I've got to?" (Alice had no idea what Latitude
+was, or Longitude either, but thought they were nice grand words to
+say.)
 
         "###,
         );
 
+        assert_eq!("Down the Rabbit Hole", page.title);
+
+        // Check some of the relative frequencies of terms
         let index = page.build_search_index().into_raw();
         assert_ne!(0, index.len());
         let rabbit_fq = index.get("rabbit").cloned().unwrap_or_default();
@@ -246,5 +249,17 @@ mod test {
             rabbit_fq
         );
         assert!(index.get("down").cloned().unwrap_or_default() > well_fq);
+
+        // Check terms are downcased
+        assert_ne!(None, index.get("orange"));
+        assert_eq!(None, index.get("MARMALADE"));
+
+        // check we don't have any whitespace or other junk symbols in the index
+        assert_eq!(None, index.get(""));
+        assert_eq!(None, index.get("!"));
+        assert_eq!(None, index.get("-"));
+        assert_eq!(None, index.get(" "));
+        assert_eq!(None, index.get("\t"));
+        assert_eq!(None, index.get("("));
     }
 }

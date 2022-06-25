@@ -20,9 +20,12 @@ impl TermFrequenciesBuilder {
     pub fn add_terms(&mut self, text: &str) -> &mut Self {
         for term in text.split(|c| {
             c == '>' || c == '<' || char::is_whitespace(c) || char::is_ascii_punctuation(&c)
-        }) {
-            self.term_count += 1;
-            *self.terms.entry(term.to_lowercase()).or_default() += 1;
+        }, ) {
+            let term = term.trim();
+            if !term.is_empty() {
+                self.term_count += 1;
+                *self.terms.entry(term.to_lowercase()).or_default() += 1;
+            }
         }
         self
     }
@@ -127,7 +130,9 @@ pub mod test {
 
         assert_eq!(3, index.iter_terms().count());
         let mut terms: Vec<_> = index.iter_terms().cloned().collect();
+        let index = index.into_raw();
         terms.sort();
         assert_eq!(vec!["a", "string", "test"], terms);
+        assert!(index.get("a").unwrap() > index.get("test").unwrap());
     }
 }
