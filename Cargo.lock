@@ -129,7 +129,7 @@ dependencies = [
 
 [[package]]
 name = "docket"
-version = "0.5.1"
+version = "0.6.0"
 dependencies = [
  "docopt",
  "env_logger",
