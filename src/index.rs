@@ -28,6 +28,22 @@ impl Renderable for Index {
         (&self.title[..]).into()
     }
 
+    fn write_nav<T: Write>(&self, file: &mut T) -> io::Result<()> {
+        // List of pages in the index
+        debug!("listing pages in index");
+        write!(file, "<h2>Pages</h2>")?;
+        write!(file, r#"<ol class="index-toc">"#)?;
+        for page in self.pages.iter() {
+            write!(
+                file,
+                r#"<li><a href="{}/">{}</a></li>"#,
+                page.slug, page.title
+            )?;
+        }
+        write!(file, "</ol>")?;
+        Ok(())
+    }
+
     fn write_header<T: Write>(&self, file: &mut T, title: &str) -> io::Result<()> {
         write!(
             file,
@@ -49,18 +65,8 @@ impl Renderable for Index {
         // Placehoder for the JS search
         write!(file, r#"<div id="docket-search"></div>"#)?;
 
-        // List of pages in the index
-        debug!("listing pages in index");
-        write!(file, "<h2>Table of Contents</h2>")?;
-        write!(file, r#"<ol class="index-toc">"#)?;
-        for page in self.pages.iter() {
-            write!(
-                file,
-                r#"<li><a href="{}/">{}</a></li>"#,
-                page.slug, page.title
-            )?;
-        }
-        write!(file, "</ol>")?;
+        // TODO: Is it enough to just the nav again here?
+        self.write_nav(file)?;
 
         Ok(())
     }
