@@ -32,7 +32,7 @@
 	/* THEME 5 - HL */
 	--col-accent: #e45597;
 	--col-dark: #020202;
-	--col-dark-dimmed: #121312;
+	--col-dark-dimmed: #262826;
 	--col-light-dimmed: #e9e9e9;
 	--col-light: #fbfbfb;
 
@@ -214,20 +214,12 @@ td {
 	text-align: left;
 }
 
-code {
-	border: 1px solid var(--col-accent);
-}
-
 code,
 pre {
 	font-family: Monospace;
 	background-color: var(--col-bg-dimmed);
 	border-radius: 2px;
 	padding: 1px 7px;
-}
-
-pre>code {
-	border: none;
 }
 
 pre {
@@ -254,6 +246,7 @@ footer {
 	text-align: center;
 	margin: 15px auto;
 	border: 1px solid var(--col-fg);
+	border-radius: 4px;
 	display: flex;
 	flex-direction: row;
 }
