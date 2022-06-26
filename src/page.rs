@@ -110,6 +110,16 @@ impl<'a> Renderable for Page<'a> {
         Cow::Borrowed(&self.title)
     }
 
+    fn write_nav<T: Write>(&self, file: &mut T) -> io::Result<()> {
+        // Placehoder for the JS search
+        write!(file, r#"<div id="docket-search"></div>"#)?;
+
+        // List of sections in the page
+        write!(file, "<h2>TOC</h2>")?;
+        write!(file, "{}", toc_to_html(self.toc.iter(), 2))?;
+        Ok(())
+    }
+
     fn write_header<T: Write>(&self, file: &mut T, title: &str) -> io::Result<()> {
         write!(
             file,

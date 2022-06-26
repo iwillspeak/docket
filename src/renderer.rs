@@ -48,15 +48,19 @@ impl Renderer {
         // HTML header, containing hardcoded CSS
         write!(
             file,
-            r#"<html>
+            r##"<!DOCTYPE html>
+                <html>
                 <head>
                     <title>{}</title>
-                    <meta name="viewport" content="width=700">
-                    <meta charset="UTF-8"> 
-                    <link href="https://fonts.googleapis.com/css?family=Merriweather|Open+Sans" rel="stylesheet">
+                    <meta name="viewport" content="width=device-wdith,initial-scale=1">
+                    <meta charset="UTF-8">
+                    <link rel="preconnect" href="https://fonts.googleapis.com">
+                    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+                    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet"> 
                     <link rel="stylesheet" href="{}">
-                    <script src="{}"></script>"#,
-            title, style_path, script_path
+                    <script src="{}"></script>
+                    <script>initialiseSearch("{}", "#docket-search");</script>"##,
+            title, style_path, script_path, renderable.path_to_root()
         )?;
         highlight::get_hilighter().write_header(&mut file)?;
         write!(
@@ -66,11 +70,24 @@ impl Renderer {
             <body>"#
         )?;
 
+        write!(file, r#"<nav class="side-nav">"#)?;
+        renderable.write_nav(&mut file)?;
+        write!(file, "</nav>")?;
+
+        // Main content wrapped in a section
+        write!(file, r#"
+        <main>
+          <section class="content">"#)?;
+        
         renderable.write_header(&mut file, &self.title)?;
         renderable.write_body(&mut file)?;
 
-        // footer finishes body.
-        write!(file, "<footer>{}</footer></body></html>", self.footer)?;
+        // footer finishes content section.
+        write!(file, "<footer>{}</footer>", self.footer)?;
+        write!(file, r#"</section></main>"#)?;
+
+        // Finish tthe
+        write!(file, "</body></html>")?;
 
         Ok(PageInfo {
             title: title.into(),

@@ -17,6 +17,9 @@ pub trait Renderable {
     /// the <head>
     fn get_title(&self) -> Cow<'_, str>;
 
+    /// Write the navbar content, if any
+    fn write_nav<T: Write>(&self, f: &mut T) -> io::Result<()>;
+
     /// Write the heading to the output file.
     fn write_header<T: Write>(&self, f: &mut T, title: &str) -> io::Result<()>;
 
