@@ -43,8 +43,8 @@ Options:
 
 /// Program Arguments
 ///
-/// Structure to capture the command line arguments for the
-/// program. This is filled in for us by Docopt.
+/// Structure to capture the command line arguments for the program. This is
+/// filled in for us by Docopt.
 #[derive(Debug, Deserialize)]
 struct Args {
     flag_watch: bool,
@@ -64,8 +64,8 @@ enum OnError {
 
 /// Path or Default
 ///
-/// Try to convert a command line argument to a path. Falling back to
-/// the default if none is provided.
+/// Try to convert a command line argument to a path. Falling back to the
+/// default if none is provided.
 fn path_or_default(maybe_path: Option<String>, default: &str) -> PathBuf {
     maybe_path
         .map(PathBuf::from)
