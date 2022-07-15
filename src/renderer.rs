@@ -60,7 +60,10 @@ impl Renderer {
                     <link rel="stylesheet" href="{}">
                     <script src="{}"></script>
                     <script>initialiseSearch("{}", "#docket-search");</script>"##,
-            title, style_path, script_path, renderable.path_to_root()
+            title,
+            style_path,
+            script_path,
+            renderable.path_to_root()
         )?;
         highlight::get_hilighter().write_header(&mut file)?;
         write!(
@@ -75,10 +78,13 @@ impl Renderer {
         write!(file, "</nav>")?;
 
         // Main content wrapped in a section
-        write!(file, r#"
+        write!(
+            file,
+            r#"
         <main>
-          <section class="content">"#)?;
-        
+          <section class="content">"#
+        )?;
+
         renderable.write_header(&mut file, &self.title)?;
         renderable.write_body(&mut file)?;
 

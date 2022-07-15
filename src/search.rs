@@ -20,7 +20,7 @@ impl TermFrequenciesBuilder {
     pub fn add_terms(&mut self, text: &str) -> &mut Self {
         for term in text.split(|c| {
             c == '>' || c == '<' || char::is_whitespace(c) || char::is_ascii_punctuation(&c)
-        }, ) {
+        }) {
             let term = term.trim();
             if !term.is_empty() {
                 self.term_count += 1;
