@@ -1,4 +1,4 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Convert a string of arbitrary charactes to a form suitable for use
 /// as an HTML identifier or file name.
@@ -56,6 +56,16 @@ pub(crate) fn normalised_stem<P: AsRef<Path>>(path: P) -> Option<String> {
     } else {
         None
     }
+}
+
+/// Path or Default
+///
+/// Try to convert a command line argument to a path. Falling back to the
+/// default if none is provided.
+pub(crate) fn path_or_default(maybe_path: Option<String>, default: &str) -> PathBuf {
+    maybe_path
+        .map(PathBuf::from)
+        .unwrap_or_else(|| default.to_owned().into())
 }
 
 #[cfg(test)]
