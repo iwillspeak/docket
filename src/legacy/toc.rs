@@ -1,5 +1,5 @@
 use super::highlight;
-use super::util;
+use crate::utils;
 use highlight::Highlighter;
 use pulldown_cmark::*;
 use std::iter::Peekable;
@@ -176,7 +176,7 @@ impl Heading {
                 slug.push_str(&t)
             }
         }));
-        let slug = util::slugify(&slug);
+        let slug = utils::slugify(&slug);
         Heading {
             level,
             contents,
@@ -191,7 +191,7 @@ mod test {
     use super::*;
 
     fn h(level: i32, contents: &str) -> Heading {
-        let slug = util::slugify(contents);
+        let slug = utils::slugify(contents);
         Heading {
             level,
             contents: contents.into(),

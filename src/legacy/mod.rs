@@ -7,7 +7,6 @@ mod renderable;
 mod renderer;
 mod search;
 mod toc;
-mod util;
 
 use docket::Docket;
 use docopt::*;

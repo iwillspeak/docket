@@ -1,7 +1,7 @@
 use super::renderable::Renderable;
 use super::search::{TermFrequenciesBuilder, TermFrequenciesIndex};
 use super::toc::*;
-use super::util;
+use crate::utils;
 use log::debug;
 use pulldown_cmark::*;
 use std::borrow::Cow;
@@ -103,7 +103,7 @@ where
 
 impl<'a> Renderable for Page<'a> {
     fn get_slug(&self) -> String {
-        util::slugify_path(self.path)
+        utils::slugify_path(self.path)
     }
 
     fn get_title(&self) -> Cow<'_, str> {
