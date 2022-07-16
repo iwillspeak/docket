@@ -1,209 +1,76 @@
+use std::{
+    fs, io,
+    path::{self, Path},
+};
 
-use crate::asset::Asset;
-use crate::index::Index;
-use crate::page::Page;
-use crate::renderer::Renderer;
-use crate::search;
-use crate::util::read_file_to_string;
-use crate::Result;
-use log::trace;
-use pulldown_cmark::{html, Parser};
-use std::path::{Component, Path, PathBuf};
+use crate::{
+    baler::{self, BaleItem, UnopenedBale},
+    error::Error,
+};
 
-#[derive(Debug)]
-enum DocketError {
-    /// Path used to create the docket instance was bad
-    PathNotDirectory { path: PathBuf },
-}
-
-impl std::fmt::Display for DocketError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            DocketError::PathNotDirectory { path } => {
-                write!(f, "Not a directory {:?}", path)?;
-                Ok(())
-            }
-        }
-    }
-}
-
-impl std::error::Error for DocketError {}
+use crate::error::Result as DocketResult;
 
 /// Docket
 ///
-/// Represents a documentation set. Repsonsible for finding files on
-/// disk which are part of a given set of documentation and rendering
-/// them out to HTML files.
+/// Represents a documentation set. Responsible for opening the bales of
+/// documentation and traversing them to render out to HTML.
 #[derive(Debug)]
 pub struct Docket {
-    /// The documentation title, based on the directory name
     title: String,
-
-    /// The index, if there is one
-    index: Option<PathBuf>,
-
-    /// The page footer, if there is one
-    footer: Option<PathBuf>,
-
-    /// The pages, in order
-    pages: Vec<PathBuf>,
-
-    /// The Assets Files
-    assets: Vec<Asset>,
+    root_bale: UnopenedBale,
 }
-
-/// The raw stylesheet contents
-///
-/// This string is written to the assets file `style.css` and
-/// referenced from each rendered page.
-static STYLE: &'static str = include_str!("../assets/style.css");
-
-/// The raw js used for our search
-///
-/// This asset is baked into the `docket` exectuable and written to the assets
-/// directory just as `style.css` is.
-static SEARCH_JS: &'static str = include_str!("../assets/search.js");
 
 impl Docket {
-    /// Create a Docket Instance
+    /// Open the given `path` as a documentaiton collection
     ///
-    /// ## Arguments
-    ///
-    /// The path to search for documentation. Markdown files in this
-    /// directory will be used for documentation.
-    #[allow(clippy::new_ret_no_self)]
-    pub fn new(doc_path: &Path) -> Result<Self> {
-        trace!("Searching for docs in {:?}", doc_path);
-        if !doc_path.is_dir() {
-            return Err(DocketError::PathNotDirectory {
-                path: doc_path.to_owned(),
-            }
-            .into());
+    /// Once opned a documentaiton collection has a title, and can be rendreed
+    /// to a target path.
+    pub fn open<P: AsRef<Path>>(path: P) -> DocketResult<Self> {
+        if !path.as_ref().is_dir() {
+            Err(Error::SourcePathNotADirectory(path.as_ref().into()))?;
         }
-
-        let title_file = doc_path.join("title");
-        let title = if title_file.is_file() {
-            read_file_to_string(&title_file)
-        } else {
-            Path::canonicalize(doc_path)
-                .unwrap()
-                .components()
-                .filter_map(|c| match c {
-                    Component::Normal(path) => path.to_owned().into_string().ok(),
-                    _ => None,
-                })
-                .filter(|s| s != "docs")
-                .last()
-                .unwrap()
-        };
-
-        let mut index = None;
-        let mut footer = None;
-        let mut pages = Vec::new();
-        let mut assets = vec![
-            Asset::internal("style.css", &STYLE),
-            Asset::internal("search.js", &SEARCH_JS),
-        ];
-
-        for entry in doc_path.read_dir()? {
-            let entry = entry?;
-            let path = entry.path();
-            if !path.is_file() {
-                // We only support file assets at the moment
-                continue;
-            }
-
-            let name = path.file_name().unwrap().to_string_lossy();
-            if name == "titlle" {
-                continue;
-            }
-
-            if let Some(ext) = path.extension() {
-                let extension = ext.to_string_lossy();
-                match extension.as_ref() {
-                    "md" | "markdown" | "mdown" => match path {
-                        ref p if has_stem(&p, "footer") => footer = Some(p.to_owned()),
-                        ref p if has_stem(&p, "index") => index = Some(p.to_owned()),
-                        _ => pages.push(path.clone()),
-                    },
-                    _ => assets.push(Asset::path(path.clone())),
-                }
-            } else {
-                assets.push(Asset::path(path.clone()));
-            }
-        }
-
-        pages.sort();
-
-        Ok(Docket {
-            title: title.to_string(),
-            index,
-            footer,
-            pages,
-            assets,
-        })
+        let title = title_from_path(path.as_ref())?;
+        let root_bale = baler::bale_dir(path)?;
+        Ok(Docket { title, root_bale })
     }
 
-    /// Render to Html
-    ///
-    /// Creates a tree of HTML files in the given `output` directory.
-    pub fn render(self, output: &Path) -> Result<()> {
-        trace!("Rendering docs to {:?} ({:?})", output, self);
-        let footer = self.rendered_footer();
-
-        let renderer = Renderer::new(self.title.clone(), footer);
-
-        let rendered_pages = map_maybe_par(self.pages, |p| {
-            let page = Page::new(&p);
-            renderer.render(&page, &output)
-        })?;
-
-        search::write_search_indices(&output, rendered_pages.iter())?;
-
-        let index = Index::new(self.title, self.index, rendered_pages);
-
-        renderer.render(&index, &output)?;
-
-        for asset in self.assets {
-            asset.copy_to(&output)?;
-        }
-
+    /// Render the documentation set to the given location
+    pub fn render<P: AsRef<Path>>(self, target: P) -> Result<(), io::Error> {
+        println!("RENDERING {0}", self.title);
+        walk_bale(self.root_bale)?;
         Ok(())
     }
+}
 
-    /// Render the Footer to a String
-    fn rendered_footer(&self) -> String {
-        let mut footer = String::new();
-        if let Some(ref footer_path) = self.footer {
-            let contents = read_file_to_string(&footer_path);
-            let parsed = Parser::new(&contents);
-            html::push_html(&mut footer, parsed);
+/// Calculate the title of the documentation set from the given path.
+fn title_from_path(path: &Path) -> Result<String, io::Error> {
+    let title_file = path.join("title");
+    Ok(if title_file.is_file() {
+        fs::read_to_string(title_file)?
+    } else {
+        Path::canonicalize(path)
+            .unwrap()
+            .components()
+            .filter_map(|c| match c {
+                path::Component::Normal(path) => path.to_owned().into_string().ok(),
+                _ => None,
+            })
+            .filter(|s| s != "docs")
+            .last()
+            .unwrap()
+    })
+}
+
+// JUNK FUNCTIONS
+
+fn walk_bale(bale: UnopenedBale) -> Result<(), io::Error> {
+    println!("got bale with index {:?}", bale.index());
+    let opend = bale.open()?;
+    for item in opend.into_items() {
+        match item {
+            BaleItem::Page(page) => println!("Page {:?}", page),
+            BaleItem::Bale(bale) => walk_bale(bale)?,
         }
-        footer
     }
-}
-
-/// Map a collection, using Rayon.
-#[cfg(feature = "par_render")]
-fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>>
-where
-    T: Sync,
-    F: Fn(&T) -> Result<U> + Send + Sync,
-    U: Send,
-{
-    use rayon::prelude::*;
-    input.into_par_iter().map(f).collect()
-}
-
-#[cfg(not(feature = "par_render"))]
-fn map_maybe_par<T, F, U>(input: Vec<T>, f: F) -> Result<Vec<U>>
-where
-    F: Fn(T) -> Result<U>,
-{
-    input.into_iter().map(f).collect()
-}
-
-/// Checks if this is the expected file
-fn has_stem(path: &Path, name: &str) -> bool {
-    path.file_stem().map(|p| p == name).unwrap_or(false)
+    Ok(())
 }
