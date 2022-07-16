@@ -4,28 +4,25 @@
 
 mod args;
 mod baler;
+mod docket;
+mod error;
 mod legacy;
 mod page;
 mod search;
 mod utils;
 
-use std::io;
+use std::{path::PathBuf, process::exit};
 
-use baler::{UnopenedBale, BaleItem};
+use docket::Docket;
+use error::Result;
 
 #[cfg(feature = "syntect-hl")]
 #[macro_use]
 extern crate lazy_static;
 
-fn walk_bale(bale: UnopenedBale) -> Result<(), io::Error> {
-    println!("got bale with index {:?}", bale.index());
-    let opend = bale.open()?;
-    for item in opend.into_items() {
-        match item {
-            BaleItem::Page(page) => println!("Page {:?}", page),
-            BaleItem::Bale(bale) => walk_bale(bale)?,
-        }
-    }
+/// Run a single pass of documentation generation
+fn run(source: PathBuf, target: PathBuf) -> Result<()> {
+    Docket::open(source)?.render(target)?;
     Ok(())
 }
 
@@ -37,15 +34,11 @@ fn main() {
     } else {
         let args = args::from_command_line();
         let source = utils::path_or_default(args.flag_source, ".");
-        let _target = utils::path_or_default(args.flag_target, "build/");
+        let target = utils::path_or_default(args.flag_target, "build/");
 
-        match baler::bale_dir(source) {
-            Ok(bale) => {
-                walk_bale(bale).unwrap();
-            }
-            Err(err) => {
-                eprintln!("Error opening bale: {0}", err);
-            }
-        };
+        if let Err(err) = run(source, target) {
+            eprint!("Error {}", err);
+            exit(-1);
+        }
     }
 }

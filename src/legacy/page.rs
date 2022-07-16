@@ -1,6 +1,6 @@
 use super::renderable::Renderable;
-use crate::search::{self, TermFrequenciesBuilder, TermFrequenciesIndex};
 use super::toc::*;
+use crate::search::{self, TermFrequenciesBuilder, TermFrequenciesIndex};
 use crate::utils;
 use log::debug;
 use pulldown_cmark::*;

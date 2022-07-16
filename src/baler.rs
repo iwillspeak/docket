@@ -65,6 +65,7 @@ impl UnopenedBale {
         }
 
         for nested in self.nested {
+            // FIXME: what happens if there isn't anything in the directory?
             items.push(BaleItem::Bale(bale_dir(&nested)?));
         }
 
