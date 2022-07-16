@@ -3,9 +3,13 @@ use std::{
     path::{self, Path},
 };
 
+use log::trace;
+
 use crate::{
-    baler::{self, BaleItem, UnopenedBale},
+    baler::{self, UnopenedBale},
     error::Error,
+    error::Result,
+    render::{self, RenderContext},
 };
 
 use crate::error::Result as DocketResult;
@@ -35,21 +39,25 @@ impl Docket {
     }
 
     /// Render the documentation set to the given location
-    pub fn render<P: AsRef<Path>>(self, target: P) -> Result<(), io::Error> {
-        println!("RENDERING {0}", self.title);
-        walk_bale(self.root_bale)?;
+    pub fn render<P: AsRef<Path>>(self, target: P) -> Result<()> {
+        trace!(
+            "Rendering documentation for {} to {:?}",
+            self.title,
+            target.as_ref()
+        );
+        let ctx = RenderContext::create_root(target.as_ref().into(), self.title);
+        render::render_bale(&ctx, self.root_bale)?;
         Ok(())
     }
 }
 
 /// Calculate the title of the documentation set from the given path.
-fn title_from_path(path: &Path) -> Result<String, io::Error> {
+fn title_from_path(path: &Path) -> std::result::Result<String, io::Error> {
     let title_file = path.join("title");
     Ok(if title_file.is_file() {
         fs::read_to_string(title_file)?
     } else {
-        Path::canonicalize(path)
-            .unwrap()
+        Path::canonicalize(path)?
             .components()
             .filter_map(|c| match c {
                 path::Component::Normal(path) => path.to_owned().into_string().ok(),
@@ -57,20 +65,6 @@ fn title_from_path(path: &Path) -> Result<String, io::Error> {
             })
             .filter(|s| s != "docs")
             .last()
-            .unwrap()
+            .unwrap_or_else(|| String::from("Documentation"))
     })
-}
-
-// JUNK FUNCTIONS
-
-fn walk_bale(bale: UnopenedBale) -> Result<(), io::Error> {
-    println!("got bale with index {:?}", bale.index());
-    let opend = bale.open()?;
-    for item in opend.into_items() {
-        match item {
-            BaleItem::Page(page) => println!("Page {:?}", page),
-            BaleItem::Bale(bale) => walk_bale(bale)?,
-        }
-    }
-    Ok(())
 }

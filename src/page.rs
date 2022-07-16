@@ -1,6 +1,6 @@
 //! Markdonw Pages with TOC
 //!
-//! Provides the `Page` type, along with functions for fabricating and working
+//! Provides the `Page` type, a&long with functions for fabricating and working
 //! with pages.
 
 use std::fs;
@@ -16,6 +16,8 @@ use crate::utils;
 #[derive(Debug)]
 pub struct Page {
     slug: String,
+    title: String,
+    content: String,
 }
 
 impl Page {
@@ -28,8 +30,29 @@ impl Page {
         Ok(Page::from_parts(slug, contents))
     }
 
-    fn from_parts<M: AsRef<str>>(slug: String, _markdown: M) -> Self {
+    /// Make a page from constituent parts
+    fn from_parts<M: AsRef<str>>(slug: String, markdown: M) -> Self {
         // FIXME: use the body of the page...
-        Page { slug }
+        let title = format!("DUMMY PAGE TITLE {}", slug);
+        Page {
+            slug,
+            title,
+            content: markdown.as_ref().to_owned(),
+        }
+    }
+
+    /// Get the title for this page
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    /// Get the slug for this page    
+    pub fn slug(&self) -> &str {
+        &self.slug
+    }
+
+    /// FIXME: Shim to allow copying
+    pub fn content(&self) -> &str {
+        &self.content
     }
 }
