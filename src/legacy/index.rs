@@ -1,6 +1,6 @@
 use super::page::PageInfo;
 use super::renderable::Renderable;
-use super::search::TermFrequenciesIndex;
+use crate::search::TermFrequenciesIndex;
 use log::debug;
 use pulldown_cmark::{html, Parser};
 use std::borrow::Cow;
