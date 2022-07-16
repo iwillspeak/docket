@@ -5,7 +5,7 @@
 //! 'bulitin' assets, such as the CSS which is bundled with Docket
 //! itself and on-disk assets from the source directory.
 
-use crate::Result;
+use super::Result;
 use std::fs::{self, File};
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};

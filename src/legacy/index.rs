@@ -1,10 +1,10 @@
-use crate::page::PageInfo;
-use crate::renderable::Renderable;
-use crate::search::TermFrequenciesIndex;
-use crate::util::read_file_to_string;
+use super::page::PageInfo;
+use super::renderable::Renderable;
+use super::search::TermFrequenciesIndex;
 use log::debug;
 use pulldown_cmark::{html, Parser};
 use std::borrow::Cow;
+use std::fs;
 use std::io::{self, Write};
 use std::path::PathBuf;
 
@@ -55,7 +55,7 @@ impl Renderable for Index {
     fn write_body<T: Write>(&self, file: &mut T) -> io::Result<()> {
         if let Some(ref index_md) = self.path {
             debug!("found index file, rendering");
-            let contents = read_file_to_string(&index_md);
+            let contents = fs::read_to_string(index_md)?;
             let parsed = Parser::new(&contents);
             let mut rendered = String::new();
             html::push_html(&mut rendered, parsed);

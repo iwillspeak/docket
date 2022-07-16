@@ -1,6 +1,5 @@
-use crate::page::PageInfo;
-
-use crate::Result;
+use super::page::PageInfo;
+use super::Result;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::File;
@@ -109,7 +108,7 @@ where
 
 #[cfg(test)]
 pub mod test {
-    use crate::search::TermFrequenciesBuilder;
+    use super::TermFrequenciesBuilder;
 
     #[test]
     pub fn empty_search_indx() {

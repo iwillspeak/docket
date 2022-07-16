@@ -1,5 +1,5 @@
-use crate::highlight;
-use crate::util;
+use super::highlight;
+use super::util;
 use highlight::Highlighter;
 use pulldown_cmark::*;
 use std::iter::Peekable;
