@@ -1,4 +1,4 @@
-use super::search::TermFrequenciesIndex;
+use crate::search::TermFrequenciesIndex;
 use std::borrow::Cow;
 use std::io::{self, Write};
 

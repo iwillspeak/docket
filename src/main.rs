@@ -6,13 +6,12 @@ mod args;
 mod baler;
 mod legacy;
 mod page;
+mod search;
 mod utils;
 
-use std::{io, path::Path};
+use std::io;
 
-use baler::UnopenedBale;
-
-use crate::baler::BaleItem;
+use baler::{UnopenedBale, BaleItem};
 
 #[cfg(feature = "syntect-hl")]
 #[macro_use]

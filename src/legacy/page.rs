@@ -1,5 +1,5 @@
 use super::renderable::Renderable;
-use super::search::{TermFrequenciesBuilder, TermFrequenciesIndex};
+use crate::search::{self, TermFrequenciesBuilder, TermFrequenciesIndex};
 use super::toc::*;
 use crate::utils;
 use log::debug;
@@ -29,6 +29,20 @@ pub struct PageInfo {
 
     /// search terms for this document.
     pub search_index: Option<TermFrequenciesIndex>,
+}
+
+impl search::SearchableDocument for PageInfo {
+    fn title(&self) -> &str {
+        &self.title
+    }
+
+    fn slug(&self) -> &str {
+        &self.slug
+    }
+
+    fn search_index(&self) -> Option<&TermFrequenciesIndex> {
+        self.search_index.as_ref()
+    }
 }
 
 fn render_tree<'a, W: Write, I: Iterator<Item = &'a TocElement>>(

@@ -5,7 +5,6 @@ mod index;
 mod page;
 mod renderable;
 mod renderer;
-mod search;
 mod toc;
 
 use crate::utils::path_or_default;

@@ -1,8 +1,7 @@
-use super::page::PageInfo;
-use super::Result;
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::File;
+use std::io;
 use std::path::Path;
 
 /// Builder struct for search indices
@@ -71,6 +70,20 @@ impl TermFrequenciesIndex {
     }
 }
 
+/// Searchable Document Trait
+///
+/// This trait abstracts over elements that can appear within a search index.
+pub trait SearchableDocument {
+    /// Document Title
+    fn title(&self) -> &str;
+
+    /// Document Slug
+    fn slug(&self) -> &str;
+
+    /// Search index for this document, if any
+    fn search_index(&self) -> Option<&TermFrequenciesIndex>;
+}
+
 /// A Page in the Search Index
 ///
 /// This POD struct is used to serialise the search index. It is consumed by
@@ -86,17 +99,18 @@ struct SearchIndexEntry<'a> {
 }
 
 /// Write the built search indices to the output directory
-pub(crate) fn write_search_indices<'a, I>(output_dir: &Path, pages: I) -> Result<()>
+pub(crate) fn write_search_indices<'a, I, D>(output_dir: &Path, pages: I) -> Result<(), io::Error>
 where
-    I: Iterator<Item = &'a PageInfo>,
+    I: Iterator<Item = &'a D>,
+    D: SearchableDocument + 'a,
 {
     let search_index_path = output_dir.join("search_index.json");
     let index_file = File::create(&search_index_path)?;
     let index: Vec<_> = pages
         .flat_map(|page| {
-            page.search_index.as_ref().map(|index| SearchIndexEntry {
-                title: &page.title,
-                slug: &page.slug,
+            page.search_index().map(|index| SearchIndexEntry {
+                title: page.title(),
+                slug: page.slug(),
                 terms: index.as_raw(),
             })
         })
