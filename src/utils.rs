@@ -34,6 +34,30 @@ pub(crate) fn slugify_path<P: AsRef<Path>>(input: P) -> String {
     })
 }
 
+/// Get a Normalised File Extension, if available
+///
+/// Returns the downcased representaiton of the file extension if one is
+/// available. If the path has no extension then `None` is returned.
+pub(crate) fn normalised_path_ext<P: AsRef<Path>>(path: P) -> Option<String> {
+    if let Some(ext) = path.as_ref().extension() {
+        Some(ext.to_string_lossy().to_ascii_lowercase())
+    } else {
+        None
+    }
+}
+
+/// Get the Normalised File Stem from the Path
+///
+/// Returns the file's stem, that is the part before the extension, downcased
+/// and converted into a standard stirng.
+pub(crate) fn normalised_stem<P: AsRef<Path>>(path: P) -> Option<String> {
+    if let Some(stem) = path.as_ref().file_stem() {
+        Some(stem.to_string_lossy().to_ascii_lowercase())
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod test {
 
@@ -90,5 +114,38 @@ mod test {
     fn slugify_path_removes_leading_path() {
         assert_eq!("world", slugify_path(Path::new("hello/world.gif")));
         assert_eq!("e", slugify_path(Path::new("a/b/c/cd/11-e.10")));
+    }
+
+    #[test]
+    fn normalised_path_ext_no_ext() {
+        assert_eq!(None, normalised_path_ext("/hello/world"));
+        assert_eq!(None, normalised_path_ext("bar::"));
+        assert_eq!(None, normalised_path_ext("../some_path/"));
+    }
+
+    #[test]
+    fn normalised_path_ext_returns_downcased_extension() {
+        assert_eq!(Some(String::from("md")), normalised_path_ext("README.md"));
+        assert_eq!(Some(String::from("rs")), normalised_path_ext("TEST.RS"));
+    }
+
+    #[test]
+    fn normalised_stem_no_stem() {
+        assert_eq!(None, normalised_stem("../"));
+    }
+
+    #[test]
+    fn nromalised_stem_downcases_stem() {
+        assert_eq!(Some(String::from("readme")), normalised_stem("README.md"));
+        assert_eq!(Some(String::from("test")), normalised_stem("TEST.RS"));
+        assert_eq!(Some(String::from("index")), normalised_stem("index.html"));
+        assert_eq!(
+            Some(String::from("world")),
+            normalised_stem("../hello/../world/")
+        );
+        assert_eq!(
+            Some(String::from(".config")),
+            normalised_stem("/hello/.config.world/")
+        );
     }
 }
