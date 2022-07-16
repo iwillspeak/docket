@@ -1,25 +1,9 @@
-use log::trace;
-use std::fs::File;
-use std::io::prelude::*;
 use std::path::Path;
-
-/// Read a file's contents to a string
-pub fn read_file_to_string(path: &Path) -> String {
-    let mut contents = String::new();
-    if let Ok(mut file) = File::open(path) {
-        while let Ok(read) = file.read_to_string(&mut contents) {
-            trace!("read {} from {:?}", read, path);
-            if read == 0 {
-                break;
-            }
-        }
-    }
-    contents
-}
 
 /// Convert a string of arbitrary charactes to a form suitable for use
 /// as an HTML identifier or file name.
-pub fn slugify(input: &str) -> String {
+pub(crate) fn slugify<S: AsRef<str>>(input: S) -> String {
+    let input = input.as_ref();
     let to_map = match input.find('-') {
         Some(offset) => {
             let (prefix, suffix) = input.split_at(offset + 1);
@@ -43,8 +27,11 @@ pub fn slugify(input: &str) -> String {
 }
 
 /// Slufigy a Path
-pub fn slugify_path(input: &Path) -> String {
-    slugify(&input.file_stem().unwrap().to_string_lossy())
+pub(crate) fn slugify_path<P: AsRef<Path>>(input: P) -> String {
+    slugify(match input.as_ref().file_stem() {
+        Some(stem) => stem.to_string_lossy(),
+        _ => input.as_ref().to_string_lossy(),
+    })
 }
 
 #[cfg(test)]

@@ -1,13 +1,14 @@
+#![deny(missing_docs)]
 
-use crate::asset::Asset;
-use crate::index::Index;
-use crate::page::Page;
-use crate::renderer::Renderer;
-use crate::search;
-use crate::util::read_file_to_string;
-use crate::Result;
+use super::asset::Asset;
+use super::index::Index;
+use super::page::Page;
+use super::renderer::Renderer;
+use super::search;
+use super::Result;
 use log::trace;
 use pulldown_cmark::{html, Parser};
+use std::fs;
 use std::path::{Component, Path, PathBuf};
 
 #[derive(Debug)]
@@ -56,13 +57,13 @@ pub struct Docket {
 ///
 /// This string is written to the assets file `style.css` and
 /// referenced from each rendered page.
-static STYLE: &'static str = include_str!("../assets/style.css");
+static STYLE: &'static str = include_str!("../../assets/style.css");
 
 /// The raw js used for our search
 ///
 /// This asset is baked into the `docket` exectuable and written to the assets
 /// directory just as `style.css` is.
-static SEARCH_JS: &'static str = include_str!("../assets/search.js");
+static SEARCH_JS: &'static str = include_str!("../../assets/search.js");
 
 impl Docket {
     /// Create a Docket Instance
@@ -83,7 +84,7 @@ impl Docket {
 
         let title_file = doc_path.join("title");
         let title = if title_file.is_file() {
-            read_file_to_string(&title_file)
+            fs::read_to_string(title_file)?
         } else {
             Path::canonicalize(doc_path)
                 .unwrap()
@@ -175,9 +176,10 @@ impl Docket {
     fn rendered_footer(&self) -> String {
         let mut footer = String::new();
         if let Some(ref footer_path) = self.footer {
-            let contents = read_file_to_string(&footer_path);
-            let parsed = Parser::new(&contents);
-            html::push_html(&mut footer, parsed);
+            if let Ok(contents) = fs::read_to_string(footer_path) {
+                let parsed = Parser::new(&contents);
+                html::push_html(&mut footer, parsed);
+            }
         }
         footer
     }

@@ -1,13 +1,13 @@
-use crate::renderable::Renderable;
-use crate::search::{TermFrequenciesBuilder, TermFrequenciesIndex};
-use crate::toc::*;
-use crate::util;
+use super::renderable::Renderable;
+use super::search::{TermFrequenciesBuilder, TermFrequenciesIndex};
+use super::toc::*;
+use super::util;
 use log::debug;
 use pulldown_cmark::*;
 use std::borrow::Cow;
-use std::io;
 use std::io::prelude::*;
 use std::path::{Path, PathBuf};
+use std::{fs, io};
 
 /// Page to be Rendered
 pub struct Page<'a> {
@@ -145,7 +145,7 @@ impl<'a> Renderable for Page<'a> {
 
 impl<'a> Page<'a> {
     pub fn new(path: &'a Path) -> Self {
-        let source = crate::util::read_file_to_string(path);
+        let source = fs::read_to_string(path).expect("FIXME: Fallible page loading");
 
         Self::from_parts(path, &source)
     }
@@ -185,7 +185,7 @@ impl<'a> Page<'a> {
 #[cfg(test)]
 mod test {
 
-    use crate::page::Page;
+    use super::super::page::Page;
     use std::path::PathBuf;
 
     #[test]

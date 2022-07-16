@@ -1,6 +1,6 @@
-use crate::renderable::Renderable;
-use crate::Result;
-use crate::{highlight, page::PageInfo};
+use super::renderable::Renderable;
+use super::Result;
+use super::{highlight, page::PageInfo};
 use std::fs::{create_dir_all, File};
 use std::io::prelude::*;
 use std::path::Path;
