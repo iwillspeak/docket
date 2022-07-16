@@ -25,6 +25,13 @@ struct IndexInfo {
     footer: Option<String>,
 }
 
+/// Navigation information for a given bale item.
+#[derive(Debug, Clone)]
+pub(crate) struct NavInfo {
+    pub slug_path: Vec<PathBuf>,
+    pub title: String,
+}
+
 /// An Unopened Bale
 ///
 /// Represents an interior node in the tree of documentation. Bales contain an
@@ -39,6 +46,8 @@ struct IndexInfo {
 #[derive(Debug)]
 pub struct UnopenedBale {
     index_info: IndexInfo,
+    slug: String,
+    nav_info: NavInfo,
     assets: Vec<PathBuf>,
     pages: Vec<PathBuf>,
     nested: Vec<PathBuf>,
@@ -56,6 +65,16 @@ impl UnopenedBale {
         self.index_info.footer.as_ref()
     }
 
+    /// Get the navigation entry for this bale
+    pub fn nav_info(&self) -> &NavInfo {
+        &self.nav_info
+    }
+
+    /// Break open a bale
+    ///
+    /// Walks the contents of the bale and builds pages for them. Assets are
+    /// identified and grouped. Child bales are identified and an unopend bale
+    /// is created for each.
     pub fn open(self) -> Result<Bale, io::Error> {
         let assets = self.assets;
         let mut items = Vec::with_capacity(self.pages.len() + self.nested.len());
@@ -79,6 +98,10 @@ impl UnopenedBale {
             assets,
             items,
         })
+    }
+
+    pub(crate) fn slug(&self) -> &str {
+        &self.slug
     }
 }
 
@@ -143,7 +166,7 @@ pub fn bale_dir<P: AsRef<Path>>(path: P) -> Result<UnopenedBale, io::Error> {
     let mut assets = Vec::new();
     let mut nested = Vec::new();
 
-    for entry in fs::read_dir(path)? {
+    for entry in fs::read_dir(&path)? {
         let entry = entry?;
         let path = entry.path().clone();
 
@@ -167,7 +190,22 @@ pub fn bale_dir<P: AsRef<Path>>(path: P) -> Result<UnopenedBale, io::Error> {
         None => None,
     };
 
+    let slug = utils::slugify_path(&path);
+
+    let nav_info = NavInfo {
+        // FIXME: need to pass in the slug path to child items somehow
+        slug_path: Vec::new(),
+        // FIXME: need to generate a title for folders where we have documents
+        // but no index.
+        title: match &index {
+            Some(page) => page.title().to_owned(),
+            None => String::from("FIXME fallback title"),
+        },
+    };
+
     Ok(UnopenedBale {
+        nav_info,
+        slug,
         index_info: IndexInfo { index, footer },
         assets,
         pages,

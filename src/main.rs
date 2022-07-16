@@ -8,6 +8,7 @@ mod docket;
 mod error;
 mod legacy;
 mod page;
+mod render;
 mod search;
 mod utils;
 

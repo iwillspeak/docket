@@ -1,4 +1,4 @@
-use std::{path::PathBuf, io};
+use std::{io, path::PathBuf};
 
 /// Docket Error Type
 ///
