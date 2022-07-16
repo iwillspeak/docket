@@ -2,6 +2,7 @@
 
 #![deny(missing_docs)]
 
+mod args;
 mod baler;
 mod legacy;
 mod page;
@@ -30,18 +31,22 @@ fn walk_bale(bale: UnopenedBale) -> Result<(), io::Error> {
 }
 
 fn main() {
+    env_logger::init();
+
     if std::env::var("DOCKET_LEGACY").is_ok() {
         legacy::main();
     } else {
-        for dir in std::env::args().skip(1) {
-            match baler::bale_dir(&Path::new(&dir)) {
-                Ok(bale) => {
-                    walk_bale(bale).unwrap();
-                }
-                Err(err) => {
-                    eprintln!("Error opening bale: {0}", err);
-                }
-            };
-        }
+        let args = args::from_command_line();
+        let source = utils::path_or_default(args.flag_source, ".");
+        let _target = utils::path_or_default(args.flag_target, "build/");
+
+        match baler::bale_dir(source) {
+            Ok(bale) => {
+                walk_bale(bale).unwrap();
+            }
+            Err(err) => {
+                eprintln!("Error opening bale: {0}", err);
+            }
+        };
     }
 }
