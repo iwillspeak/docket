@@ -6,9 +6,10 @@ mod args;
 mod asset;
 mod baler;
 mod docket;
+mod doctree;
 mod error;
+#[cfg(legacy)]
 mod legacy;
-mod page;
 mod render;
 mod search;
 mod utils;
@@ -16,11 +17,10 @@ mod utils;
 use std::{error::Error, path::PathBuf, process::exit};
 
 use docket::Docket;
-use env_logger::Env;
 use error::Result;
 use log::{info, warn};
 
-#[cfg(feature = "syntect-hl")]
+#[cfg(all(feature = "syntect-hl", legacy))]
 #[macro_use]
 extern crate lazy_static;
 

@@ -2,12 +2,13 @@ use log::trace;
 
 use crate::{
     baler::{self, BaleItem, NavInfo},
+    doctree,
     error::Result,
 };
 use std::{
     fs::{create_dir_all, File},
     io::{BufWriter, Write},
-    path::PathBuf,
+    path::{Path, PathBuf},
 };
 
 /// Render Contex
@@ -137,7 +138,7 @@ fn render_page(
     path: &PathBuf,
     nav_prefix: &str,
     navs: &[NavInfo],
-    page: &crate::page::Page,
+    page: &crate::doctree::Page,
 ) -> Result<()> {
     trace!("rendering page {} at {:?}", page.title(), path);
     create_dir_all(&path)?;
@@ -153,4 +154,15 @@ fn render_page(
     write!(writer, "\n***\n\n{}", page.content())?;
 
     Ok(())
+}
+
+/// Render a Doctree
+///
+/// Wwrite  the given doctree out to the `target` path using the default render
+/// contex.
+pub(crate) fn render<P: AsRef<Path>>(_target: P, _doctree_root: doctree::Bale) -> Result<()> {
+    todo!("Implement rendering of new doctree");
+    // // let ctx = RenderContext::create_root(target.as_ref().into(), title);
+    // // render_bale(&ctx, self.root_bale)?;
+    // Ok(())
 }

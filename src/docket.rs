@@ -6,13 +6,10 @@ use std::{
 use log::trace;
 
 use crate::{
-    baler::{self, UnopenedBale},
-    error::Error,
-    error::Result,
-    render::{self, RenderContext},
+    doctree::{self, Bale},
+    error::{Error, Result as DocketResult},
+    render,
 };
-
-use crate::error::Result as DocketResult;
 
 /// Docket
 ///
@@ -21,7 +18,7 @@ use crate::error::Result as DocketResult;
 #[derive(Debug)]
 pub struct Docket {
     title: String,
-    root_bale: UnopenedBale,
+    doctree_root: Bale,
 }
 
 impl Docket {
@@ -33,20 +30,20 @@ impl Docket {
         if !path.as_ref().is_dir() {
             Err(Error::SourcePathNotADirectory(path.as_ref().into()))?;
         }
-        let title = title_from_path(path.as_ref())?;
-        let root_bale = baler::bale_dir(path)?;
-        Ok(Docket { title, root_bale })
+        Ok(Docket {
+            title: title_from_path(path.as_ref())?,
+            doctree_root: doctree::open(&path)?,
+        })
     }
 
     /// Render the documentation set to the given location
-    pub fn render<P: AsRef<Path>>(self, target: P) -> Result<()> {
+    pub fn render<P: AsRef<Path>>(self, target: P) -> DocketResult<()> {
         trace!(
             "Rendering documentation for {} to {:?}",
             self.title,
             target.as_ref()
         );
-        let ctx = RenderContext::create_root(target.as_ref().into(), self.title);
-        render::render_bale(&ctx, self.root_bale)?;
+        render::render(target, self.doctree_root)?;
         Ok(())
     }
 }

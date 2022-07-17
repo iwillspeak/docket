@@ -18,7 +18,7 @@ use std::{
 
 use log::info;
 
-use crate::{asset::Asset, page::Page, utils};
+use crate::{asset::Asset, doctree::Page, utils};
 
 /// Information about the bale's index. This is the eagerly opned portion of the
 /// bale.

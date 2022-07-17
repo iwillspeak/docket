@@ -68,6 +68,20 @@ pub(crate) fn path_or_default(maybe_path: Option<String>, default: &str) -> Path
         .unwrap_or_else(|| default.to_owned().into())
 }
 
+/// Prettify a Directory Name
+///
+/// Trims the leading and trailing parts of the given directory name. Drops
+/// leading numeric characters.
+pub(crate) fn prettify_dir<P: AsRef<Path>>(path: P) -> Option<String> {
+    path.as_ref().file_name().map(|name| {
+        name.to_string_lossy()
+            .trim_start_matches(char::is_numeric)
+            .trim_start_matches(['-', '_'])
+            .trim()
+            .to_owned()
+    })
+}
+
 #[cfg(test)]
 mod test {
 
@@ -157,5 +171,13 @@ mod test {
             Some(String::from(".config")),
             normalised_stem("/hello/.config.world/")
         );
+    }
+
+    #[test]
+    fn prettified_dirnames() {
+        assert_eq!(Some("Hello World"), prettify_dir("Hello World").as_deref());
+        assert_eq!(Some("Test"), prettify_dir("/this/is/a/Test").as_deref());
+        assert_eq!(Some("Test"), prettify_dir("../another/Test/.").as_deref());
+        assert_eq!(Some("Testing2"), prettify_dir("./futher/10-Testing2/").as_deref());
     }
 }
