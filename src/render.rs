@@ -1,28 +1,27 @@
 use log::trace;
 
 use crate::{
-    baler::{self, BaleItem, NavInfo},
-    doctree,
-    error::Result,
+    doctree::{self, BaleFrontispice, DoctreeItem},
+    error::Result, asset::Asset,
 };
 use std::{
-    fs::{create_dir_all, File},
-    io::{BufWriter, Write},
-    path::{Path, PathBuf},
+    path::{Path, PathBuf}, fs::{self, File}, io::{Write, BufWriter},
 };
 
 /// Render Contex
 ///
 /// A render context represents a point into which pages can be rendered. It
-/// stores global information about the current rendering process, such as the
-/// overall documentation site title, as well as context specific information.
-///
-/// Each document bale is rendered in a single render context. New contexts are
-/// created for derived bales.
+/// stores global information about the current rendering process. The render
+/// context is immutable for the duration of the render.
+/// 
+/// Nested information about the current output directory, the bale being
+/// rendred, and the current point in the navigation heirachy is stored in the
+/// `RenderState`.
 pub struct RenderContext {
+    /// The output directory to write the state to
     path: PathBuf,
-    title: String,
-    slug_path: Vec<String>,
+    /// The overall site name. This is used as the root point in the navigation.
+    site_name: String,
 }
 
 impl RenderContext {
@@ -30,89 +29,123 @@ impl RenderContext {
     ///
     /// Root render contexts hold global information about the render, and are
     /// used as parents for derived cotnexts.
-    pub fn create_root(path: PathBuf, title: String) -> Self {
+    pub fn new(path: PathBuf, site_name: String) -> Self {
         RenderContext {
             path,
-            title,
-            slug_path: Vec::new(),
+            site_name
+        }
+    }
+}
+
+enum RenderStateKind<'s, 'b> {
+    /// A root render state. This state has a direct reference to the render
+    /// context.
+    Root(&'s RenderContext),
+    /// A nested render state. This is made up of a reference to the parent
+    /// render state, along with the new directory root this context should
+    /// write into.
+    Nested(&'s RenderState<'s, 'b>, PathBuf),
+}
+
+/// Render State
+/// 
+/// The render state is used by layout to render pages.
+pub struct RenderState<'s, 'b> {
+    /// The kind link
+    kind: RenderStateKind<'s, 'b>,
+    /// The bale that is being rendered
+    bale: &'b BaleFrontispice,
+}
+
+impl<'s, 'b> RenderState<'s, 'b> {
+    /// Create a new root render state
+    /// 
+    /// This render state represents the root node in the documentaiton tree. It
+    /// renders to the path in the given render context directly.
+    fn new_root(context: &'s RenderContext, bale: &'b BaleFrontispice) -> Self {
+        RenderState { kind: RenderStateKind::Root(context), bale }
+    }
+
+    /// Create a new render context based on a parent
+    fn with_parent(state: &'s RenderState<'s, 'b>, bale: &'b BaleFrontispice) -> Self {
+        let mut new_path = PathBuf::from(state.output_path());
+        new_path.push(&bale.slug());
+        RenderState { kind: RenderStateKind::Nested(state, new_path), bale }
+    }
+
+    /// Get the output path for this render state
+    /// 
+    /// The path is the folder where items should be created when rendering.
+    fn output_path(&self) -> &Path {
+        match &self.kind {
+            RenderStateKind::Root(ctx) => &ctx.path,
+            RenderStateKind::Nested(_, path) => path,
         }
     }
 
-    /// Create a render context based on a parent one
-    ///
-    /// TODO: This currently just copies information from the parent context.
-    /// Instead it might be nice to form a proper tree, allowing contexts to
-    /// return references to their parent contexts. This would hopefully move
-    /// some of the infromation about navigation into the render context rather
-    /// than having it 'tag along' as it currently does.
-    ///
-    /// Anotehr advantage mgith be that asset paths could be reified in the
-    /// render context too, allowing assets to be queried for during rendering.
-    /// This would allow us to 'fixup' asset paths that we have re-written the
-    /// slugs for.
-    pub fn create_with_parent(parent: &Self, path: PathBuf, slug: String) -> Self {
-        let mut slug_path = parent.slug_path.clone();
-        slug_path.push(slug);
-        RenderContext {
-            path,
-            title: parent.title.to_owned(),
-            slug_path,
+    /// The current bale
+    fn current_bale(&self) -> &BaleFrontispice {
+        &self.bale
+    }
+
+    /// Get the render context
+    fn ctx(&self) -> &RenderContext {
+        match self.kind {
+            RenderStateKind::Root(ctx) => ctx,
+            RenderStateKind::Nested(parent, _) => parent.ctx(),
         }
     }
+}
+
+/// Kind of page we are rendering. For index pages we don't need to do anything
+/// to get to the bale root. For nested pages we keep the page's slug.
+enum PageKind {
+    /// An index page
+    Index,
+    /// A neseted page with a given slug
+    Nested(String)
 }
 
 /// Render a bale to the given directory
 ///
 /// This walks the tree of documentaiton referred to by the given `bale` and
 /// writes the rendered result to the given `ctx`.
-///
-/// TODO: Should this just take a bale, and an output path. We cna then
-/// fabricate a context _as required_?
-pub(crate) fn render_bale(ctx: &RenderContext, bale: baler::UnopenedBale) -> Result<()> {
-    trace!("rendering bale {:?} to {:?}", bale, ctx.path);
-    create_dir_all(&ctx.path)?;
+fn render_bale_contents(state: &RenderState, assets: Vec<PathBuf>, items: Vec<DoctreeItem>) -> Result<()> {
+    trace!("rendering bale contents {:?} to {:?}", state.bale, state.output_path());
+    fs::create_dir_all(&state.output_path())?;
 
-    // Break open the bale and build navigiation information for it
-    let bale = bale.break_open()?;
-    let navs: Vec<_> = bale
-        .items()
-        .map(|item| match &item {
-            BaleItem::Page(page) => NavInfo {
-                slug: page.slug().to_owned(),
-                title: page.title().to_owned(),
-            },
-            BaleItem::Bale(bale) => bale.nav_info().clone(),
+    // TODO: Navs should probably be moved into the render state, rather than
+    // being fabricated here in the render function.
+    let navs: Vec<_> = items
+        .iter()
+        .map(|item| match item {
+            DoctreeItem::Page(page) => (page.slug().to_owned(), page.title().to_owned()),
+            DoctreeItem::Bale(bale) => (bale.frontispiece().slug().to_owned(), bale.frontispiece().title().to_owned()),
         })
         .collect();
 
     // If we have an index page then redner that
-    if let Some(page) = bale.index() {
-        render_page(&ctx, &ctx.path, "", &navs, page)?;
+    if let Some(page) = state.current_bale().index_page() {
+        trace!("Bale has an index. Rendering.");
+        render_page(&state, &navs,PageKind::Index,  page)?;
     }
 
     // Walk our assets and copy them
-    for asset in bale.assets() {
-        asset.copy_to(&ctx.path)?;
+    for asset in assets {
+        Asset::path(asset).copy_to(&state.output_path())?;
     }
 
     // Walk the inner items in the bale and render them, in nested contexts if
     // required.
-    for item in bale.into_items() {
+    for item in items {
         match item {
-            BaleItem::Bale(bale) => {
-                // FIXME: need to create a child context here, appending the
-                // bale's slug and generating the correct path.
-                let path = (&ctx.path).clone();
-                let path = path.join(&bale.nav_info().slug);
-                let ctx =
-                    RenderContext::create_with_parent(ctx, path, bale.nav_info().slug.clone());
-                render_bale(&ctx, bale)?;
+            DoctreeItem::Bale(bale) => {
+                let (bale, assets, items) = bale.break_open()?;
+                let state = RenderState::with_parent(&state, &bale);
+                render_bale_contents(&state, assets, items)?;
             }
-            BaleItem::Page(page) => {
-                let path = (&ctx.path).clone();
-                let path = path.join(page.slug());
-                render_page(&ctx, &path, "../", &navs, &page)?;
-            }
+            DoctreeItem::Page(page) =>
+                render_page(&state, &navs, PageKind::Nested(page.slug().to_owned()), &page)?
         }
     }
 
@@ -122,33 +155,36 @@ pub(crate) fn render_bale(ctx: &RenderContext, bale: baler::UnopenedBale) -> Res
 /// Render a Single Page
 ///
 /// Writes the rendred contents of a given page to a given path.
-///
-/// TOOD: This method has too many paramters. We should move as much of this as
-/// possible into either the render contex, or some page specific item.
-///
-/// One of the akward things we're dealing with here, with the `nav_prefix`, is
-/// the page's locaiton within the bale. We could abstact over this with some
-/// structure that is either `Index`, or `Nested(NavItem)`. That would allow a
-/// page to know both the correct nav prefix to access other items in the bale
-/// (and therefore outer bales) as well as identify itself in the navigation
-/// tree. This might be useful for setting a `class=current` on the navigation
-/// items.
 fn render_page(
-    _ctx: &RenderContext,
-    path: &PathBuf,
-    nav_prefix: &str,
-    navs: &[NavInfo],
+    state: &RenderState,
+    // FIXME: Navs need mving into the render state
+    navs: &[(String, String)],
+    kind: PageKind,
     page: &crate::doctree::Page,
 ) -> Result<()> {
+
+    let (path, nav_prefix) = match kind {
+        PageKind::Index => (state.output_path().into(), "./"),
+        PageKind::Nested(slug) => {
+            let mut path = PathBuf::from(state.output_path());
+            path.push(slug);
+            (path, "../")
+        },
+    };
+
     trace!("rendering page {} at {:?}", page.title(), path);
-    create_dir_all(&path)?;
+    fs::create_dir_all(&path)?;
 
     let output_path = path.join("index.html");
     let file = File::create(&output_path)?;
     let mut writer = BufWriter::new(file);
 
+    writeln!(writer, "{} -- {}", state.ctx().site_name, page.title())?;
+    writeln!(writer, "-----------------------------------")?;
+
+    writeln!(writer, " * # [{}]({})", state.current_bale().title(), nav_prefix)?;
     for nav in navs {
-        writeln!(writer, " * [{}]({}{})", nav.title, nav_prefix, nav.slug)?;
+        writeln!(writer, "   - ## [{}]({}{})", nav.1, nav_prefix, nav.0)?;
     }
 
     write!(writer, "\n***\n\n{}", page.content())?;
@@ -160,9 +196,9 @@ fn render_page(
 ///
 /// Wwrite  the given doctree out to the `target` path using the default render
 /// contex.
-pub(crate) fn render<P: AsRef<Path>>(_target: P, _doctree_root: doctree::Bale) -> Result<()> {
-    todo!("Implement rendering of new doctree");
-    // // let ctx = RenderContext::create_root(target.as_ref().into(), title);
-    // // render_bale(&ctx, self.root_bale)?;
-    // Ok(())
+pub(crate) fn render<P: AsRef<Path>>(target: P, title: String, doctree_root: doctree::Bale) -> Result<()> {
+    let ctx = RenderContext::new(target.as_ref().to_owned(), title);
+    let (frontispiece, assets, items) = doctree_root.break_open()?;
+    let state = RenderState::new_root(&ctx, &frontispiece);
+    render_bale_contents(&state, assets, items)
 }

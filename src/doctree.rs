@@ -16,6 +16,8 @@ use std::{
     result,
 };
 
+use log::info;
+
 use crate::{
     error::Result,
     utils::{self, slugify_path},
@@ -24,7 +26,7 @@ use crate::{
 /// A Doctree Item
 ///
 /// Represents the kinds of item that can appear within the doctree.
-enum DoctreeItem {
+pub(crate) enum DoctreeItem {
     /// A leaf page
     Page(Page),
 
@@ -158,6 +160,57 @@ impl Bale {
             nested,
         })
     }
+
+    /// Break Open the Bale
+    ///
+    /// This reifies the contents of the bale. Inner items are converted into
+    /// real pages and bales.
+    pub fn break_open(self) -> Result<(BaleFrontispice, Vec<PathBuf>, Vec<DoctreeItem>)> {
+        info!(
+            "Breaking open bale {} ({})",
+            self.frontispice.title,
+            self.frontispice.slug(),
+        );
+
+        let mut assets: Vec<_> = self.assets;
+        let mut items = Vec::with_capacity(self.pages.len() + self.nested.len());
+
+        for page in self.pages {
+            items.push((
+                utils::normalised_stem(&page),
+                DoctreeItem::Page(Page::open(page)?),
+            ));
+        }
+
+        for nested in self.nested {
+            let bale = Bale::new(&nested)?;
+            if bale.frontispice.index.is_none() && bale.pages.is_empty() {
+                info!(
+                    "Inner item {:?} does not appear to be able. Adding as an asset",
+                    &nested
+                );
+                assets.push(nested);
+            } else {
+                items.push((utils::normalised_stem(&nested), DoctreeItem::Bale(bale)));
+            }
+        }
+
+        // Sort the items by their origional path. This allows files on disk to
+        // be given a prefix that is stripped off in slugification but still
+        // affects the item's order within the documentation tree.
+        items.sort_by_cached_key(|(k, _)| k.clone());
+
+        Ok((
+            self.frontispice,
+            assets,
+            items.into_iter().map(|(_, i)| i).collect(),
+        ))
+    }
+
+    /// Get the Frontispiece for this bale
+    pub(crate) fn frontispiece(&self) -> &BaleFrontispice {
+        &self.frontispice
+    }
 }
 
 /// Bale Frontispiece
@@ -166,10 +219,11 @@ impl Bale {
 /// are broken open into three parts: frontispiece, assets, and inner items.
 /// This type is used to group together the index.
 #[derive(Debug)]
-struct BaleFrontispice {
+pub(crate) struct BaleFrontispice {
     /// The title for this bale. This is from the index page, if there is one,
     /// or falls back to the directory name otherwise.
     title: String,
+
     /// The slug for this bale
     ///
     /// TODO: Do we want a special `Slug` type to wrap these?
@@ -202,6 +256,21 @@ impl BaleFrontispice {
             index,
             footer,
         }
+    }
+
+    /// Get the bale's slug
+    pub fn slug(&self) -> &str {
+        &self.slug
+    }
+
+    /// Get the bale's title
+    pub fn title(&self) -> &str {
+        &self.title
+    }
+
+    /// Get a reference to the index page of this bale, if any
+    pub fn index_page(&self) -> Option<&Page> {
+        self.index.as_ref()
     }
 }
 

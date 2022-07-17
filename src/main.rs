@@ -4,7 +4,6 @@
 
 mod args;
 mod asset;
-mod baler;
 mod docket;
 mod doctree;
 mod error;

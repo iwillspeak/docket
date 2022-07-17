@@ -43,7 +43,7 @@ impl Docket {
             self.title,
             target.as_ref()
         );
-        render::render(target, self.doctree_root)?;
+        render::render(target, self.title, self.doctree_root)?;
         Ok(())
     }
 }
