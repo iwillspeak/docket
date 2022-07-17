@@ -1,10 +1,10 @@
 #![deny(missing_docs)]
 
-use super::asset::Asset;
 use super::index::Index;
 use super::page::Page;
 use super::renderer::Renderer;
 use super::Result;
+use crate::asset::Asset;
 use crate::search;
 use log::trace;
 use pulldown_cmark::{html, Parser};

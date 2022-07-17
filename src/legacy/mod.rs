@@ -1,4 +1,3 @@
-mod asset;
 mod docket;
 mod highlight;
 mod index;

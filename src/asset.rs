@@ -5,6 +5,8 @@
 //! 'bulitin' assets, such as the CSS which is bundled with Docket
 //! itself and on-disk assets from the source directory.
 
+use log::error;
+
 use super::Result;
 use std::fs::{self, File};
 use std::io::prelude::*;
@@ -71,7 +73,9 @@ impl Asset {
                 Ok(())
             }
             Asset::Disk(path) => {
-                if let Some(name) = path.file_name() {
+                if path.is_dir() {
+                    error!("FIXME: Need to implement recirsive copy for directory assets");
+                } else if let Some(name) = path.file_name() {
                     fs::copy(path, output.join(name))?;
                 }
                 Ok(())

@@ -1,7 +1,11 @@
 //! Markdonw Pages with TOC
 //!
-//! Provides the `Page` type, a&long with functions for fabricating and working
-//! with pages.
+//!
+//! Provides the `Page` type, along with functions for fabricating and working
+//! with pages. Pages represent the leaf nodes in our documentation tree. Pages
+//! are used for both dcoumentation pages, and bale indexes.
+//!
+//! A page is effectively a thin wrapper around a TOC to make it renderable.
 
 use std::fs;
 
@@ -9,12 +13,14 @@ use crate::utils;
 
 /// A Documentation Page
 ///
-/// Each documentation page is made of two items: a simple `slug` which should
-/// be used to refer to the page in navigation contexts, and a TOC. The TOC is a
-/// hierachical representation of the contents of the page and can be traversed
-/// to inspect the structure as well as rendred to HTML.
+///
+/// Each documentaiton page is mad eup of two items: a simple `slug` which
+/// should be used to refer to the page in the navigation tree, and a TOC. The
+/// TOC is a heirachical represenattion of the contents of the page. A TOC can
+/// be traversed to inspect the structure of the page; and rendered to HTML.
 #[derive(Debug)]
 pub struct Page {
+    // TODO: This is widly different from what the documentaion, or design, suggest.
     slug: String,
     title: String,
     content: String,
@@ -46,7 +52,7 @@ impl Page {
         &self.title
     }
 
-    /// Get the slug for this page    
+    /// Get the slug for this page
     pub fn slug(&self) -> &str {
         &self.slug
     }
