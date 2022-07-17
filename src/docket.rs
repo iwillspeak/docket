@@ -36,7 +36,10 @@ impl Docket {
         })
     }
 
-    /// Render the documentation set to the given location
+    /// Render to HTML
+    ///
+    /// Renders the documentation set. Creates a tree of HTML files into the
+    /// given `target` directory.
     pub fn render<P: AsRef<Path>>(self, target: P) -> DocketResult<()> {
         trace!(
             "Rendering documentation for {} to {:?}",

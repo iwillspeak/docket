@@ -4,7 +4,7 @@ mod layout;
 
 use crate::{
     asset::Asset,
-    doctree::{self, BaleFrontispice, DoctreeItem},
+    doctree::{self, DoctreeItem, Frontispiece},
     error::Result,
 };
 use std::{
@@ -84,7 +84,7 @@ pub struct RenderState<'s, 'b> {
     /// The kind link
     kind: RenderStateKind<'s, 'b>,
     /// The bale that is being rendered
-    bale: &'b BaleFrontispice,
+    bale: &'b Frontispiece,
     /// The navigation items at this level
     navs: Vec<NavInfo>,
 }
@@ -94,7 +94,7 @@ impl<'s, 'b> RenderState<'s, 'b> {
     ///
     /// This render state represents the root node in the documentaiton tree. It
     /// renders to the path in the given render context directly.
-    fn new(kind: RenderStateKind<'s, 'b>, bale: &'b BaleFrontispice, navs: Vec<NavInfo>) -> Self {
+    fn new(kind: RenderStateKind<'s, 'b>, bale: &'b Frontispiece, navs: Vec<NavInfo>) -> Self {
         RenderState { kind, bale, navs }
     }
 
@@ -109,7 +109,7 @@ impl<'s, 'b> RenderState<'s, 'b> {
     }
 
     /// The current bale
-    fn current_bale(&self) -> &BaleFrontispice {
+    fn current_bale(&self) -> &Frontispiece {
         &self.bale
     }
 

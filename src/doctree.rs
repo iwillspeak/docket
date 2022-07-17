@@ -7,9 +7,6 @@
 //! The documentation tree is made up of two things: bales and pages. Bales form
 //! the interior nodes of the tree, and pages the leaves.
 
-// FIXME: Remove once this is done prototyping
-#![allow(dead_code)]
-
 use std::{
     fs,
     path::{Path, PathBuf},
@@ -102,7 +99,7 @@ impl Page {
 pub(crate) struct Bale {
     /// The frontispiece for this bale. This contains the bale's resolved slug
     /// and title to be used in navigation.
-    frontispice: BaleFrontispice,
+    frontispiece: Frontispiece,
     /// The paths we suspect to be page items
     pages: Vec<PathBuf>,
     /// The paths we know to be assets
@@ -112,10 +109,11 @@ pub(crate) struct Bale {
 }
 
 impl Bale {
-    /// Createa New Bale
+    /// Create a new Bale
     ///
     /// Wraps the given `path` as a bale. This performs a shallow traversal of
-    /// the directory to find the index.
+    /// the directory to find the index to produce the `Frontispiece`. The full
+    /// contents of the bale can be retrieved by `Bale::break_open`.
     pub fn new<P: AsRef<Path>>(path: P) -> Result<Self> {
         let mut index = None;
         let mut footer = None;
@@ -154,7 +152,7 @@ impl Bale {
         };
 
         Ok(Bale {
-            frontispice: BaleFrontispice::new(path, index, footer),
+            frontispiece: Frontispiece::new(path, index, footer),
             pages,
             assets,
             nested,
@@ -165,14 +163,14 @@ impl Bale {
     ///
     /// This reifies the contents of the bale. Inner items are converted into
     /// real pages and bales.
-    pub fn break_open(self) -> Result<(BaleFrontispice, Vec<PathBuf>, Vec<DoctreeItem>)> {
+    pub fn break_open(self) -> Result<(Frontispiece, Vec<PathBuf>, Vec<DoctreeItem>)> {
         info!(
             "Breaking open bale {} ({})",
-            self.frontispice.title,
-            self.frontispice.slug(),
+            self.frontispiece.title,
+            self.frontispiece.slug(),
         );
 
-        let mut assets: Vec<_> = self.assets;
+        let mut assets = self.assets;
         let mut items = Vec::with_capacity(self.pages.len() + self.nested.len());
 
         for page in self.pages {
@@ -184,7 +182,7 @@ impl Bale {
 
         for nested in self.nested {
             let bale = Bale::new(&nested)?;
-            if bale.frontispice.index.is_none() && bale.pages.is_empty() {
+            if bale.frontispiece.index.is_none() && bale.pages.is_empty() {
                 info!(
                     "Inner item {:?} does not appear to be able. Adding as an asset",
                     &nested
@@ -201,15 +199,15 @@ impl Bale {
         items.sort_by_cached_key(|(k, _)| k.clone());
 
         Ok((
-            self.frontispice,
+            self.frontispiece,
             assets,
             items.into_iter().map(|(_, i)| i).collect(),
         ))
     }
 
     /// Get the Frontispiece for this bale
-    pub(crate) fn frontispiece(&self) -> &BaleFrontispice {
-        &self.frontispice
+    pub(crate) fn frontispiece(&self) -> &Frontispiece {
+        &self.frontispiece
     }
 }
 
@@ -219,7 +217,7 @@ impl Bale {
 /// are broken open into three parts: frontispiece, assets, and inner items.
 /// This type is used to group together the index.
 #[derive(Debug)]
-pub(crate) struct BaleFrontispice {
+pub(crate) struct Frontispiece {
     /// The title for this bale. This is from the index page, if there is one,
     /// or falls back to the directory name otherwise.
     title: String,
@@ -237,20 +235,16 @@ pub(crate) struct BaleFrontispice {
     footer: Option<String>,
 }
 
-impl BaleFrontispice {
+impl Frontispiece {
     /// Create a new Frontispiece
     ///
     /// This picks a title and slug for the bale based on the bale's path.
-    fn new<P: AsRef<Path>>(
-        path: P,
-        index: Option<Page>,
-        footer: Option<String>,
-    ) -> BaleFrontispice {
+    fn new<P: AsRef<Path>>(path: P, index: Option<Page>, footer: Option<String>) -> Frontispiece {
         let title = match &index {
             Some(page) => page.title.clone(),
             None => utils::prettify_dir(&path).expect("Could not create a title"),
         };
-        BaleFrontispice {
+        Frontispiece {
             title,
             slug: slugify_path(path),
             index,
@@ -271,6 +265,11 @@ impl BaleFrontispice {
     /// Get a reference to the index page of this bale, if any
     pub fn index_page(&self) -> Option<&Page> {
         self.index.as_ref()
+    }
+
+    /// Get the page's footer
+    pub fn footer(&self) -> Option<&str> {
+        self.footer.as_deref()
     }
 }
 

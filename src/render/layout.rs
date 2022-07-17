@@ -43,7 +43,7 @@ impl Layout for DefaultLayout {
 
         writeln!(writer, "{} -- {}", state.ctx().site_name, page.title())?;
         writeln!(writer, "-----------------------------------")?;
-
+        writeln!(writer, "")?;
         writeln!(
             writer,
             " * # [{}]({})",
@@ -57,9 +57,18 @@ impl Layout for DefaultLayout {
                 nav.title, nav_prefix, nav.slug
             )?;
         }
-
-        write!(writer, "\n***\n\n{}", page.content())?;
-
+        writeln!(writer, "")?;
+        writeln!(writer, "             ***")?;
+        writeln!(writer, "")?;
+        write!(writer, "{}", page.content())?;
+        writeln!(writer, "")?;
+        writeln!(writer, "             ***")?;
+        writeln!(writer, "")?;
+        if let Some(footer) = state.current_bale().footer() {
+            write!(writer, "{}", footer)?;
+        } else {
+            write!(writer, "Rendered by Docket")?;
+        }
         Ok(())
     }
 }
