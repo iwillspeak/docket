@@ -28,7 +28,7 @@ struct IndexInfo {
 /// Navigation information for a given bale item.
 #[derive(Debug, Clone)]
 pub(crate) struct NavInfo {
-    pub slug_path: Vec<PathBuf>,
+    pub slug: String,
     pub title: String,
 }
 
@@ -190,11 +190,8 @@ pub fn bale_dir<P: AsRef<Path>>(path: P) -> Result<UnopenedBale, io::Error> {
         None => None,
     };
 
-    let slug = utils::slugify_path(&path);
-
     let nav_info = NavInfo {
-        // FIXME: need to pass in the slug path to child items somehow
-        slug_path: Vec::new(),
+        slug: utils::slugify_path(&path),
         // FIXME: need to generate a title for folders where we have documents
         // but no index.
         title: match &index {
@@ -205,7 +202,7 @@ pub fn bale_dir<P: AsRef<Path>>(path: P) -> Result<UnopenedBale, io::Error> {
 
     Ok(UnopenedBale {
         nav_info,
-        slug,
+        slug: utils::slugify_path(&path),
         index_info: IndexInfo { index, footer },
         assets,
         pages,
