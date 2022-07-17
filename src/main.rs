@@ -3,6 +3,7 @@
 #![deny(missing_docs)]
 
 mod args;
+mod asset;
 mod baler;
 mod docket;
 mod error;
@@ -12,11 +13,12 @@ mod render;
 mod search;
 mod utils;
 
-use std::{path::PathBuf, process::exit};
+use std::{error::Error, path::PathBuf, process::exit};
 
 use docket::Docket;
 use env_logger::Env;
 use error::Result;
+use log::{info, warn};
 
 #[cfg(feature = "syntect-hl")]
 #[macro_use]
@@ -24,6 +26,7 @@ extern crate lazy_static;
 
 /// Run a single pass of documentation generation
 fn run(source: PathBuf, target: PathBuf) -> Result<()> {
+    info!("Rendering documenation from {:?} => {:?}", &source, &target);
     Docket::open(source)?.render(target)?;
     Ok(())
 }
@@ -31,23 +34,30 @@ fn run(source: PathBuf, target: PathBuf) -> Result<()> {
 fn main() {
     init_logging();
 
-    if std::env::var("DOCKET_LEGACY").is_ok() {
-        legacy::main();
-    } else {
-        let args = args::from_command_line();
-        let source = utils::path_or_default(args.flag_source, ".");
-        let target = utils::path_or_default(args.flag_target, "build/");
+    let args = args::from_command_line();
+    let source = utils::path_or_default(args.flag_source, ".");
+    let target = utils::path_or_default(args.flag_target, "build/");
 
-        if let Err(err) = run(source, target) {
-            eprint!("Error {}", err);
-            exit(-1);
+    if let Err(err) = run(source, target) {
+        eprintln!("docket: error: {}", err);
+        if let Some(source) = err.source() {
+            warn!("Error caused by {}", source);
         }
+        exit(-1);
     }
 }
 
+/// Initialise logging
+///
+/// Sets up the env logger using our custom environment varaibles.
 fn init_logging() {
-    let log_env = Env::new()
-        .filter("DOCKET_LOG")
-        .write_style("DOCKET_LOG_STYLE");
-    env_logger::init_from_env(log_env);
+    use env_logger::*;
+    builder()
+        .target(Target::Stdout)
+        .parse_env(
+            Env::new()
+                .filter("DOCKET_LOG")
+                .write_style("DOCKET_LOG_STYLE"),
+        )
+        .init();
 }
