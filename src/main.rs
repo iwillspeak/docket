@@ -15,6 +15,7 @@ mod utils;
 use std::{path::PathBuf, process::exit};
 
 use docket::Docket;
+use env_logger::Env;
 use error::Result;
 
 #[cfg(feature = "syntect-hl")]
@@ -28,7 +29,7 @@ fn run(source: PathBuf, target: PathBuf) -> Result<()> {
 }
 
 fn main() {
-    env_logger::init();
+    init_logging();
 
     if std::env::var("DOCKET_LEGACY").is_ok() {
         legacy::main();
@@ -42,4 +43,11 @@ fn main() {
             exit(-1);
         }
     }
+}
+
+fn init_logging() {
+    let log_env = Env::new()
+        .filter("DOCKET_LOG")
+        .write_style("DOCKET_LOG_STYLE");
+    env_logger::init_from_env(log_env);
 }

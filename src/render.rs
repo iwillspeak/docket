@@ -2,7 +2,8 @@ use log::trace;
 
 use crate::{
     baler::{self, BaleItem, NavInfo},
-    error::Result, search::SearchableDocument,
+    error::Result,
+    search::SearchableDocument,
 };
 use std::{
     fs::{create_dir, create_dir_all, File},
@@ -30,7 +31,11 @@ impl RenderContext {
     /// Root render contexts hold global information about the render, and are
     /// used as parents for derived cotnexts.
     pub fn create_root(path: PathBuf, title: String) -> Self {
-        RenderContext { path, title, slug_path: Vec::new() }
+        RenderContext {
+            path,
+            title,
+            slug_path: Vec::new(),
+        }
     }
 
     /// Create a render context based on a parent one
@@ -72,7 +77,8 @@ pub(crate) fn render_bale(ctx: &RenderContext, bale: baler::UnopenedBale) -> Res
                 // bale's slug and generating the correct path.
                 let path = (&ctx.path).clone();
                 let path = path.join(bale.slug());
-                let ctx = RenderContext::create_with_parent(ctx, path, bale.nav_info().slug.clone());
+                let ctx =
+                    RenderContext::create_with_parent(ctx, path, bale.nav_info().slug.clone());
                 render_bale(&ctx, bale)?;
             }
             BaleItem::Page(page) => {
