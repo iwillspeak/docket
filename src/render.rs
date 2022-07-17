@@ -47,6 +47,26 @@ enum RenderStateKind<'s, 'b> {
     Nested(&'s RenderState<'s, 'b>, PathBuf),
 }
 
+impl<'s, 'b> RenderStateKind<'s, 'b> {
+    /// Create a new root render state
+    /// 
+    /// This render state represents the root node in the documentaiton tree. It
+    /// renders to the path in the given render context directly.
+    fn new_root(context: &'s RenderContext) -> Self {
+        RenderStateKind::Root(context)
+    }
+
+    /// Create a new render context based on a parent state
+    /// 
+    /// The nested render state gets a new path based on the paren'ts location
+    /// and the given `slug`.
+    fn with_parent(state: &'s RenderState<'s, 'b>, slug: &str) -> Self {
+        let mut new_path = PathBuf::from(state.output_path());
+        new_path.push(slug);
+        RenderStateKind::Nested(state, new_path)
+    }
+}
+
 /// Render State
 /// 
 /// The render state is used by layout to render pages.
@@ -55,22 +75,17 @@ pub struct RenderState<'s, 'b> {
     kind: RenderStateKind<'s, 'b>,
     /// The bale that is being rendered
     bale: &'b BaleFrontispice,
+    /// The navigation items at this level
+    navs: Vec<NavInfo>,
 }
 
 impl<'s, 'b> RenderState<'s, 'b> {
-    /// Create a new root render state
+    /// Create a new render state
     /// 
     /// This render state represents the root node in the documentaiton tree. It
     /// renders to the path in the given render context directly.
-    fn new_root(context: &'s RenderContext, bale: &'b BaleFrontispice) -> Self {
-        RenderState { kind: RenderStateKind::Root(context), bale }
-    }
-
-    /// Create a new render context based on a parent
-    fn with_parent(state: &'s RenderState<'s, 'b>, bale: &'b BaleFrontispice) -> Self {
-        let mut new_path = PathBuf::from(state.output_path());
-        new_path.push(&bale.slug());
-        RenderState { kind: RenderStateKind::Nested(state, new_path), bale }
+    fn new(kind: RenderStateKind<'s, 'b>, bale: &'b BaleFrontispice, navs: Vec<NavInfo>) -> Self {
+        RenderState { kind, bale, navs }
     }
 
     /// Get the output path for this render state
@@ -97,6 +112,20 @@ impl<'s, 'b> RenderState<'s, 'b> {
     }
 }
 
+/// An entry in the navigation tree.
+struct NavInfo {
+    /// The title of the item.
+    pub title: String,
+    /// The slug to use when constructing a URI.
+    pub slug: String,
+}
+
+impl NavInfo {
+    fn new(slug: &str, title: &str) -> Self {
+        NavInfo { title: title.to_owned(), slug: slug.to_owned() }
+    }
+}
+
 /// Kind of page we are rendering. For index pages we don't need to do anything
 /// to get to the bale root. For nested pages we keep the page's slug.
 enum PageKind {
@@ -114,20 +143,10 @@ fn render_bale_contents(state: &RenderState, assets: Vec<PathBuf>, items: Vec<Do
     trace!("rendering bale contents {:?} to {:?}", state.bale, state.output_path());
     fs::create_dir_all(&state.output_path())?;
 
-    // TODO: Navs should probably be moved into the render state, rather than
-    // being fabricated here in the render function.
-    let navs: Vec<_> = items
-        .iter()
-        .map(|item| match item {
-            DoctreeItem::Page(page) => (page.slug().to_owned(), page.title().to_owned()),
-            DoctreeItem::Bale(bale) => (bale.frontispiece().slug().to_owned(), bale.frontispiece().title().to_owned()),
-        })
-        .collect();
-
     // If we have an index page then redner that
     if let Some(page) = state.current_bale().index_page() {
         trace!("Bale has an index. Rendering.");
-        render_page(&state, &navs,PageKind::Index,  page)?;
+        render_page(&state,PageKind::Index,  page)?;
     }
 
     // Walk our assets and copy them
@@ -141,15 +160,26 @@ fn render_bale_contents(state: &RenderState, assets: Vec<PathBuf>, items: Vec<Do
         match item {
             DoctreeItem::Bale(bale) => {
                 let (bale, assets, items) = bale.break_open()?;
-                let state = RenderState::with_parent(&state, &bale);
+                let navs = navs_for_items(&items);
+                let state = RenderState::new(RenderStateKind::with_parent(&state, bale.slug()), &bale, navs);
                 render_bale_contents(&state, assets, items)?;
             }
             DoctreeItem::Page(page) =>
-                render_page(&state, &navs, PageKind::Nested(page.slug().to_owned()), &page)?
+                render_page(&state, PageKind::Nested(page.slug().to_owned()), &page)?
         }
     }
 
     Ok(())
+}
+
+fn navs_for_items(items: &[DoctreeItem]) -> Vec<NavInfo> {
+    items
+        .iter()
+        .map(|item| match item {
+            DoctreeItem::Page(page) => NavInfo::new(page.slug(), page.title()),
+            DoctreeItem::Bale(bale) => NavInfo::new(bale.frontispiece().slug(), bale.frontispiece().title()),
+        })
+        .collect()
 }
 
 /// Render a Single Page
@@ -157,8 +187,6 @@ fn render_bale_contents(state: &RenderState, assets: Vec<PathBuf>, items: Vec<Do
 /// Writes the rendred contents of a given page to a given path.
 fn render_page(
     state: &RenderState,
-    // FIXME: Navs need mving into the render state
-    navs: &[(String, String)],
     kind: PageKind,
     page: &crate::doctree::Page,
 ) -> Result<()> {
@@ -183,8 +211,8 @@ fn render_page(
     writeln!(writer, "-----------------------------------")?;
 
     writeln!(writer, " * # [{}]({})", state.current_bale().title(), nav_prefix)?;
-    for nav in navs {
-        writeln!(writer, "   - ## [{}]({}{})", nav.1, nav_prefix, nav.0)?;
+    for nav in state.navs.iter() {
+        writeln!(writer, "   - ## [{}]({}{})", nav.title, nav_prefix, nav.slug)?;
     }
 
     write!(writer, "\n***\n\n{}", page.content())?;
@@ -199,6 +227,7 @@ fn render_page(
 pub(crate) fn render<P: AsRef<Path>>(target: P, title: String, doctree_root: doctree::Bale) -> Result<()> {
     let ctx = RenderContext::new(target.as_ref().to_owned(), title);
     let (frontispiece, assets, items) = doctree_root.break_open()?;
-    let state = RenderState::new_root(&ctx, &frontispiece);
+    let navs = navs_for_items(&items);
+    let state = RenderState::new(RenderStateKind::new_root(&ctx), &frontispiece, navs);
     render_bale_contents(&state, assets, items)
 }
