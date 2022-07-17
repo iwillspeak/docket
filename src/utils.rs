@@ -178,6 +178,9 @@ mod test {
         assert_eq!(Some("Hello World"), prettify_dir("Hello World").as_deref());
         assert_eq!(Some("Test"), prettify_dir("/this/is/a/Test").as_deref());
         assert_eq!(Some("Test"), prettify_dir("../another/Test/.").as_deref());
-        assert_eq!(Some("Testing2"), prettify_dir("./futher/10-Testing2/").as_deref());
+        assert_eq!(
+            Some("Testing2"),
+            prettify_dir("./futher/10-Testing2/").as_deref()
+        );
     }
 }

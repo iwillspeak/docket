@@ -1,19 +1,26 @@
 use log::trace;
 
+mod layout;
+
 use crate::{
+    asset::Asset,
     doctree::{self, BaleFrontispice, DoctreeItem},
-    error::Result, asset::Asset,
+    error::Result,
 };
 use std::{
-    path::{Path, PathBuf}, fs::{self, File}, io::{Write, BufWriter},
+    fs::{self, File},
+    io::BufWriter,
+    path::{Path, PathBuf},
 };
+
+use self::layout::Layout;
 
 /// Render Contex
 ///
 /// A render context represents a point into which pages can be rendered. It
 /// stores global information about the current rendering process. The render
 /// context is immutable for the duration of the render.
-/// 
+///
 /// Nested information about the current output directory, the bale being
 /// rendred, and the current point in the navigation heirachy is stored in the
 /// `RenderState`.
@@ -22,6 +29,8 @@ pub struct RenderContext {
     path: PathBuf,
     /// The overall site name. This is used as the root point in the navigation.
     site_name: String,
+    /// The layout for this render
+    layout: Option<Box<dyn Layout>>,
 }
 
 impl RenderContext {
@@ -32,7 +41,8 @@ impl RenderContext {
     pub fn new(path: PathBuf, site_name: String) -> Self {
         RenderContext {
             path,
-            site_name
+            site_name,
+            layout: None,
         }
     }
 }
@@ -49,7 +59,7 @@ enum RenderStateKind<'s, 'b> {
 
 impl<'s, 'b> RenderStateKind<'s, 'b> {
     /// Create a new root render state
-    /// 
+    ///
     /// This render state represents the root node in the documentaiton tree. It
     /// renders to the path in the given render context directly.
     fn new_root(context: &'s RenderContext) -> Self {
@@ -57,7 +67,7 @@ impl<'s, 'b> RenderStateKind<'s, 'b> {
     }
 
     /// Create a new render context based on a parent state
-    /// 
+    ///
     /// The nested render state gets a new path based on the paren'ts location
     /// and the given `slug`.
     fn with_parent(state: &'s RenderState<'s, 'b>, slug: &str) -> Self {
@@ -68,7 +78,7 @@ impl<'s, 'b> RenderStateKind<'s, 'b> {
 }
 
 /// Render State
-/// 
+///
 /// The render state is used by layout to render pages.
 pub struct RenderState<'s, 'b> {
     /// The kind link
@@ -81,7 +91,7 @@ pub struct RenderState<'s, 'b> {
 
 impl<'s, 'b> RenderState<'s, 'b> {
     /// Create a new render state
-    /// 
+    ///
     /// This render state represents the root node in the documentaiton tree. It
     /// renders to the path in the given render context directly.
     fn new(kind: RenderStateKind<'s, 'b>, bale: &'b BaleFrontispice, navs: Vec<NavInfo>) -> Self {
@@ -89,7 +99,7 @@ impl<'s, 'b> RenderState<'s, 'b> {
     }
 
     /// Get the output path for this render state
-    /// 
+    ///
     /// The path is the folder where items should be created when rendering.
     fn output_path(&self) -> &Path {
         match &self.kind {
@@ -122,31 +132,52 @@ struct NavInfo {
 
 impl NavInfo {
     fn new(slug: &str, title: &str) -> Self {
-        NavInfo { title: title.to_owned(), slug: slug.to_owned() }
+        NavInfo {
+            title: title.to_owned(),
+            slug: slug.to_owned(),
+        }
     }
 }
 
 /// Kind of page we are rendering. For index pages we don't need to do anything
 /// to get to the bale root. For nested pages we keep the page's slug.
-enum PageKind {
+pub(crate) enum PageKind {
     /// An index page
     Index,
     /// A neseted page with a given slug
-    Nested(String)
+    Nested(String),
+}
+
+impl PageKind {
+    /// Get the path to the current bale given this page's kind.
+    fn path_to_bale(&self) -> &'static str {
+        match self {
+            PageKind::Index => "./",
+            PageKind::Nested(_) => "../",
+        }
+    }
 }
 
 /// Render a bale to the given directory
 ///
 /// This walks the tree of documentaiton referred to by the given `bale` and
 /// writes the rendered result to the given `ctx`.
-fn render_bale_contents(state: &RenderState, assets: Vec<PathBuf>, items: Vec<DoctreeItem>) -> Result<()> {
-    trace!("rendering bale contents {:?} to {:?}", state.bale, state.output_path());
+fn render_bale_contents(
+    state: &RenderState,
+    assets: Vec<PathBuf>,
+    items: Vec<DoctreeItem>,
+) -> Result<()> {
+    trace!(
+        "rendering bale contents {:?} to {:?}",
+        state.bale,
+        state.output_path()
+    );
     fs::create_dir_all(&state.output_path())?;
 
     // If we have an index page then redner that
     if let Some(page) = state.current_bale().index_page() {
         trace!("Bale has an index. Rendering.");
-        render_page(&state,PageKind::Index,  page)?;
+        render_page(&state, PageKind::Index, page)?;
     }
 
     // Walk our assets and copy them
@@ -161,11 +192,16 @@ fn render_bale_contents(state: &RenderState, assets: Vec<PathBuf>, items: Vec<Do
             DoctreeItem::Bale(bale) => {
                 let (bale, assets, items) = bale.break_open()?;
                 let navs = navs_for_items(&items);
-                let state = RenderState::new(RenderStateKind::with_parent(&state, bale.slug()), &bale, navs);
+                let state = RenderState::new(
+                    RenderStateKind::with_parent(&state, bale.slug()),
+                    &bale,
+                    navs,
+                );
                 render_bale_contents(&state, assets, items)?;
             }
-            DoctreeItem::Page(page) =>
+            DoctreeItem::Page(page) => {
                 render_page(&state, PageKind::Nested(page.slug().to_owned()), &page)?
+            }
         }
     }
 
@@ -177,7 +213,9 @@ fn navs_for_items(items: &[DoctreeItem]) -> Vec<NavInfo> {
         .iter()
         .map(|item| match item {
             DoctreeItem::Page(page) => NavInfo::new(page.slug(), page.title()),
-            DoctreeItem::Bale(bale) => NavInfo::new(bale.frontispiece().slug(), bale.frontispiece().title()),
+            DoctreeItem::Bale(bale) => {
+                NavInfo::new(bale.frontispiece().slug(), bale.frontispiece().title())
+            }
         })
         .collect()
 }
@@ -185,37 +223,25 @@ fn navs_for_items(items: &[DoctreeItem]) -> Vec<NavInfo> {
 /// Render a Single Page
 ///
 /// Writes the rendred contents of a given page to a given path.
-fn render_page(
-    state: &RenderState,
-    kind: PageKind,
-    page: &crate::doctree::Page,
-) -> Result<()> {
-
-    let (path, nav_prefix) = match kind {
-        PageKind::Index => (state.output_path().into(), "./"),
-        PageKind::Nested(slug) => {
-            let mut path = PathBuf::from(state.output_path());
-            path.push(slug);
-            (path, "../")
-        },
+fn render_page(state: &RenderState, kind: PageKind, page: &doctree::Page) -> Result<()> {
+    let mut path = PathBuf::from(state.output_path());
+    if let PageKind::Nested(slug) = &kind {
+        path.push(slug);
+        fs::create_dir_all(&path)?;
     };
 
     trace!("rendering page {} at {:?}", page.title(), path);
-    fs::create_dir_all(&path)?;
 
     let output_path = path.join("index.html");
     let file = File::create(&output_path)?;
     let mut writer = BufWriter::new(file);
 
-    writeln!(writer, "{} -- {}", state.ctx().site_name, page.title())?;
-    writeln!(writer, "-----------------------------------")?;
-
-    writeln!(writer, " * # [{}]({})", state.current_bale().title(), nav_prefix)?;
-    for nav in state.navs.iter() {
-        writeln!(writer, "   - ## [{}]({}{})", nav.title, nav_prefix, nav.slug)?;
-    }
-
-    write!(writer, "\n***\n\n{}", page.content())?;
+    let layout = state
+        .ctx()
+        .layout
+        .as_deref()
+        .unwrap_or_else(layout::get_default_layout);
+    layout.render(&mut writer, state, kind, page)?;
 
     Ok(())
 }
@@ -224,7 +250,11 @@ fn render_page(
 ///
 /// Wwrite  the given doctree out to the `target` path using the default render
 /// contex.
-pub(crate) fn render<P: AsRef<Path>>(target: P, title: String, doctree_root: doctree::Bale) -> Result<()> {
+pub(crate) fn render<P: AsRef<Path>>(
+    target: P,
+    title: String,
+    doctree_root: doctree::Bale,
+) -> Result<()> {
     let ctx = RenderContext::new(target.as_ref().to_owned(), title);
     let (frontispiece, assets, items) = doctree_root.break_open()?;
     let navs = navs_for_items(&items);
