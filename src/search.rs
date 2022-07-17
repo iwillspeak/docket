@@ -1,3 +1,12 @@
+//! Search Index Builder
+//!
+//! This module defines a builder API to produce term frequency indexes. These
+//! indexes are serialisable. Once built search indexes are written out to the
+//! root of the site and loaded by javascript to provide an interactive search.
+
+// FIXME: Remove once this is done prototyping
+#![allow(dead_code)]
+
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::File;

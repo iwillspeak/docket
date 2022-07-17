@@ -56,3 +56,34 @@ Seprating rendering, layout, and renderables like this allows _some_ portion of
 location. A builder API for render conntexts along with making the
 `Highlighter`, and `Layout` traits public would allow a user to inject a custom
 layout.
+
+## Printing of Things
+
+The renderable trait that is passed to a `Layout` should expose the toc, title,
+and content of the document. We can expose these as opaque items which implement
+the `Display` trait. That way we can format directly into whatever target buffer
+is being written to.
+
+E.g.:
+
+```rust
+trait Renderable {
+  fn toc(&'a self, ctx: &'b RenderCtx) -> Toc<'a, 'b>;
+  fn content(&'a self, ctx: &'b RenderCtx) -> Content<'a, 'b>;
+}
+
+type Content<'a> {
+  toc: &'a TocTree;
+  ctx: &'b RenderCtx;
+}
+
+impl<'a> Display for Content<'a> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+      // Create a highlighter iterator using the current highlighter, consuming
+      // events from our main TOC. Pull those events down into Pulldown and have
+      // it render directly to the output stream.
+      html::write_html(Highlighted(self.ctx.highlighter, self.toc.iter()))
+        .map_err(|_| fmt::Error)
+    }
+}
+```
