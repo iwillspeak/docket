@@ -183,4 +183,16 @@ mod test {
             prettify_dir("./futher/10-Testing2/").as_deref()
         );
     }
+
+    #[test]
+    fn path_or_default_with_valid_argument() {
+        let source = Some("/Users/foo/".to_owned());
+        assert_eq!(Path::new("/Users/foo/"), path_or_default(source, "."));
+    }
+
+    #[test]
+    fn path_or_default_without_argument() {
+        let source = None;
+        assert_eq!(Path::new("baz/"), path_or_default(source, "baz/"));
+    }
 }

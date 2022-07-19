@@ -11,6 +11,18 @@ pub enum Error {
     SourcePathNotADirectory(PathBuf),
     /// A generic IO Error occured
     Io(io::Error),
+    /// Annotated inner error
+    Annotated(String, Box<dyn std::error::Error>),
+}
+
+impl Error {
+    pub fn annotated<S, E>(anno: S, err: E) -> Self
+    where
+        S: Into<String>,
+        E: std::error::Error + 'static,
+    {
+        Error::Annotated(anno.into(), Box::new(err))
+    }
 }
 
 impl std::fmt::Display for Error {
@@ -24,6 +36,9 @@ impl std::fmt::Display for Error {
                 )
             }
             Error::Io(io) => io.fmt(f),
+            Error::Annotated(anno, e) => {
+                write!(f, "{}: {}", anno, e)
+            }
         }
     }
 }
@@ -47,3 +62,17 @@ impl From<io::Error> for Error {
 ///
 /// Shorthand result type for functions returning docket errors.
 pub type Result<T> = std::result::Result<T, Error>;
+
+pub(crate) trait ResultExt<T, A: Into<String>> {
+    fn annotate_err(self, anno: A) -> Result<T>;
+}
+
+impl<T, E, A> ResultExt<T, A> for std::result::Result<T, E>
+where
+    E: std::error::Error + 'static,
+    A: Into<String>,
+{
+    fn annotate_err(self, anno: A) -> Result<T> {
+        self.map_err(|err| Error::annotated(anno, err))
+    }
+}
