@@ -7,8 +7,7 @@ mod asset;
 mod docket;
 mod doctree;
 mod error;
-#[cfg(legacy)]
-mod legacy;
+mod highlight;
 mod render;
 mod search;
 mod utils;
@@ -21,11 +20,11 @@ use std::{
 
 use docket::Docket;
 use error::Result;
-use log::{error, info, warn};
+use log::{info, warn};
 
 use crate::error::ResultExt;
 
-#[cfg(all(feature = "syntect-hl", legacy))]
+#[cfg(all(feature = "syntect-hl"))]
 #[macro_use]
 extern crate lazy_static;
 

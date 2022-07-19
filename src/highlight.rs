@@ -1,7 +1,7 @@
 use std::io::Write;
 
 use log::debug;
-use pulldown_cmark::Event;
+use pulldown_cmark::{CodeBlockKind, Event, Tag};
 
 pub(crate) trait Highlighter {
     /// # Highlight a Code Block
@@ -22,12 +22,12 @@ mod syntect_hl {
     use std::io::Write;
 
     use log::debug;
-    use pulldown_cmark::{CowStr, Event, Tag};
+    use pulldown_cmark::Event;
     use syntect::{
         self, highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet,
     };
 
-    use super::Highlighter;
+    use super::{to_default_events, Highlighter};
 
     pub struct SyntectHighlighter {
         ss: SyntaxSet,
@@ -57,14 +57,7 @@ mod syntect_hl {
             let highlighted = highlighted_html_for_string(&block, &self.ss, &syntax, theme);
             match highlighted {
                 Ok(html) => vec![Event::Html(html.into())],
-                Err(_) => {
-                    let name: CowStr = String::from(name).into();
-                    vec![
-                        Event::Start(Tag::CodeBlock(name.clone())),
-                        Event::Text(String::from(block).into()),
-                        Event::End(Tag::CodeBlock(name)),
-                    ]
-                }
+                Err(_) => to_default_events(&name, &block),
             }
         }
         fn write_header(&self, _out: &mut dyn Write) -> std::io::Result<()> {
@@ -76,26 +69,15 @@ mod syntect_hl {
 mod js_hl {
     use std::io::Write;
 
-    use pulldown_cmark::{CowStr, Event, Tag};
+    use pulldown_cmark::Event;
 
-    use super::Highlighter;
+    use super::{to_default_events, Highlighter};
 
-    pub struct HighlightJsHighlighter();
-
-    impl HighlightJsHighlighter {
-        pub const fn new() -> Self {
-            HighlightJsHighlighter()
-        }
-    }
+    pub struct HighlightJsHighlighter;
 
     impl Highlighter for HighlightJsHighlighter {
         fn hl_codeblock(&self, name: &str, block: &str) -> Vec<Event> {
-            let name: CowStr = String::from(name).into();
-            vec![
-                Event::Start(Tag::CodeBlock(name.clone())),
-                Event::Text(String::from(block).into()),
-                Event::End(Tag::CodeBlock(name)),
-            ]
+            to_default_events(&name, &block)
         }
 
         fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()> {
@@ -113,6 +95,15 @@ mod js_hl {
     }
 }
 
+fn to_default_events<'a, 'b>(name: &'a str, block: &'a str) -> Vec<Event<'b>> {
+    let name = CodeBlockKind::Fenced(name.to_owned().into());
+    vec![
+        Event::Start(Tag::CodeBlock(name.clone())),
+        Event::Text(block.to_owned().into()),
+        Event::End(Tag::CodeBlock(name)),
+    ]
+}
+
 #[cfg(feature = "syntect-hl")]
 lazy_static! {
     static ref GLOBAL_SYNTECT_HL: SyntectHighlighter = SyntectHighlighter::new();
@@ -122,7 +113,7 @@ lazy_static! {
 ///
 /// Returns a reference to a shared highlighter.
 pub(crate) fn get_hilighter() -> &'static dyn Highlighter {
-    static GLOBAL_JS_HL: HighlightJsHighlighter = HighlightJsHighlighter::new();
+    static GLOBAL_JS_HL: HighlightJsHighlighter = HighlightJsHighlighter;
     #[cfg(feature = "syntect-hl")]
     if std::env::var("DOCKET_FORCE_JS_HL").is_err() {
         debug!("Using syntect for highlighting.");
