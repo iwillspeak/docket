@@ -6,7 +6,7 @@
 //! 'bulitin' assets, such as the CSS which is bundled with Docket
 //! itself and on-disk assets from the source directory.
 
-use log::{error, warn};
+use log::warn;
 
 use super::Result;
 use std::fs::{self, File};
