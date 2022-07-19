@@ -1,4 +1,5 @@
 //! Non-Renderable Assets
+
 //!
 //! This module models the other files in a given docs directory which
 //! need to be copied to the output. We use this to abstract between
@@ -72,16 +73,32 @@ impl Asset {
                 write!(file, "{}", int.contents)?;
                 Ok(())
             }
-            Asset::Disk(path) => {
-                if path.is_dir() {
-                    error!("FIXME: Need to implement recirsive copy for directory assets");
-                } else if let Some(name) = path.file_name() {
-                    fs::copy(path, output.join(name))?;
-                } else {
-                    warn!("Asset at {:?} does not appear to be copyable", path);
-                }
-                Ok(())
-            }
+            Asset::Disk(path) => copy_single(&path, output),
         }
     }
+}
+
+fn copy_single(path: &Path, target: &Path) -> Result<()> {
+    if path.is_dir() {
+        let mut target = PathBuf::from(target);
+        target.push(path.file_name().unwrap());
+        if !target.exists() {
+            fs::create_dir(&target)?;
+        }
+        copy_recurse(path, &target)?;
+    } else if let Some(name) = path.file_name() {
+        fs::copy(path, target.join(name))?;
+    } else {
+        warn!("Asset at {:?} does not appear to be copyable", path);
+    }
+    Ok(())
+}
+
+fn copy_recurse(source: &Path, target: &Path) -> Result<()> {
+    for entry in fs::read_dir(source)? {
+        let entry = entry?;
+        let path = entry.path();
+        copy_single(&path, target)?;
+    }
+    Ok(())
 }
