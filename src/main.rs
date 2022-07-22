@@ -10,6 +10,7 @@ mod error;
 mod highlight;
 mod render;
 mod search;
+mod toc;
 mod utils;
 
 use std::{
