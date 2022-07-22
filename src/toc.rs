@@ -7,6 +7,7 @@
 use std::iter::Peekable;
 
 use pulldown_cmark::*;
+use log::error;
 
 use crate::build;
 
@@ -45,7 +46,7 @@ pub(crate) struct Heading<'a> {
 #[derive(Debug)]
 pub(crate) struct TocNode<'a> {
     /// The heading at this node
-    heading: Option<Heading<'a>>,
+    heading: Heading<'a>,
 
     /// The TOC contents for this node.
     contents: Vec<TocElement<'a>>,
@@ -81,7 +82,10 @@ where
                 // If we see a heading end tag then recurse to parse any
                 // elements owned by that theading
                 Event::End(Tag::Heading(level, ..)) => {
-                    elements.push(TocElement::Node(TocNode { heading: heading.take(), contents: parse_toc_at_level(Some(level), events)}));
+                    match heading.take() {
+                        Some(heading) =>                     elements.push(TocElement::Node(TocNode { heading, contents: parse_toc_at_level(Some(level), events)})),
+                        None => error!("Invalid or mis-matched heading at {level}"),
+                    }
                 },
                 // A normal event
                 _ => match heading {
