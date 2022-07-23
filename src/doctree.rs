@@ -31,8 +31,6 @@ pub(crate) enum DoctreeItem {
     Bale(Bale),
 }
 
-impl DoctreeItem {}
-
 /// A Documentation Page
 ///
 /// Each documentaiton page is mad eup of two items: a simple `slug` which

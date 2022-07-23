@@ -6,10 +6,37 @@
 
 use std::iter::Peekable;
 
-use pulldown_cmark::*;
 use log::error;
+use pulldown_cmark::*;
 
-use crate::build;
+#[derive(Debug)]
+pub(crate) struct TocTree<'a>(Vec<TocElement<'a>>);
+
+impl<'a> TocTree<'a> {
+    /// Create a new TOC from the given `markdown`
+    ///
+    /// Parses the markdown text and constructs a tree of contents from the
+    /// events.
+    pub(crate) fn parse(markdown: &'a str) -> Self {
+        let parser = Parser::new_ext(markdown, Options::all());
+        TocTree(parse_toc_events(parser))
+    }
+
+    /// Get the Primary Heading
+    ///
+    /// Returns the first heading in the document. This is treated as the
+    /// primary heading and used by pages to infer the page's title.
+    pub fn primary_heading(&self) -> Option<&Heading<'a>> {
+        self.0.iter().find_map(|el| match el {
+            TocElement::Node(n) => Some(&n.heading),
+            _ => None,
+        })
+    }
+
+    pub(crate) fn iter_events(&self) -> impl Iterator<Item = Event<'a>> {
+        self.0.iter().flat_map(|e| e.iter_events())
+    }
+}
 
 /// # A single ement in the TOC
 ///
@@ -52,19 +79,43 @@ pub(crate) struct TocNode<'a> {
     contents: Vec<TocElement<'a>>,
 }
 
+/// Get the inner text from a series of events. used to create a heading name
+/// from a series of events, or to find the text that should be
+pub(crate) fn inner_text<'e, 'a, I>(events: I) -> String
+where
+    I: Iterator<Item = &'e Event<'a>>,
+    'a: 'e,
+{
+    let mut text = String::new();
+
+    for ev in events {
+        match ev {
+            Event::Text(txt) => text.push_str(txt.as_ref()),
+            Event::Code(code) => text.push_str(code.as_ref()),
+            Event::Html(htm) => text.push_str(htm.as_ref()),
+            _ => (),
+        }
+    }
+
+    text
+}
+
 /// Parse a TOC tree from the headers in the markdown document
-pub(crate) fn parse_toc<'a, I>(events: I) -> Vec<TocElement<'a>>
+fn parse_toc_events<'a, I>(events: I) -> Vec<TocElement<'a>>
 where
     I: Iterator<Item = Event<'a>>,
 {
     parse_toc_at_level(None, &mut events.peekable())
 }
 
-fn parse_toc_at_level<'a, I>(level: Option<HeadingLevel>, events: &mut Peekable<I>) -> Vec<TocElement<'a>>
+fn parse_toc_at_level<'a, I>(
+    level: Option<HeadingLevel>,
+    events: &mut Peekable<I>,
+) -> Vec<TocElement<'a>>
 where
     I: Iterator<Item = Event<'a>>,
 {
-    let mut heading = None; 
+    let mut heading = None;
     let mut elements = Vec::new();
 
     while is_below(level, events.peek()) {
@@ -81,11 +132,12 @@ where
                 }
                 // If we see a heading end tag then recurse to parse any
                 // elements owned by that theading
-                Event::End(Tag::Heading(level, ..)) => {
-                    match heading.take() {
-                        Some(heading) =>                     elements.push(TocElement::Node(TocNode { heading, contents: parse_toc_at_level(Some(level), events)})),
-                        None => error!("Invalid or mis-matched heading at {level}"),
-                    }
+                Event::End(Tag::Heading(level, ..)) => match heading.take() {
+                    Some(heading) => elements.push(TocElement::Node(TocNode {
+                        heading,
+                        contents: parse_toc_at_level(Some(level), events),
+                    })),
+                    None => error!("Invalid or mis-matched heading at {level}"),
                 },
                 // A normal event
                 _ => match heading {
@@ -98,7 +150,7 @@ where
                     },
                 },
             },
-            None => break
+            None => break,
         }
     }
 
@@ -114,18 +166,6 @@ fn is_below(level: Option<HeadingLevel>, event: Option<&Event>) -> bool {
         },
         None => true,
     }
-}
-
-/// # Render Pulldown Events to a String
-///
-/// Takes a set of captured events and renders them to a string.
-fn render_to_string<'a, I>(events: I) -> String
-where
-    I: Iterator<Item = Event<'a>>,
-{
-    let mut rendered = String::new();
-    html::push_html(&mut rendered, events);
-    rendered
 }
 
 #[cfg(test)]
