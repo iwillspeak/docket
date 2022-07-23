@@ -41,29 +41,33 @@ impl Layout for DefaultLayout {
     ) -> Result<()> {
         let nav_prefix = kind.path_to_bale();
 
-        writeln!(writer, "{} -- {}", state.ctx().site_name, page.title())?;
-        writeln!(writer, "-----------------------------------")?;
-        writeln!(writer, "")?;
+        writeln!(writer, "<!DOCTYPE html><html><body>")?;
         writeln!(
             writer,
-            " * # [{}]({})",
+            "<heading><h1>{}</h1></heading>",
+            state.ctx().site_name
+        )?;
+        writeln!(writer, "<nav><ul>")?;
+        writeln!(
+            writer,
+            "<li><a href='{1}'>{0}</a>",
             state.current_bale().title(),
             nav_prefix
         )?;
+        writeln!(writer, "<ul>")?;
         for nav in state.navs.iter() {
             writeln!(
                 writer,
-                "   - ## [{}]({}{})",
+                "<li><a href='{1}{2}'>{0}</a>",
                 nav.title, nav_prefix, nav.slug
             )?;
         }
-        writeln!(writer, "")?;
-        writeln!(writer, "             ***")?;
-        writeln!(writer, "")?;
+        writeln!(writer, "</ul>")?;
+        writeln!(writer, "</ul></nav>")?;
+        writeln!(writer, "<main>")?;
         write!(writer, "{}", page.content())?;
-        writeln!(writer, "")?;
-        writeln!(writer, "             ***")?;
-        writeln!(writer, "")?;
+        writeln!(writer, "</main>")?;
+        writeln!(writer, "<footer>")?;
         if let Some(footer) = state.current_bale().footer() {
             write!(writer, "{}", footer)?;
         } else {

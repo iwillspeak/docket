@@ -17,6 +17,7 @@ use log::info;
 
 use crate::{
     error::Result,
+    toc::{self, TocElement},
     utils::{self, slugify_path},
 };
 
@@ -39,31 +40,27 @@ pub(crate) enum DoctreeItem {
 /// be traversed to inspect the structure of the page; and rendered to HTML.
 #[derive(Debug)]
 pub(crate) struct Page {
-    // TODO: This is widly different from what the documentaion, or design, suggest.
     slug: String,
     title: String,
-    content: String,
+    tree: Vec<TocElement>,
 }
 
 impl Page {
     /// Open a Page
     ///
     /// Loads the contents of the given file and parses it as markdown.
-    pub fn open<P: AsRef<std::path::Path>>(path: P) -> result::Result<Self, std::io::Error> {
+    pub fn open<P: AsRef<Path>>(path: P) -> result::Result<Self, std::io::Error> {
         let slug = utils::slugify_path(&path);
-        let contents = fs::read_to_string(path)?;
-        Ok(Page::from_parts(slug, contents))
-    }
-
-    /// Make a page from constituent parts
-    fn from_parts<M: AsRef<str>>(slug: String, markdown: M) -> Self {
-        // FIXME: use the body of the page...
-        let title = format!("DUMMY PAGE TITLE {}", slug);
-        Page {
-            slug,
-            title,
-            content: markdown.as_ref().to_owned(),
-        }
+        let markdown = fs::read_to_string(&path)?;
+        let tree = toc::parse_toc(&markdown);
+        let title = toc::primary_heading(&tree).cloned().unwrap_or_else(|| {
+            path.as_ref()
+                .file_stem()
+                .unwrap()
+                .to_string_lossy()
+                .into_owned()
+        });
+        Ok(Page { slug, title, tree })
     }
 
     /// Get the title for this page
@@ -77,8 +74,8 @@ impl Page {
     }
 
     /// FIXME: Shim to allow copying
-    pub fn content(&self) -> &str {
-        &self.content
+    pub fn content(&self) -> String {
+        toc::render_html(&self.tree[..])
     }
 }
 
@@ -242,6 +239,11 @@ impl Frontispiece {
             Some(page) => page.title.clone(),
             None => utils::prettify_dir(&path).expect("Could not create a title"),
         };
+        let footer = footer.map(|text| {
+            let mut output = String::new();
+            pulldown_cmark::html::push_html(&mut output, pulldown_cmark::Parser::new(&text));
+            output
+        });
         Frontispiece {
             title,
             slug: slugify_path(path),
