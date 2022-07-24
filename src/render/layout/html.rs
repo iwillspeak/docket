@@ -1,23 +1,49 @@
-use std::{fmt, io::Write};
-
-use pulldown_cmark::HeadingLevel;
-
 use crate::{
     doctree::Page,
     error::Result,
     render::{NavInfo, PageKind, RenderState},
     toc::{Nodes, Toc, TocElement},
 };
+use pulldown_cmark::HeadingLevel;
+use std::{fmt, io::Write};
 
 use super::Layout;
 
-struct Content<'a>(&'a Toc);
+struct Breadcrumbs<'a>(&'a RenderState<'a, 'a>, &'a str);
 
-impl<'a> Content<'a> {
-    fn new(toc: &'a Toc) -> Self {
-        Content(toc)
+impl<'a> fmt::Display for Breadcrumbs<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut current = Some(self.0);
+        let mut stack = Vec::new();
+        let mut path = String::from(self.1);
+
+        while let Some(state) = current {
+            stack.push((path.clone(), state));
+            path.push_str("../");
+            current = state.parent();
+        }
+        write!(f, "<ol class='breadcrumbs'>")?;
+        if let Some((path, _)) = stack.pop() {
+            write!(
+                f,
+                "<li class='primary'><a href='{}'><strong>{}</strong></a></li>",
+                path,
+                self.0.ctx().site_name
+            )?;
+        }
+        while let Some((path, state)) = stack.pop() {
+            write!(
+                f,
+                "<li><a href='{}'>{}</a></li>",
+                path,
+                state.current_bale().title()
+            )?;
+        }
+        write!(f, "</ol>")
     }
 }
+
+struct Content<'a>(&'a Toc);
 
 impl<'a> fmt::Display for Content<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -29,13 +55,22 @@ impl<'a> fmt::Display for Content<'a> {
                 // handled by the recurse from the walker.
                 TocElement::Node(nested) => write!(
                     f,
-                    "<a href='#{slug}'><span id='{slug}'>{heading}</a>",
+                    "<{level} id='{slug}'><a href='#{slug}'>{heading}</a></{level}>",
+                    level = &nested.heading.level,
                     slug = &nested.heading.slug,
                     heading = &nested.heading.contents,
                 )?,
             }
         }
         Ok(())
+    }
+}
+
+struct RenderedToc<'a>(&'a Toc, HeadingLevel);
+
+impl<'a> fmt::Display for RenderedToc<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        render_toc_to(f, self.0.nodes(), self.1)
     }
 }
 
@@ -50,7 +85,7 @@ fn render_toc_to(f: &mut fmt::Formatter<'_>, nodes: Nodes, limit: HeadingLevel) 
             write!(
                 f,
                 "<li><a href='#{0}'>{1}</a>",
-                node.heading.slug, node.heading.clean_text
+                node.heading.slug, node.heading.contents
             )?;
 
             render_toc_to(f, node.nodes(), limit)?;
@@ -104,28 +139,43 @@ impl Layout for HtmlLayout {
         let nav_prefix = kind.path_to_bale();
         write!(
             writer,
-            "<!DOCTYPE html>
+            r##"<!DOCTYPE html>
 <html>
-    <body>
-        <heading><h1>{site_name}</h1></heading>
-        <nav>
+<head>
+    <title>{site_name} | {page_title}</title>
+    <meta name="viewport" content="width=device-wdith,initial-scale=1">
+    <meta charset="UTF-8">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+</head>
+<body>
+    <heading>{breadcrumbs}</heading>
+    <section id="main-contnet">
+        <nav id="site-nav">
             <ul>
                 <li><a href='{nav_prefix}'>{bale_title}</a>
                     {navs}
             </ul>
         </nav>
+        <nav id="toc-tree">{toc}</nav>
         <main>
-            {content}
+            <article id="documetnation">
+                {content}
+            </article>
         </main>
-        <footer>{footer}</footer>
-    </body>
-</html>
-        ",
+    </section>
+    <footer>{footer}</footer>
+</body>
+</html>"##,
             site_name = state.ctx().site_name,
+            breadcrumbs = Breadcrumbs(state, nav_prefix),
+            page_title = page.title(),
             bale_title = state.current_bale().title(),
             nav_prefix = nav_prefix,
             navs = Navs(&state.navs, nav_prefix),
-            content = Content::new(&page.content()),
+            toc = RenderedToc(page.content(), HeadingLevel::H2),
+            content = Content(page.content()),
             footer = get_footer(state)
         )?;
         Ok(())
