@@ -1,30 +1,37 @@
 use std::{fmt, io::Write};
 
+use pulldown_cmark::HeadingLevel;
+
 use crate::{
     doctree::Page,
     error::Result,
     render::{NavInfo, PageKind, RenderState},
-    toc::TocElement,
+    toc::{Nodes, Toc, TocElement},
 };
 
 use super::Layout;
 
-struct Content<'a>(&'a [TocElement], &'a [TocElement]);
+struct Content<'a>(&'a Toc);
+
+impl<'a> Content<'a> {
+    fn new(toc: &'a Toc) -> Self {
+        Content(toc)
+    }
+}
 
 impl<'a> fmt::Display for Content<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        let tree = self.0;
-        let current = self.1;
-        for element in current {
+        for element in self.0.walk_elements() {
             match element {
-                TocElement::Html(htm) => write!(f, "{}", htm)?,
-                TocElement::TocReference => render_toc_to(f, &tree)?,
+                TocElement::Html(htm) => htm.fmt(f)?,
+                TocElement::TocReference => render_toc_to(f, self.0.nodes(), HeadingLevel::H3)?,
+                // We only need to write the heading here, the contents will be
+                // handled by the recurse from the walker.
                 TocElement::Node(nested) => write!(
                     f,
-                    "<a id='{slug}' href='#{slug}'>{heading}</a>{content}",
+                    "<a href='#{slug}'><span id='{slug}'>{heading}</a>",
                     slug = &nested.heading.slug,
                     heading = &nested.heading.contents,
-                    content = Content(tree, &nested.contents)
                 )?,
             }
         }
@@ -36,19 +43,17 @@ impl<'a> fmt::Display for Content<'a> {
 ///
 /// This walks the list of `TocElement`s and renders them as a list of links
 /// using their clean text for the link body.
-fn render_toc_to(f: &mut fmt::Formatter<'_>, tree: &[TocElement]) -> fmt::Result {
+fn render_toc_to(f: &mut fmt::Formatter<'_>, nodes: Nodes, limit: HeadingLevel) -> fmt::Result {
     write!(f, "<ul class='toc'>")?;
-    for element in tree {
-        if let TocElement::Node(node) = element {
+    for node in nodes {
+        if node.heading.level <= limit {
             write!(
                 f,
                 "<li><a href='#{0}'>{1}</a>",
                 node.heading.slug, node.heading.clean_text
             )?;
 
-            // TODO: We should recurse here and render out any nested headings.
-            // This might be best if the TOC rendering was wrapped in a
-            // renderable struct.
+            render_toc_to(f, node.nodes(), limit)?;
         }
     }
     write!(f, "</ul>")
@@ -120,8 +125,7 @@ impl Layout for HtmlLayout {
             bale_title = state.current_bale().title(),
             nav_prefix = nav_prefix,
             navs = Navs(&state.navs, nav_prefix),
-            // TODO: some more ergonomic constructor here.
-            content = Content(&page.content().0, &page.content().0),
+            content = Content::new(&page.content()),
             footer = get_footer(state)
         )?;
         Ok(())

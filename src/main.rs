@@ -69,8 +69,6 @@ fn watch_and_build(target: &PathBuf, source: &PathBuf) -> Result<()> {
 
         // Create the target directory first, to ensure we can unwatch it if
         // needed.
-        //
-        // TODO: properly handle the error here.
         fs::create_dir_all(target).annotate_err("Error creating target directory")?;
 
         let (tx, rx) = channel();
