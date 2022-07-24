@@ -158,7 +158,10 @@ impl Layout for HtmlLayout {
                     {navs}
             </ul>
         </nav>
-        <nav id="toc-tree">{toc}</nav>
+        <nav id="toc-tree">
+            <h2>What's on this Page</h2>
+            {toc}
+        </nav>
         <main>
             <article id="documetnation">
                 {content}
