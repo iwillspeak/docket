@@ -4,6 +4,8 @@ Currently we walk the tree of bales and render out the indexes and pages within
 them. Moving more of the knowledge of the tree structure into the render contex
 will hopefully simplify some of the job of rendering.
 
+[TOC]
+
 ## Legacy
 
 In the old approach we had a seprataion between the `Renderer`, and the

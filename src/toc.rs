@@ -58,6 +58,56 @@ pub(crate) struct TocNode {
     pub contents: Vec<TocElement>,
 }
 
+impl TocNode {
+    pub fn nodes(&self) -> Nodes {
+        Nodes(&self.contents, 0)
+    }
+}
+
+/// Toc Element Iterator
+///
+/// This iterator performs a depth-first walk of the element tree
+pub(crate) struct Elements<'a>(Vec<&'a TocElement>);
+
+impl<'a> Elements<'a> {
+    pub fn new(elements: &'a [TocElement]) -> Self {
+        Elements(Vec::from_iter(elements.iter().rev()))
+    }
+}
+
+impl<'a> Iterator for Elements<'a> {
+    type Item = &'a TocElement;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let next = self.0.pop();
+        if let Some(TocElement::Node(node)) = next {
+            self.0.extend(node.contents.iter().rev())
+        }
+
+        next
+    }
+}
+
+/// Toc Node Iterator
+///
+/// Enumerates all the nodes within a given set of elements.
+pub(crate) struct Nodes<'a>(&'a [TocElement], usize);
+
+impl<'a> Iterator for Nodes<'a> {
+    type Item = &'a TocNode;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while let Some(element) = self.0.get(self.1) {
+            self.1 = self.1 + 1;
+            if let TocElement::Node(node) = element {
+                return Some(&node);
+            }
+        }
+
+        None
+    }
+}
+
 /// # Tree of Contents
 ///
 /// The tree of contents is the basic unit of pages within the document tree. A
