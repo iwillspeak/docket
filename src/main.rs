@@ -19,7 +19,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use docket::Docket;
+use crate::docket::Docket;
 use error::Result;
 use log::{info, warn};
 
