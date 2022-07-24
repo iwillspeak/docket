@@ -38,9 +38,6 @@ pub(crate) struct Heading {
     /// The raw contents for this heading.
     pub contents: String,
 
-    /// The clean text for this header.
-    pub clean_text: String,
-
     /// The fragment identifier, or slug, to use for this heading.
     pub slug: String,
 }
@@ -118,7 +115,7 @@ impl<'a> Iterator for Nodes<'a> {
 /// heading, or full contnet. The layout module uses the public API of the `Toc`
 /// to render out page's contents, internal navigation, and title information.
 #[derive(Debug)]
-pub(crate) struct Toc(pub Vec<TocElement>); // FIXME: Visibility on the innards
+pub(crate) struct Toc(Vec<TocElement>);
 
 impl Toc {
     /// # Parse a Tree of Contents
@@ -136,12 +133,25 @@ impl Toc {
     /// then `None` is returned.
     pub fn primary_heading(&self) -> Option<&String> {
         self.0.iter().find_map(|element| match element {
-            TocElement::Node(node) => Some(&node.heading.clean_text),
+            TocElement::Node(node) => Some(&node.heading.contents),
             _ => None,
         })
     }
 
+    /// # Get the Nodes Iterator
+    ///
+    /// Returns an iterator over the nodes within the root of the tree.
+    pub fn nodes(&self) -> Nodes {
+        Nodes(&self.0, 0)
+    }
+
+    /// # Depth-frist walk of the elements of the tree
+    pub fn walk_elements(&self) -> Elements {
+        Elements::new(&self.0)
+    }
+
     /// # Unwrap the Inner Elements
+    #[cfg(test)]
     fn into_inner(self) -> Vec<TocElement> {
         self.0
     }
@@ -206,31 +216,24 @@ where
     while let Some(event) = events.next_if(|event| is_below(level, event)) {
         match event {
             // If we see a heading tag then start building a heading
-            ev @ Event::Start(Tag::Heading(..)) => {
+            Event::Start(Tag::Heading(..)) => {
                 if let Some(element) = drain_events_to_html(&mut buffered) {
                     elements.push(TocElement::Html(element));
                 }
-                buffered.push(ev)
             }
             // If we see a heading end tag then recurse to parse any
             // elements owned by that heading.
-            Event::End(Tag::Heading(level, frag, class)) => {
-                // FIXME: we push the heading back with the origional
-                // fragment here. Ideally we'd compute the slug and then
-                // re-write the events for this header to use that slug. The
-                // wrinkle preventing it in this case is ownership of the
-                // fragment. We can't produce a string slice that will live
-                // long enough.
-                buffered.push(Event::End(Tag::Heading(level, frag, class)));
-                let clean_text = events_to_plain(buffered.iter());
+            Event::End(Tag::Heading(level, frag, _class)) => {
+                // Not we didn't push the opening event _and_ we ignore the
+                // closing one here too. This means we will only render the
+                // _contents_ of the header, not the opening and closing tags.
                 let slug = frag
                     .map(|s| s.to_owned())
-                    .unwrap_or_else(|| utils::slugify(&clean_text));
+                    .unwrap_or_else(|| utils::slugify(&events_to_plain(buffered.iter())));
                 elements.push(TocElement::Node(TocNode {
                     heading: Heading {
                         level,
                         contents: drain_events_to_html(&mut buffered).unwrap_or(String::new()),
-                        clean_text,
                         slug,
                     },
                     contents: parse_toc_at_level(Some(level), events),
@@ -308,11 +311,9 @@ fn is_below(level: Option<HeadingLevel>, event: &Event) -> bool {
 mod test {
     use super::*;
     fn h(level: HeadingLevel, contents: &str) -> Heading {
-        let clean_text = contents.to_string();
-        let slug = utils::slugify(&clean_text);
+        let slug = utils::slugify(&contents);
         Heading {
             level,
-            clean_text,
             contents: format!("<{0}>{1}</{0}>\n", level, contents),
             slug,
         }

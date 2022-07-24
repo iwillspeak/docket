@@ -120,6 +120,15 @@ impl<'s, 'b> RenderState<'s, 'b> {
             RenderStateKind::Nested(parent, _) => parent.ctx(),
         }
     }
+
+    /// Get this state's parent, if any
+    fn parent(&self) -> Option<&RenderState> {
+        if let RenderStateKind::Nested(parent, _) = &self.kind {
+            Some(parent)
+        } else {
+            None
+        }
+    }
 }
 
 /// An entry in the navigation tree.
