@@ -17,7 +17,7 @@ use log::info;
 
 use crate::{
     error::Result,
-    toc::{self, TocElement},
+    toc::Toc,
     utils::{self, slugify_path},
 };
 
@@ -42,7 +42,7 @@ pub(crate) enum DoctreeItem {
 pub(crate) struct Page {
     slug: String,
     title: String,
-    tree: Vec<TocElement>,
+    tree: Toc,
 }
 
 impl Page {
@@ -52,8 +52,8 @@ impl Page {
     pub fn open<P: AsRef<Path>>(path: P) -> result::Result<Self, std::io::Error> {
         let slug = utils::slugify_path(&path);
         let markdown = fs::read_to_string(&path)?;
-        let tree = toc::parse_toc(&markdown);
-        let title = toc::primary_heading(&tree).cloned().unwrap_or_else(|| {
+        let tree = Toc::new(&markdown);
+        let title = tree.primary_heading().cloned().unwrap_or_else(|| {
             path.as_ref()
                 .file_stem()
                 .unwrap()
@@ -73,9 +73,9 @@ impl Page {
         &self.slug
     }
 
-    /// FIXME: Shim to allow copying
-    pub fn content(&self) -> String {
-        toc::render_html(&self.tree[..])
+    /// Get the content
+    pub fn content(&self) -> &Toc {
+        &self.tree
     }
 }
 
