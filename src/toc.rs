@@ -4,12 +4,7 @@
 //! tree can be rendered into HTML with `pulldown`, or quieried for the document
 //! layout in order to produce navigation elements.
 
-use std::{
-    borrow::Borrow,
-    iter::Peekable,
-    os::raw::c_uchar,
-    thread::{current, park_timeout},
-};
+use std::{borrow::Borrow, iter::Peekable};
 
 use pulldown_cmark::*;
 
@@ -17,8 +12,8 @@ use crate::utils;
 
 /// # A single ement in the TOC
 ///
-/// Represents either a captured event from Pulldown or a header
-/// element.
+/// Represents either a pre-rendered HTML blob, a reference to insert the full
+/// TOC, or a nested toc node.
 #[derive(Debug, PartialEq)]
 pub(crate) enum TocElement {
     /// Raw Pulldown events
@@ -32,6 +27,9 @@ pub(crate) enum TocElement {
 }
 
 /// # A heading
+///
+/// Headings from the raw markdown document with extra metadata to allow the TOC
+/// to be rendered.
 #[derive(Debug, PartialEq)]
 pub(crate) struct Heading {
     /// The header level. H1 .. H6
@@ -47,18 +45,61 @@ pub(crate) struct Heading {
     pub slug: String,
 }
 
+/// # TOC Node
+///
+/// A node in the TOC tree. A node has a heading that introduced the node and a
+/// list of children.
 #[derive(Debug, PartialEq)]
 pub(crate) struct TocNode {
     /// The heading at this node
-    heading: Heading,
+    pub heading: Heading,
 
     /// The TOC contents for this node.
-    contents: Vec<TocElement>,
+    pub contents: Vec<TocElement>,
+}
+
+/// # Tree of Contents
+///
+/// The tree of contents is the basic unit of pages within the document tree. A
+/// page contains a single Tree of Contents. The tree is a list of elements
+/// which mirror the nesting of the document's heading structure.
+///
+/// A tree can be queried for information about the document's outline, primary
+/// heading, or full contnet. The layout module uses the public API of the `Toc`
+/// to render out page's contents, internal navigation, and title information.
+#[derive(Debug)]
+pub(crate) struct Toc(pub Vec<TocElement>); // FIXME: Visibility on the innards
+
+impl Toc {
+    /// # Parse a Tree of Contents
+    ///
+    /// Given a markdown string parse it and return a vector containing the
+    /// top-level elements in the document's tree.
+    pub fn new(markdown: &str) -> Self {
+        let parser = Parser::new_ext(markdown, Options::all());
+        Toc(parse_toc_events(parser))
+    }
+
+    /// # Primary Heading
+    ///
+    /// Get the first heading within the tree. If the tree contains no headings
+    /// then `None` is returned.
+    pub fn primary_heading(&self) -> Option<&String> {
+        self.0.iter().find_map(|element| match element {
+            TocElement::Node(node) => Some(&node.heading.clean_text),
+            _ => None,
+        })
+    }
+
+    /// # Unwrap the Inner Elements
+    fn into_inner(self) -> Vec<TocElement> {
+        self.0
+    }
 }
 
 /// Get the inner text from a series of events. used to create a heading name
 /// from a series of events, or to find the text that should be
-pub fn events_to_plain<'a, I, E>(events: I) -> String
+fn events_to_plain<'a, I, E>(events: I) -> String
 where
     I: Iterator<Item = E>,
     E: Borrow<Event<'a>>,
@@ -77,7 +118,13 @@ where
     text
 }
 
-fn events_to_html(events: &mut Vec<Event>) -> Option<String> {
+/// # Drain events to HTML
+///
+/// If the events vector contains any buffered events then return the rendred
+/// HTML. If the buffer is empty then return `None`. This utility is used during
+/// the TOC walk to ensure we always render HTML if we have events buffered, and
+/// that we don't include spurious HTML nodes when there are no buffered events.
+fn drain_events_to_html(events: &mut Vec<Event>) -> Option<String> {
     if events.is_empty() {
         None
     } else {
@@ -85,11 +132,6 @@ fn events_to_html(events: &mut Vec<Event>) -> Option<String> {
         pulldown_cmark::html::push_html(&mut result, events.drain(..));
         Some(result)
     }
-}
-
-pub(crate) fn parse_toc(markdown: &str) -> Vec<TocElement> {
-    let parser = Parser::new_ext(markdown, Options::all());
-    parse_toc_events(parser)
 }
 
 /// Parse a TOC tree from the headers in the markdown document
@@ -111,73 +153,60 @@ where
     let mut buffered = Vec::new();
     let mut elements = Vec::new();
 
-    while is_below(level, events.peek()) {
-        match events.next() {
-            Some(event) => match event {
-                // If we see a heading tag then start building a heading
-                ev @ Event::Start(Tag::Heading(..)) => {
-                    if let Some(element) = events_to_html(&mut buffered) {
-                        elements.push(TocElement::Html(element));
+    while let Some(event) = events.next_if(|event| is_below(level, event)) {
+        match event {
+            // If we see a heading tag then start building a heading
+            ev @ Event::Start(Tag::Heading(..)) => {
+                if let Some(element) = drain_events_to_html(&mut buffered) {
+                    elements.push(TocElement::Html(element));
+                }
+                buffered.push(ev)
+            }
+            // If we see a heading end tag then recurse to parse any
+            // elements owned by that heading.
+            Event::End(Tag::Heading(level, frag, class)) => {
+                // FIXME: we push the heading back with the origional
+                // fragment here. Ideally we'd compute the slug and then
+                // re-write the events for this header to use that slug. The
+                // wrinkle preventing it in this case is ownership of the
+                // fragment. We can't produce a string slice that will live
+                // long enough.
+                buffered.push(Event::End(Tag::Heading(level, frag, class)));
+                let clean_text = events_to_plain(buffered.iter());
+                let slug = frag
+                    .map(|s| s.to_owned())
+                    .unwrap_or_else(|| utils::slugify(&clean_text));
+                elements.push(TocElement::Node(TocNode {
+                    heading: Heading {
+                        level,
+                        contents: drain_events_to_html(&mut buffered).unwrap_or(String::new()),
+                        clean_text,
+                        slug,
+                    },
+                    contents: parse_toc_at_level(Some(level), events),
+                }))
+            }
+            // If we see a closing paragraph then check if we're looking at
+            // a `[TOC]` reference. If we are then replace the paragraph
+            // with a marker.
+            Event::End(Tag::Paragraph) => {
+                if in_toc(&buffered) {
+                    buffered.truncate(buffered.len() - 4);
+                    if let Some(html) = drain_events_to_html(&mut buffered) {
+                        elements.push(TocElement::Html(html));
                     }
-                    buffered.push(ev)
+                    elements.push(TocElement::TocReference);
+                } else {
+                    buffered.push(Event::End(Tag::Paragraph));
                 }
-                // If we see a heading end tag then recurse to parse any
-                // elements owned by that theading
-                Event::End(Tag::Heading(level, frag, class)) => {
-                    buffered.push(Event::End(Tag::Heading(level, frag, class)));
-                    let clean_text = events_to_plain(buffered.iter());
-                    let slug = frag
-                        .map(|s| s.to_owned())
-                        .unwrap_or_else(|| utils::slugify(&clean_text));
-                    elements.push(TocElement::Node(TocNode {
-                        heading: Heading {
-                            level,
-                            contents: events_to_html(&mut buffered).unwrap_or(String::new()),
-                            clean_text,
-                            slug,
-                        },
-                        contents: parse_toc_at_level(Some(level), events),
-                    }))
-                }
-                Event::Start(Tag::Link(LinkType::ShortcutUnknown, dest, title)) => {
-                    if dest.as_ref() == "toc://marker" {
-                        while let Some(event) = events.next() {
-                            if let Event::Start(Tag::Link(LinkType::ShortcutUnknown, _, _)) = event
-                            {
-                                break;
-                            }
-                        }
-                        if let Some(element) = events_to_html(&mut buffered) {
-                            elements.push(TocElement::Html(element));
-                        }
-                        elements.push(TocElement::TocReference)
-                    } else {
-                        buffered.push(Event::Start(Tag::Link(
-                            LinkType::ShortcutUnknown,
-                            dest,
-                            title,
-                        )))
-                    }
-                }
-                Event::End(Tag::Paragraph) => {
-                    if in_toc(&buffered) {
-                        buffered.truncate(buffered.len() - 4);
-                        if let Some(html) = events_to_html(&mut buffered) {
-                            elements.push(TocElement::Html(html));
-                        }
-                        elements.push(TocElement::TocReference);
-                    } else {
-                        buffered.push(Event::End(Tag::Paragraph));
-                    }
-                }
-                // A normal event
-                ev => buffered.push(ev),
-            },
-            None => break,
+            }
+            // A normal event
+            ev => buffered.push(ev),
         }
     }
 
-    if let Some(element) = events_to_html(&mut buffered) {
+    // If we have any events left then make sure to append them here.
+    if let Some(element) = drain_events_to_html(&mut buffered) {
         elements.push(TocElement::Html(element));
     }
 
@@ -215,15 +244,14 @@ fn in_toc(current: &[Event]) -> bool {
     }
 }
 
-fn is_below(level: Option<HeadingLevel>, event: Option<&Event>) -> bool {
-    match level {
-        Some(level) => match event {
-            Some(Event::Start(Tag::Heading(ref next_level, ..))) => *next_level > level,
-            None => false,
+// Check if the current event should live below the given heading level.
+fn is_below(level: Option<HeadingLevel>, event: &Event) -> bool {
+    level
+        .map(|level| match event {
+            Event::Start(Tag::Heading(ref next_level, ..)) => *next_level > level,
             _ => true,
-        },
-        None => true,
-    }
+        })
+        .unwrap_or(true)
 }
 
 #[cfg(test)]
@@ -238,6 +266,10 @@ mod test {
             contents: format!("<{0}>{1}</{0}>\n", level, contents),
             slug,
         }
+    }
+
+    fn parse_toc(s: &str) -> Vec<TocElement> {
+        Toc::new(s).into_inner()
     }
 
     #[test]
@@ -349,48 +381,4 @@ block four
             toc
         )
     }
-}
-
-pub(crate) fn primary_heading(toc: &[TocElement]) -> Option<&String> {
-    toc.iter().find_map(|element| match element {
-        TocElement::Node(node) => Some(&node.heading.clean_text),
-        _ => None,
-    })
-}
-
-fn render_html_to(output: &mut String, tree: &[TocElement], current: &[TocElement]) {
-    for element in current {
-        match element {
-            TocElement::Html(htm) => output.push_str(htm),
-            TocElement::TocReference => render_toc_to(output, &tree),
-            TocElement::Node(nested) => {
-                // TODO: this should be a little less `String`y. Can probably take a writer inestad to format to.
-                output.push_str(&format!(
-                    "<a id='{0}' href='#{0}'>{1}</a>",
-                    &nested.heading.slug, &nested.heading.contents
-                ));
-                render_html_to(output, tree, &nested.contents);
-            }
-        }
-    }
-}
-
-fn render_toc_to(output: &mut String, tree: &[TocElement]) {
-    output.push_str("<ul class='toc'>");
-    for element in tree {
-        if let TocElement::Node(node) = element {
-            output.push_str(&format!(
-                "<li><a href='#{0}'>{1}</a>",
-                node.heading.slug, node.heading.clean_text
-            ));
-        }
-    }
-    output.push_str("</ul>");
-}
-
-pub(crate) fn render_html(tree: &[TocElement]) -> String {
-    let mut output = String::new();
-    render_html_to(&mut output, &tree, &tree);
-
-    output
 }
