@@ -120,7 +120,7 @@ fn get_footer<'a>(state: &'a RenderState) -> &'a str {
     state
         .current_bale()
         .footer()
-        .unwrap_or("<p>Rendered by Docket</p>")
+        .unwrap_or("<p>Rendered by <a href='https://github.com/iwillspeak/docket/'>Docket</a></p>")
 }
 
 /// The HTML Layout
