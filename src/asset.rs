@@ -49,7 +49,7 @@ impl Asset {
     /// # Parameters
     ///  * `name` - The name of the file to create in the output
     ///  * `contents` - The contents to fill the file with
-    pub fn internal(name: &'static str, contents: &'static str) -> Self {
+    pub const fn internal(name: &'static str, contents: &'static str) -> Self {
         Asset::Internal(InternalAsset { name, contents })
     }
 
@@ -57,7 +57,7 @@ impl Asset {
     ///
     /// # Parameters
     ///  * `path` - The source path
-    pub fn path(path: PathBuf) -> Self {
+    pub const fn path(path: PathBuf) -> Self {
         Asset::Disk(path)
     }
 

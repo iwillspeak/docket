@@ -1,3 +1,17 @@
+//! Syntax Highlighting
+//!
+//! This module provides a trait for highlighinng code blocks and a pair of
+//! implementations. The `SyntectHighligher` uses the Syntect crate to render
+//! the code to highlighted HTML at build time. The `HighlightJsHighlighter`
+//! uses the Highlight JS library at runtime to process codeblocks in the user's
+//! browser.
+//!
+//!  If the `syntect-hl` feature is enabled then both highlighters will be
+//!  available, and syntect perferred. HighlightJS is always avaiable.
+
+// FIXME: Remove once this is done prototyping
+#![allow(dead_code)]
+
 use std::io::Write;
 
 use log::debug;

@@ -312,10 +312,14 @@ mod test {
     use super::*;
     fn h(level: HeadingLevel, contents: &str) -> Heading {
         let slug = utils::slugify(&contents);
+        hslug(level, contents, &slug)
+    }
+
+    fn hslug(level: HeadingLevel, contents: &str, slug: &str) -> Heading {
         Heading {
             level,
-            contents: format!("<{0}>{1}</{0}>\n", level, contents),
-            slug,
+            contents: contents.into(),
+            slug: slug.into(),
         }
     }
 
@@ -375,6 +379,25 @@ block four
         assert_eq!(
             vec![TocElement::Node(TocNode {
                 heading: h(HeadingLevel::H1, "I am an H1"),
+                contents: Vec::new()
+            })],
+            toc
+        );
+    }
+
+    #[test]
+    fn parse_heading_with_nested_formatting() {
+        let doc = "# I am `an` **H1**";
+
+        let toc = parse_toc(doc);
+
+        assert_eq!(
+            vec![TocElement::Node(TocNode {
+                heading: hslug(
+                    HeadingLevel::H1,
+                    "I am <code>an</code> <strong>H1</strong>",
+                    "I-am-an-H1"
+                ),
                 contents: Vec::new()
             })],
             toc
