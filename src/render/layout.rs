@@ -6,7 +6,7 @@
 mod html;
 
 use super::{PageKind, RenderState};
-use crate::{doctree, error::Result};
+use crate::{asset::Asset, doctree, error::Result};
 use html::HtmlLayout;
 use std::io::Write;
 
@@ -28,6 +28,12 @@ pub(crate) trait Layout {
         kind: PageKind,
         page: &doctree::Page,
     ) -> Result<()>;
+
+    /// Get the Layout's Assets
+    ///
+    /// Returns a list of items to copy to the site root if this layout is used
+    /// to render things.
+    fn assets(&self) -> &[Asset];
 }
 
 // Get the dfault layout

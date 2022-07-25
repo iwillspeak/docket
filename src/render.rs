@@ -45,6 +45,12 @@ impl RenderContext {
             layout: None,
         }
     }
+
+    fn layout(&self) -> &dyn Layout {
+        self.layout
+            .as_deref()
+            .unwrap_or_else(layout::get_default_layout)
+    }
 }
 
 enum RenderStateKind<'s, 'b> {
@@ -173,7 +179,7 @@ impl PageKind {
 /// writes the rendered result to the given `ctx`.
 fn render_bale_contents(
     state: &RenderState,
-    assets: Vec<PathBuf>,
+    assets: Vec<Asset>,
     items: Vec<DoctreeItem>,
 ) -> Result<()> {
     trace!(
@@ -191,7 +197,7 @@ fn render_bale_contents(
 
     // Walk our assets and copy them
     for asset in assets {
-        Asset::path(asset).copy_to(&state.output_path())?;
+        asset.copy_to(&state.output_path())?;
     }
 
     // Walk the inner items in the bale and render them, in nested contexts if
@@ -245,12 +251,18 @@ fn render_page(state: &RenderState, kind: PageKind, page: &doctree::Page) -> Res
     let file = File::create(&output_path)?;
     let mut writer = BufWriter::new(file);
 
-    let layout = state
-        .ctx()
-        .layout
-        .as_deref()
-        .unwrap_or_else(layout::get_default_layout);
+    let layout = state.ctx().layout();
     layout.render(&mut writer, state, kind, page)?;
+
+    Ok(())
+}
+
+/// Copy any assets used by the layout
+fn copy_global_assets(ctx: &RenderContext) -> Result<()> {
+    fs::create_dir_all(&ctx.path)?;
+    for asset in ctx.layout().assets() {
+        asset.copy_to(&ctx.path)?;
+    }
 
     Ok(())
 }
@@ -268,5 +280,6 @@ pub(crate) fn render<P: AsRef<Path>>(
     let (frontispiece, assets, items) = doctree_root.break_open()?;
     let navs = navs_for_items(&items);
     let state = RenderState::new(RenderStateKind::new_root(&ctx), &frontispiece, navs);
+    copy_global_assets(&ctx)?;
     render_bale_contents(&state, assets, items)
 }

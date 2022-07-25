@@ -16,6 +16,7 @@ use std::{
 use log::info;
 
 use crate::{
+    asset::Asset,
     error::Result,
     toc::Toc,
     utils::{self, slugify_path},
@@ -158,14 +159,14 @@ impl Bale {
     ///
     /// This reifies the contents of the bale. Inner items are converted into
     /// real pages and bales.
-    pub fn break_open(self) -> Result<(Frontispiece, Vec<PathBuf>, Vec<DoctreeItem>)> {
+    pub fn break_open(self) -> Result<(Frontispiece, Vec<Asset>, Vec<DoctreeItem>)> {
         info!(
             "Breaking open bale {} ({})",
             self.frontispiece.title,
             self.frontispiece.slug(),
         );
 
-        let mut assets = self.assets;
+        let mut assets: Vec<_> = self.assets.into_iter().map(Asset::path).collect();
         let mut items = Vec::with_capacity(self.pages.len() + self.nested.len());
 
         for page in self.pages {
@@ -182,7 +183,7 @@ impl Bale {
                     "Inner item {:?} does not appear to be able. Adding as an asset",
                     &nested
                 );
-                assets.push(nested);
+                assets.push(Asset::path(nested));
             } else {
                 items.push((utils::normalised_stem(&nested), DoctreeItem::Bale(bale)));
             }
