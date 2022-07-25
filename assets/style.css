@@ -1,35 +1,14 @@
 :root {
-	/* COLOURS */
+	/* Colourschemes */
 
-	/* THEME 1
-	--col-accent: #eb5e28;
-	--col-dark: #252422;
-	--col-dark-dimmed: #403d39;
-	--col-light-dimmed: #ccc5b9;
-	--col-light: #fffcf2; */
-
-	/* THEME 2 -- warm with orange accent */
+	/* Clemantine - bright and zesty */
 	/* --col-accent: #ff7315;
 	--col-dark: #232020;
 	--col-dark-dimmed: #3a3535;
 	--col-light-dimmed: #f4f4f4;
 	--col-light: #fff; */
 
-	/* THEME 3 --pinky */
-	/* --col-accent: #e8296f;
-	--col-dark: #181516;
-	--col-dark-dimmed: #3b3539;
-	--col-light-dimmed: #dfd7dc;
-	--col-light: #fff; */
-
-	/* THEME 4 - Owl */
-	/* --col-accent: #9f454c;
-	--col-dark: #01121f;
-	--col-dark-dimmed: #011627;
-	--col-light-dimmed: #809d9f;
-	--col-light: #fff; */
-
-	/* THEME 5 - HL */
+	/* Sharp - Pinktacular accents */
 	--col-accent: #e45597;
 	--col-dark: #020202;
 	--col-dark-dimmed: #262826;
@@ -44,6 +23,7 @@
 	/* FONTS */
 	--fnt-base-size: 12px;
 	--fnt-base-lineheight: 1.75;
+	--fnt-family-body: 'Montserrat', sans-serif;
 }
 
 /* Apply a dark color scheme */
@@ -63,7 +43,7 @@ body {
 	padding: 0 1rem;
 	margin: 0 auto;
 	font-size: var(--fnt-base-size);
-    font-family: 'Montserrat', sans-serif;
+    font-family: var(--fnt-family-body);
 	text-rendering: optimizeSpeed;
 	height: 100vh;
 }
@@ -213,6 +193,8 @@ td {
 	text-align: left;
 }
 
+/* -----------------------SYNTAX HIGHLIGHING & CODEBLOCKS---------------------*/
+
 code,
 pre {
 	font-family: Monospace;
@@ -234,6 +216,8 @@ pre {
 	padding: 10px;
 }
 
+/* --------------------------------- FOOTER ----------------------------------*/
+
 footer {
 	color: var(--col-fg-dimmed);
 	text-align: center;
@@ -241,7 +225,9 @@ footer {
 	padding: 20px;
 }
 
-#docket-search form {
+/* --------------------------------- SEARCH ----------------------------------*/
+
+/* #docket-search form {
 	text-align: center;
 	margin: 15px auto;
 	border: 1px solid var(--col-fg);
@@ -267,4 +253,4 @@ footer {
 
 #docket-search form button {
 	font-weight: bold;
-}
+} */
