@@ -27,7 +27,7 @@ impl<'a> fmt::Display for Breadcrumbs<'a> {
         if let Some((path, _)) = stack.pop() {
             write!(
                 f,
-                "<li class='primary'><a href='{}'><strong>{}</strong></a></li>",
+                "<li class='primary'><a href='{}'>{}</a></li>",
                 path,
                 self.0.ctx().site_name
             )?;
@@ -153,15 +153,19 @@ impl Layout for HtmlLayout {
     <script src="{script_url}" type=module></script>
 </head>
 <body>
-    <heading>{breadcrumbs}</heading>
-    <section id="main-contnet">
-        <nav id="site-nav">
+    <header class="site-head">
+        <div class="content">
+            <nav class="breadcrumbs">{breadcrumbs}</nav>
+        </div>
+    </header>
+    <section class="content doc-grid">
+        <nav class="site-nav">
             <ul>
                 <li><a href='{nav_prefix}'>{bale_title}</a>
                     {navs}
             </ul>
         </nav>
-        <nav id="toc-tree">
+        <nav class="toc-tree">
             <h2>What's on this Page</h2>
             {toc}
         </nav>
@@ -171,7 +175,7 @@ impl Layout for HtmlLayout {
             </article>
         </main>
     </section>
-    <footer>{footer}</footer>
+    <footer><div class="content">{footer}</div></footer>
 </body>
 </html>"##,
             site_name = state.ctx().site_name,
