@@ -166,7 +166,7 @@ impl Layout for HtmlLayout {
             </ul>
         </nav>
         <nav class="toc-tree">
-            <h2>What's on this Page</h2>
+            <h2>On this Page</h2>
             {toc}
         </nav>
         <main>
