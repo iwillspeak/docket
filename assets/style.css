@@ -2,19 +2,19 @@
 	/* Colourschemes */
 
 	/* Clemantine - bright and zesty */
-	--col-accent: #ff7315;
+	/* --col-accent: #ff7315;
 	--col-dark: #232020;
 	--col-dark-dimmed: #3a3535;
 	--col-light-dimmed: #f4f4f4;
-	--col-light: #fff;
+	--col-light: #fff; */
 
 	/* Sharp - Pinktacular accents */
-	/* --col-accent: #e45597;
+	--col-accent: #ee0b74;
 	--col-dark: #020202;
 	--col-dark-dimmed: #262826;
 	--col-light-dimmed: #e9e9e9;
 	--col-light: #fbfbfb;
- */
+
 	--col-bg: var(--col-light);
 	--col-bg-dimmed: var(--col-light-dimmed);
 	--col-fg: var(--col-dark);
@@ -57,7 +57,7 @@
 		display: grid;
 		grid-template-areas: "sidebar content toc";
 		grid-template-columns: minmax(0, 1.5fr) minmax(0, 2fr) minmax(0, 1fr);
-		gap: 15px;
+		gap: 1.2rem;
 	}
 
 	.doc-grid .site-nav {
@@ -90,7 +90,7 @@
 	.content {
 		max-width: 1280px;
 		margin: 0 auto;
-	}	
+	}
 
 	.doc-grid {
 		grid-template-columns: minmax(0, 1.2fr) minmax(0, 3fr) minmax(0, 1fr);
@@ -101,18 +101,17 @@ body {
 	background-color: var(--col-bg);
 	color: var(--col-fg);
 	margin: 0;
-	padding: 0 1rem;
-	margin: 0 auto;
+	padding: 0;
 	font-size: var(--fnt-base-size);
 	line-height: var(--fnt-base-lineheight);
-    font-family: var(--fnt-family-body);
+	font-family: var(--fnt-family-body);
 	text-rendering: optimizeSpeed;
 	height: 100vh;
 }
 
 /* ------------------------- HEADER AND BREADCRUMBS --------------------------*/
 
-header.site-head  {
+header.site-head {
 	border-bottom: 1px solid var(--col-bg-dimmed);
 }
 
@@ -144,9 +143,42 @@ header.site-head  {
 
 /* ------------------------------- TOC TREES ---------------------------------*/
 
-.toc {
+/* in the sidebar */
+.site-nav ul,
+.toc-tree ul {
 	list-style-type: none;
-	padding-left: 1.5em;
+	padding: 0;
+}
+
+.site-nav ul ul {
+	padding-left: 1rem;
+}
+
+.toc-tree ul li li {
+	margin-left: 1rem;
+}
+
+.toc-tree li a {
+	display: block;
+	padding: 0.3rem 1rem;
+	border-left: 3px solid var(--col-bg-dimmed);
+	color: var(--col-fg-dimmed);
+}
+
+.toc-tree li a:hover {
+	border-color: var(--col-accent);
+	color: var(--col-accent);
+}
+
+/* general TOC */
+
+ul.toc {
+	list-style-type: none;
+	padding: 0;
+}
+
+ul.toc ul.toc {
+	padding-left: 1.5rem;
 }
 
 /* ------------------------------ MAIN ARTICLE -------------------------------*/
@@ -173,7 +205,9 @@ h3 {
 	font-size: calc(1.1 * var(--fnt-base-size));
 }
 
-h4, h5, h6 {
+h4,
+h5,
+h6 {
 	font-size: calc(0.8 * var(--fnt-base-size));
 }
 
@@ -221,6 +255,11 @@ td {
 	text-align: left;
 }
 
+ul,
+ol {
+	padding: 0;
+}
+
 /* ---------------------- SYNTAX HIGHLIGHING & CODEBLOCKS --------------------*/
 
 code,
@@ -250,10 +289,35 @@ pre {
 /* --------------------------------- FOOTER ----------------------------------*/
 
 footer {
+	margin-top: 1.5rem;
 	color: var(--col-fg-dimmed);
-	text-align: center;
+	/* background: var(--col-bg-dimmed); */
 	border-top: 1px solid var(--col-bg-dimmed);
-	padding: 20px;
+}
+
+footer .content {
+	padding: 10px 0;
+	display: flex;
+	flex-direction: row;
+	align-items: baseline;
+}
+
+/* If there is only one item, center things */
+footer .content> :only-child {
+	text-align: center;
+}
+
+footer .content>* {
+	margin-left: 15px;
+	flex-grow: 1;
+}
+
+footer .content> :first-child {
+	margin-left: 0;
+}
+
+footer .content li {
+	list-style-type: none;
 }
 
 /* --------------------------------- SEARCH ----------------------------------*/
