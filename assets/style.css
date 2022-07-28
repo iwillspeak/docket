@@ -27,6 +27,9 @@
 
 	/* SIZES */
 	--sz-header-height: 45px;
+
+	color-scheme: light;
+	accent-color: var(--col-accent);
 }
 
 /* Apply a dark color scheme */
@@ -36,11 +39,14 @@
 		--col-bg-dimmed: var(--col-dark-dimmed);
 		--col-fg: var(--col-light);
 		--col-fg-dimmed: var(--col-light-dimmed);
+
+		color-scheme: dark;
 	}
 }
 
 .content {
-	margin: 0;
+	margin: 0 auto;
+	padding: 0 0.5rem;
 }
 
 * {
@@ -89,7 +95,6 @@
 
 	.content {
 		max-width: 1280px;
-		margin: 0 auto;
 	}
 
 	.doc-grid {
@@ -106,7 +111,13 @@ body {
 	line-height: var(--fnt-base-lineheight);
 	font-family: var(--fnt-family-body);
 	text-rendering: optimizeSpeed;
-	height: 100vh;
+	min-height: 100vh;
+	display: flex;
+	flex-direction: column;
+}
+
+body > section.doc-grid {
+	flex-grow: 1;
 }
 
 /* ------------------------- HEADER AND BREADCRUMBS --------------------------*/
@@ -137,7 +148,7 @@ header.site-head {
 }
 
 .breadcrumbs ol :first-child a {
-	font-size: calc(var(--fnt-base-size) * 1.1);
+	font-size: 1.1rem;
 	font-weight: bold;
 }
 
@@ -190,25 +201,25 @@ h4,
 h5,
 h6 {
 	margin: 1em 0 0 0;
-	font-weight: semibold;
+	font-weight: bold;
 }
 
 h1 {
-	font-size: calc(1.5 * var(--fnt-base-size));
+	font-size: 1.5rem;
 }
 
 h2 {
-	font-size: calc(1.2 * var(--fnt-base-size));
+	font-size: 1.2rem;
 }
 
 h3 {
-	font-size: calc(1.1 * var(--fnt-base-size));
+	font-size: 1.1rem;
 }
 
 h4,
 h5,
 h6 {
-	font-size: calc(0.8 * var(--fnt-base-size));
+	font-size: 0.8rem;
 }
 
 img {
