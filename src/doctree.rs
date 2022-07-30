@@ -8,6 +8,7 @@
 //! the interior nodes of the tree, and pages the leaves.
 
 use std::{
+    borrow::Borrow,
     fs,
     path::{Path, PathBuf},
     result,
@@ -18,6 +19,7 @@ use log::info;
 use crate::{
     asset::Asset,
     error::Result,
+    search,
     toc::Toc,
     utils::{self, slugify_path},
 };
@@ -46,14 +48,39 @@ pub(crate) struct Page {
     tree: Toc,
 }
 
+impl search::SearchableDocument for Page {
+    /// Get the title for this page
+    fn title(&self) -> &str {
+        &self.title
+    }
+
+    /// Get the slug for this page
+    fn slug(&self) -> &str {
+        &self.slug
+    }
+
+    /// Get the search index for the given page
+    fn search_index(&self) -> Option<&search::TermFrequenciesIndex> {
+        Some(&self.content().search_index())
+    }
+}
+
 impl Page {
     /// Open a Page
     ///
     /// Loads the contents of the given file and parses it as markdown.
     pub fn open<P: AsRef<Path>>(path: P) -> result::Result<Self, std::io::Error> {
-        let slug = utils::slugify_path(&path);
         let markdown = fs::read_to_string(&path)?;
-        let tree = Toc::new(&markdown);
+        Ok(Self::from_parts(path, markdown))
+    }
+
+    /// Construct a Page from Constituent Parts
+    ///
+    /// Builds the TOC tree for the given page, and returns the opened and
+    /// parsed page.
+    fn from_parts<P: AsRef<Path>, M: Borrow<str>>(path: P, markdown: M) -> Self {
+        let slug = utils::slugify_path(&path);
+        let tree = Toc::new(markdown.borrow());
         let title = tree.primary_heading().cloned().unwrap_or_else(|| {
             path.as_ref()
                 .file_stem()
@@ -61,7 +88,7 @@ impl Page {
                 .to_string_lossy()
                 .into_owned()
         });
-        Ok(Page { slug, title, tree })
+        Page { slug, title, tree }
     }
 
     /// Get the title for this page
@@ -284,4 +311,93 @@ pub(crate) fn open<P: AsRef<Path>>(path: P) -> Result<Bale> {
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn page_has_search_terms() {
+        let path = PathBuf::from("foo/bar.md");
+        let page = Page::from_parts(&path, "Some sample text in some text");
+
+        let index = page.content().search_index().as_raw();
+        assert_ne!(0, index.len());
+        let some_fq = index.get("some").cloned().unwrap_or_default();
+        let sample_fq = index.get("sample").cloned().unwrap_or_default();
+        let text_fq = index.get("text").cloned().unwrap_or_default();
+        assert_eq!(some_fq, text_fq);
+        assert!(some_fq > sample_fq);
+    }
+
+    #[test]
+    fn index_of_example_markdown() {
+        let path = PathBuf::from("foo/bar.md");
+        let page = Page::from_parts(
+            &path,
+            r###"
+
+# Down the Rabbit Hole
+
+Either the well was very deep, or she fell very slowly, for she had
+plenty of time as she went down to look about her, and to wonder what
+was going to happen next. First, she tried to look down and make out
+what she was coming to, but it was too dark to see anything; then she
+looked at the sides of the well and noticed that they were filled with
+cupboards and book-shelves: here and there she saw maps and pictures
+hung upon pegs. She took down a jar from one of the shelves as she
+passed; it was labelled "ORANGE MARMALADE," but to her disappointment it
+was empty; she did not like to drop the jar for fear of killing
+somebody underneath, so managed to put it into one of the cupboards as
+she fell past it.
+
+"Well!" thought Alice to herself. "After such a fall as this, I shall
+think nothing of tumbling down stairs! How brave they'll all think me at
+home! Why, I wouldn't say anything about it, even if I fell off the top
+of the house!" (Which was very likely true.)
+
+### Going Down?
+
+Down, down, down. Would the fall _never_ come to an end? "I wonder how
+many miles I've fallen by this time?" she said aloud. "I must be getting
+somewhere near the centre of the earth. Let me see: that would be four
+thousand miles down. I think--" (for, you see, Alice had learnt several
+things of this sort in her lessons in the schoolroom, and though this
+was not a _very_ good opportunity for showing off her knowledge, as
+there was no one to listen to her, still it was good practice to say it
+over) "--yes, that's about the right distance--but then I wonder what
+Latitude or Longitude I've got to?" (Alice had no idea what Latitude
+was, or Longitude either, but thought they were nice grand words to
+say.)
+
+        "###,
+        );
+
+        assert_eq!("Down the Rabbit Hole", page.title);
+
+        // Check some of the relative frequencies of terms
+        let index = page.content().search_index().as_raw();
+        assert_ne!(0, index.len());
+        let rabbit_fq = index.get("rabbit").cloned().unwrap_or_default();
+        assert!(rabbit_fq > 0.0);
+        let well_fq = index.get("well").cloned().unwrap_or_default();
+        assert!(well_fq > rabbit_fq);
+        assert_eq!(
+            index.get("distance").cloned().unwrap_or_default(),
+            rabbit_fq
+        );
+        assert!(index.get("down").cloned().unwrap_or_default() > well_fq);
+
+        // Check terms are downcased
+        assert_ne!(None, index.get("orange"));
+        assert_eq!(None, index.get("MARMALADE"));
+
+        // check we don't have any whitespace or other junk symbols in the index
+        assert_eq!(None, index.get(""));
+        assert_eq!(None, index.get("!"));
+        assert_eq!(None, index.get("-"));
+        assert_eq!(None, index.get(" "));
+        assert_eq!(None, index.get("\t"));
+        assert_eq!(None, index.get("("));
+    }
+}

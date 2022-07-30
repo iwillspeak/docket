@@ -71,6 +71,14 @@ struct RenderedToc<'a>(&'a Toc, HeadingLevel);
 
 impl<'a> fmt::Display for RenderedToc<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.0.nodes().count() == 1 {
+            let inner_node = self.0.nodes().next().unwrap();
+            if inner_node.nodes().count() > 0 {
+                render_toc_to(f, inner_node.nodes(), self.1)?;
+
+                return Ok(());
+            }
+        }
         render_toc_to(f, self.0.nodes(), self.1)
     }
 }
@@ -152,19 +160,23 @@ impl Layout for HtmlLayout {
     <link rel="stylesheet" href="{style_url}">
     <script src="{script_url}" type=module></script>
 </head>
-<body>
+<body data-root="{root}">
     <header class="site-head">
         <div class="content">
             <nav class="breadcrumbs">{breadcrumbs}</nav>
         </div>
     </header>
     <section class="content doc-grid">
-        <nav class="site-nav">
-            <ul>
-                <li><a href='{nav_prefix}'>{bale_title}</a>
-                    {navs}
-            </ul>
-        </nav>
+        <asside class="sidebar">
+            <div id="docket-search"></div>
+            <nav class="site-nav">
+                <h2>Related</h2>
+                <ul>
+                    <li><a href='{nav_prefix}'>{bale_title}</a>
+                        {navs}
+                </ul>
+            </nav>
+        </asside>
         <nav class="toc-tree">
             <h2>On this Page</h2>
             {toc}
@@ -183,12 +195,13 @@ impl Layout for HtmlLayout {
             // to be hosted in subdirectories.
             script_url = "/script.js",
             style_url = "/style.css",
+            root = "",
             breadcrumbs = Breadcrumbs(state, nav_prefix),
             page_title = page.title(),
             bale_title = state.current_bale().title(),
             nav_prefix = nav_prefix,
             navs = Navs(&state.navs, nav_prefix),
-            toc = RenderedToc(page.content(), HeadingLevel::H2),
+            toc = RenderedToc(page.content(), HeadingLevel::H3),
             content = Content(page.content()),
             footer = get_footer(state)
         )?;

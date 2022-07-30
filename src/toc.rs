@@ -8,7 +8,10 @@ use std::{borrow::Borrow, iter::Peekable};
 
 use pulldown_cmark::*;
 
-use crate::utils;
+use crate::{
+    search::{TermFrequenciesBuilder, TermFrequenciesIndex},
+    utils,
+};
 
 /// # A single ement in the TOC
 ///
@@ -115,7 +118,7 @@ impl<'a> Iterator for Nodes<'a> {
 /// heading, or full contnet. The layout module uses the public API of the `Toc`
 /// to render out page's contents, internal navigation, and title information.
 #[derive(Debug)]
-pub(crate) struct Toc(Vec<TocElement>);
+pub(crate) struct Toc(Vec<TocElement>, TermFrequenciesIndex);
 
 impl Toc {
     /// # Parse a Tree of Contents
@@ -124,7 +127,10 @@ impl Toc {
     /// top-level elements in the document's tree.
     pub fn new(markdown: &str) -> Self {
         let parser = Parser::new_ext(markdown, Options::all());
-        Toc(parse_toc_events(parser))
+        let mut index_builder = TermFrequenciesBuilder::default();
+        let parser = build_search_index(&mut index_builder, parser);
+        let events = parse_toc_events(parser);
+        Toc(events, index_builder.finalise())
     }
 
     /// # Primary Heading
@@ -155,6 +161,35 @@ impl Toc {
     fn into_inner(self) -> Vec<TocElement> {
         self.0
     }
+
+    /// # Get the Page's Search Index
+    ///
+    /// The search index contains  the raw term frequencies for the document's
+    /// content.
+    pub fn search_index(&self) -> &TermFrequenciesIndex {
+        &self.1
+    }
+}
+
+fn build_search_index<'a, 'p, I>(
+    index_builder: &'p mut TermFrequenciesBuilder,
+    parser: I,
+) -> impl Iterator<Item = Event<'a>> + 'p
+where
+    I: Iterator<Item = Event<'a>> + 'p,
+{
+    parser.inspect(|event| match event {
+        Event::Code(code) => {
+            index_builder.add_terms(&code);
+        }
+        Event::Text(txt) => {
+            index_builder.add_terms(&txt);
+        }
+        Event::Html(htm) => {
+            index_builder.add_terms(&htm);
+        }
+        _ => (),
+    })
 }
 
 /// Get the inner text from a series of events. used to create a heading name

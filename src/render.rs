@@ -4,8 +4,9 @@ mod layout;
 
 use crate::{
     asset::Asset,
-    doctree::{self, DoctreeItem, Frontispiece},
+    doctree::{self, DoctreeItem, Frontispiece, Page},
     error::Result,
+    search::{self, SearchableDocument},
 };
 use std::{
     fs::{self, File},
@@ -173,6 +174,45 @@ impl PageKind {
     }
 }
 
+enum RenderedItem {
+    Page(Page),
+    Nested(String, Box<RenderedItem>),
+}
+
+impl SearchableDocument for RenderedItem {
+    fn title(&self) -> &str {
+        match self {
+            RenderedItem::Page(p) => p.title(),
+            RenderedItem::Nested(_, n) => n.title(),
+        }
+    }
+
+    fn slug(&self) -> &str {
+        match self {
+            RenderedItem::Page(p) => p.slug(),
+            RenderedItem::Nested(s, _) => &s,
+        }
+    }
+
+    fn search_index(&self) -> Option<&search::TermFrequenciesIndex> {
+        match self {
+            RenderedItem::Page(p) => p.search_index(),
+            RenderedItem::Nested(_, n) => n.search_index(),
+        }
+    }
+}
+
+impl RenderedItem {
+    fn page(page: Page) -> Self {
+        Self::Page(page)
+    }
+
+    fn nested(slug: &str, inner: RenderedItem) -> Self {
+        let slug = format!("{}/{}", slug, inner.slug());
+        Self::Nested(slug, Box::new(inner))
+    }
+}
+
 /// Render a bale to the given directory
 ///
 /// This walks the tree of documentaiton referred to by the given `bale` and
@@ -181,7 +221,7 @@ fn render_bale_contents(
     state: &RenderState,
     assets: Vec<Asset>,
     items: Vec<DoctreeItem>,
-) -> Result<()> {
+) -> Result<Vec<RenderedItem>> {
     trace!(
         "rendering bale contents {:?} to {:?}",
         state.bale,
@@ -189,10 +229,14 @@ fn render_bale_contents(
     );
     fs::create_dir_all(&state.output_path())?;
 
+    let mut rendered_items = Vec::new();
+
     // If we have an index page then redner that
     if let Some(page) = state.current_bale().index_page() {
         trace!("Bale has an index. Rendering.");
         render_page(&state, PageKind::Index, page)?;
+        // TODO: We don't add the index pages to the search index here, because
+        // we don't _own_ the index pages. This needs fixing.
     }
 
     // Walk our assets and copy them
@@ -212,15 +256,20 @@ fn render_bale_contents(
                     &bale,
                     navs,
                 );
-                render_bale_contents(&state, assets, items)?;
+                rendered_items.extend(
+                    render_bale_contents(&state, assets, items)?
+                        .into_iter()
+                        .map(|item| RenderedItem::nested(bale.slug(), item)),
+                );
             }
             DoctreeItem::Page(page) => {
-                render_page(&state, PageKind::Nested(page.slug().to_owned()), &page)?
+                render_page(&state, PageKind::Nested(page.slug().to_owned()), &page)?;
+                rendered_items.push(RenderedItem::page(page))
             }
         }
     }
 
-    Ok(())
+    Ok(rendered_items)
 }
 
 fn navs_for_items(items: &[DoctreeItem]) -> Vec<NavInfo> {
@@ -276,10 +325,24 @@ pub(crate) fn render<P: AsRef<Path>>(
     title: String,
     doctree_root: doctree::Bale,
 ) -> Result<()> {
+    // The render context. This contains the global state used in rendering
     let ctx = RenderContext::new(target.as_ref().to_owned(), title);
+
+    // Break opne the root bale and build a root render state. This is the root
+    // of the render state tree as we walk the document tree.
     let (frontispiece, assets, items) = doctree_root.break_open()?;
     let navs = navs_for_items(&items);
     let state = RenderState::new(RenderStateKind::new_root(&ctx), &frontispiece, navs);
+
+    // Copy any global assets. This allows layouts and other global items to
+    // include items in the output.
     copy_global_assets(&ctx)?;
-    render_bale_contents(&state, assets, items)
+
+    // Render the documentation itself.
+    let docs = render_bale_contents(&state, assets, items)?;
+
+    // Write out a search index for all the rendered documents.
+    search::write_search_indices(&ctx.path, docs.iter())?;
+
+    Ok(())
 }
