@@ -6,9 +6,11 @@
 
 use std::{borrow::Borrow, iter::Peekable};
 
+use log::error;
 use pulldown_cmark::*;
 
 use crate::{
+    highlight,
     search::{TermFrequenciesBuilder, TermFrequenciesIndex},
     utils,
 };
@@ -129,6 +131,7 @@ impl Toc {
         let parser = Parser::new_ext(markdown, Options::all());
         let mut index_builder = TermFrequenciesBuilder::default();
         let parser = build_search_index(&mut index_builder, parser);
+        let parser = hl_codeblocks(parser);
         let events = parse_toc_events(parser);
         Toc(events, index_builder.finalise())
     }
@@ -169,6 +172,47 @@ impl Toc {
     pub fn search_index(&self) -> &TermFrequenciesIndex {
         &self.1
     }
+}
+
+fn hl_codeblocks<'a, I>(parser: I) -> impl Iterator<Item = Event<'a>>
+where
+    I: Iterator<Item = Event<'a>>,
+{
+    let mut state: Option<String> = None;
+    let hl = highlight::get_hilighter();
+    parser.flat_map(move |event| {
+        if let Some(mut hl_state) = state.take() {
+            match event {
+                Event::Text(txt) => {
+                    hl_state.push_str(txt.as_ref());
+                    state = Some(hl_state);
+                    vec![]
+                }
+                Event::End(Tag::CodeBlock(kind)) => {
+                    state = None;
+                    hl.hl_codeblock(
+                        match &kind {
+                            CodeBlockKind::Indented => None,
+                            CodeBlockKind::Fenced(name) => Some(name.as_ref()),
+                        },
+                        &hl_state,
+                    )
+                }
+                _ => {
+                    error!("Unexpected item in codeblock: {:?}", event);
+                    vec![event]
+                }
+            }
+        } else {
+            match event {
+                Event::Start(Tag::CodeBlock(_)) => {
+                    state = Some(String::new());
+                    vec![]
+                }
+                _ => vec![event],
+            }
+        }
+    })
 }
 
 fn build_search_index<'a, 'p, I>(
