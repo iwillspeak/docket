@@ -1,13 +1,6 @@
 :root {
 	/* Colourschemes */
 
-	/* Clemantine - bright and zesty */
-	/* --col-accent: #ff7315;
-	--col-dark: #232020;
-	--col-dark-dimmed: #3a3535;
-	--col-light-dimmed: #f4f4f4;
-	--col-light: #fff; */
-
 	/* Sharp - Pinktacular accents */
 	--col-accent: #ee0b74;
 	--col-dark: #020202;
@@ -116,7 +109,7 @@ body {
 	flex-direction: column;
 }
 
-body > section.doc-grid {
+body>section.doc-grid {
 	flex-grow: 1;
 }
 
@@ -266,6 +259,13 @@ td {
 	text-align: left;
 }
 
+blockquote {
+	padding: 0 0.5rem;
+	margin: 0 -0.5rem;
+	border-left: 3px solid var(--col-fg-dimmed);
+	font-style: italic;
+}
+
 ul,
 ol {
 	padding: 0;
@@ -302,13 +302,14 @@ pre {
 footer {
 	margin-top: 1.5rem;
 	color: var(--col-fg-dimmed);
-	/* background: var(--col-bg-dimmed); */
 	border-top: 1px solid var(--col-bg-dimmed);
 }
 
 footer .content {
 	padding: 10px 0;
 	display: flex;
+	flex-wrap: wrap;
+	gap: 15px;
 	flex-direction: row;
 	align-items: baseline;
 }
@@ -319,12 +320,7 @@ footer .content> :only-child {
 }
 
 footer .content>* {
-	margin-left: 15px;
 	flex-grow: 1;
-}
-
-footer .content> :first-child {
-	margin-left: 0;
 }
 
 footer .content li {
