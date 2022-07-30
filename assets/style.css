@@ -56,10 +56,10 @@
 		display: grid;
 		grid-template-areas: "sidebar content toc";
 		grid-template-columns: minmax(0, 1.5fr) minmax(0, 2fr) minmax(0, 1fr);
-		gap: 1.2rem;
+		gap: 2rem;
 	}
 
-	.doc-grid .site-nav {
+	.doc-grid .sidebar {
 		grid-area: sidebar;
 	}
 
@@ -67,7 +67,7 @@
 		grid-area: toc;
 	}
 
-	.doc-grid .site-nav,
+	.doc-grid .sidebar,
 	.doc-grid .toc-tree {
 		max-height: calc(100vh - var(--sz-header-height));
 		position: sticky;
@@ -162,15 +162,17 @@ header.site-head {
 	margin-left: 1rem;
 }
 
+.toc-tree li {
+	border-left: 3px solid var(--col-bg-dimmed);
+}
+
 .toc-tree li a {
 	display: block;
-	padding: 0.3rem 1rem;
-	border-left: 3px solid var(--col-bg-dimmed);
+	padding: 0.3rem 0 0.3rem 1rem;
 	color: var(--col-fg-dimmed);
 }
 
 .toc-tree li a:hover {
-	border-color: var(--col-accent);
 	color: var(--col-accent);
 }
 
@@ -329,7 +331,7 @@ footer .content li {
 
 /* --------------------------------- SEARCH ----------------------------------*/
 
-/* #docket-search form {
+#docket-search form {
 	text-align: center;
 	margin: 15px auto;
 	border: 1px solid var(--col-fg);
@@ -355,4 +357,4 @@ footer .content li {
 
 #docket-search form button {
 	font-weight: bold;
-} */
+}

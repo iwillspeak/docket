@@ -4,9 +4,6 @@
 //! indexes are serialisable. Once built search indexes are written out to the
 //! root of the site and loaded by javascript to provide an interactive search.
 
-// FIXME: Remove once this is done prototyping
-#![allow(dead_code)]
-
 use serde::Serialize;
 use std::collections::HashMap;
 use std::fs::File;
@@ -52,6 +49,7 @@ impl TermFrequenciesBuilder {
     }
 }
 
+#[derive(Debug)]
 pub struct TermFrequenciesIndex(HashMap<String, f64>);
 
 impl TermFrequenciesIndex {
