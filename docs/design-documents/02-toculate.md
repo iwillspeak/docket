@@ -20,7 +20,7 @@ Pulldown produces events for a node starting, for content within a node, and for
 a node ending. To build the TOC we want to trasnform a `Vec<Event<'a>>` into
 a structure similar to the following:
 
-```fsharp
+```ml
 type TocEntry<'a> =
     | Events of Event list
     | Node of HeadingLevel * Events list * TocEntry list
