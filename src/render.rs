@@ -136,6 +136,22 @@ impl<'s, 'b> RenderState<'s, 'b> {
             None
         }
     }
+
+    /// Get the path to the root for the given page kind
+    fn path_to_root(&self, page: &PageKind) -> String {
+        let mut current = self;
+        let mut path = String::new();
+        while let Some(parent) = current.parent() {
+            path.push_str("../");
+            current = parent
+        }
+
+        if let PageKind::Nested(_) = page {
+            path.push_str("../");
+        }
+
+        path
+    }
 }
 
 /// An entry in the navigation tree.
