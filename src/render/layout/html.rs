@@ -157,8 +157,8 @@ impl Layout for HtmlLayout {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{style_url}">
-    <script src="{script_url}" type=module></script>
+    <link rel="stylesheet" href="{root}{style_url}">
+    <script src="{root}{script_url}" type=module></script>
 </head>
 <body data-root="{root}">
     <header class="site-head">
@@ -191,11 +191,9 @@ impl Layout for HtmlLayout {
 </body>
 </html>"##,
             site_name = state.ctx().site_name,
-            // TODO: These should be relative paths, not absolute to allow docs
-            // to be hosted in subdirectories.
-            script_url = "/script.js",
-            style_url = "/style.css",
-            root = "",
+            script_url = "script.js",
+            style_url = "style.css",
+            root = state.path_to_root(&kind),
             breadcrumbs = Breadcrumbs(state, nav_prefix),
             page_title = page.title(),
             bale_title = state.current_bale().title(),
