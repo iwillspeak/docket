@@ -9,6 +9,7 @@
 //!  If the `syntect-hl` feature is enabled then both highlighters will be
 //!  available, and syntect perferred. HighlightJS is always avaiable.
 
+use once_cell::sync::Lazy;
 use std::io::Write;
 
 use log::debug;
@@ -115,21 +116,20 @@ fn to_default_events<'a, 'b>(name: Option<&'a str>, block: &'a str) -> Vec<Event
     ]
 }
 
-#[cfg(feature = "syntect-hl")]
-lazy_static! {
-    static ref GLOBAL_SYNTECT_HL: SyntectHighlighter = SyntectHighlighter::new();
-}
-
 /// # Get the Active Highlighter
 ///
 /// Returns a reference to a shared highlighter.
 pub(crate) fn get_hilighter() -> &'static dyn Highlighter {
     static GLOBAL_JS_HL: HighlightJsHighlighter = HighlightJsHighlighter;
+
     #[cfg(feature = "syntect-hl")]
     if std::env::var("DOCKET_FORCE_JS_HL").is_err() {
+        static GLOBAL_SYNTECT_HL: Lazy<SyntectHighlighter> =
+            Lazy::new(|| SyntectHighlighter::new());
         debug!("Using syntect for highlighting.");
         return &*GLOBAL_SYNTECT_HL;
     }
+
     debug!("Using Javascript highlighter.");
     &GLOBAL_JS_HL
 }

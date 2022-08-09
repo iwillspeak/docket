@@ -25,10 +25,6 @@ use log::{info, warn};
 
 use crate::error::ResultExt;
 
-#[cfg(all(feature = "syntect-hl"))]
-#[macro_use]
-extern crate lazy_static;
-
 /// On Error Behaviour
 ///
 /// Chooses what should happen if an error happens when running the build.

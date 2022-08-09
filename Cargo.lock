@@ -88,9 +88,9 @@ version = "0.6.1"
 dependencies = [
  "docopt",
  "env_logger",
- "lazy_static",
  "log",
  "notify",
+ "once_cell",
  "pulldown-cmark",
  "serde",
  "serde_json",
