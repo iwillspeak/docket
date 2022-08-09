@@ -145,12 +145,23 @@ header.site-head {
 
 header.site-head .content {
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 }
 
 .site-head #dark-mode-placeholder {
 	border: 1px solid var(--col-bg-dimmed);
 	border-radius: 3px;
+}
+
+.site-head #dark-mode-placeholder a {
+	color: var(--col-fg);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: row;
+	padding: 5px;
+	width: 24px;
+	height: 24px;
 }
 
 .breadcrumbs {
