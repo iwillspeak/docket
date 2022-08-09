@@ -209,7 +209,7 @@ impl Layout for HtmlLayout {
     fn assets(&self) -> &[Asset] {
         static ASSETS: [Asset; 4] = [
             Asset::internal("style.css", include_str!("../../../assets/style.css")),
-            Asset::internal("script.js", include_str!("../../../assets/search.js")),
+            Asset::internal("search.js", include_str!("../../../assets/search.js")),
             Asset::internal("dark.js", include_str!("../../../assets/dark.js")),
             Asset::internal("feather-sprite.svg", include_str!("../../../assets/feather-sprite.svg")),
         ];
