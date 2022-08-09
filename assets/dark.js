@@ -1,16 +1,28 @@
 const darkModePlaceholder = document.getElementById("dark-mode-placeholder");
 const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)");
 
-const sunIcon = `<i class="light-mode-icon">Light</i>`
-const moonIcon = `<i class="dark-mode-icon">Dark</i>`
+const rootPath = document.body.dataset['root'];
+
+const sunIcon = `sun`
+const moonIcon = `moon`
 
 const setIconFromMode = (button, mode) => {
     if (mode === undefined) {
         mode = prefersDarkMode.matches ? "dark" : "light";
     }
 
-    button.innerHTML = (mode === "light") ?
-        moonIcon : sunIcon;
+    button.innerHTML = `<svg
+    width="24"
+    height="24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  >
+    <use href="${rootPath}/feather-sprite.svg#${(mode === "light") ?
+            moonIcon : sunIcon}"/>
+  </svg>`
 };
 
 const toggleMode = () => {
