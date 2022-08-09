@@ -157,13 +157,15 @@ impl Layout for HtmlLayout {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{root}{style_url}">
-    <script src="{root}{script_url}" type=module></script>
+    <link rel="stylesheet" href="{root}style.css">
+    <script src="{root}dark.js" type=module></script>
+    <script src="{root}search.js" type=module></script>
 </head>
 <body data-root="{root}">
     <header class="site-head">
         <div class="content">
             <nav class="breadcrumbs">{breadcrumbs}</nav>
+            <div id="dark-mode-placeholder"></div>
         </div>
     </header>
     <section class="content doc-grid">
@@ -191,8 +193,6 @@ impl Layout for HtmlLayout {
 </body>
 </html>"##,
             site_name = state.ctx().site_name,
-            script_url = "script.js",
-            style_url = "style.css",
             root = state.path_to_root(&kind),
             breadcrumbs = Breadcrumbs(state, nav_prefix),
             page_title = page.title(),
@@ -207,9 +207,10 @@ impl Layout for HtmlLayout {
     }
 
     fn assets(&self) -> &[Asset] {
-        static ASSETS: [Asset; 2] = [
+        static ASSETS: [Asset; 3] = [
             Asset::internal("style.css", include_str!("../../../assets/style.css")),
             Asset::internal("script.js", include_str!("../../../assets/search.js")),
+            Asset::internal("dark.js", include_str!("../../../assets/dark.js")),
         ];
         &ASSETS[..]
     }
