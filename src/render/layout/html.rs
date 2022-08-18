@@ -165,12 +165,12 @@ impl Layout for HtmlLayout {
     <header class="site-head">
         <div class="content">
             <nav class="breadcrumbs">{breadcrumbs}</nav>
+            <div id="docket-search"></div>
             <div id="dark-mode-placeholder"></div>
         </div>
     </header>
     <section class="content doc-grid">
         <asside class="sidebar">
-            <div id="docket-search"></div>
             <nav class="site-nav">
                 <h2>Related</h2>
                 <ul>
@@ -211,7 +211,10 @@ impl Layout for HtmlLayout {
             Asset::internal("style.css", include_str!("../../../assets/style.css")),
             Asset::internal("search.js", include_str!("../../../assets/search.js")),
             Asset::internal("dark.js", include_str!("../../../assets/dark.js")),
-            Asset::internal("feather-sprite.svg", include_str!("../../../assets/feather-sprite.svg")),
+            Asset::internal(
+                "feather-sprite.svg",
+                include_str!("../../../assets/feather-sprite.svg"),
+            ),
         ];
         &ASSETS[..]
     }
