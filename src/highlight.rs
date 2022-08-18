@@ -9,7 +9,6 @@
 //!  If the `syntect-hl` feature is enabled then both highlighters will be
 //!  available, and syntect perferred. HighlightJS is always avaiable.
 
-use once_cell::sync::Lazy;
 use std::io::Write;
 
 use log::debug;
@@ -124,6 +123,7 @@ pub(crate) fn get_hilighter() -> &'static dyn Highlighter {
 
     #[cfg(feature = "syntect-hl")]
     if std::env::var("DOCKET_FORCE_JS_HL").is_err() {
+        use once_cell::sync::Lazy;
         static GLOBAL_SYNTECT_HL: Lazy<SyntectHighlighter> =
             Lazy::new(|| SyntectHighlighter::new());
         debug!("Using syntect for highlighting.");

@@ -15,15 +15,12 @@ mod utils;
 
 use std::{
     error::Error,
-    fs,
     path::{Path, PathBuf},
 };
 
 use crate::docket::Docket;
 use error::Result;
 use log::{info, warn};
-
-use crate::error::ResultExt;
 
 /// On Error Behaviour
 ///
@@ -59,9 +56,9 @@ fn main() {
 fn watch_and_build(target: &PathBuf, source: &PathBuf) -> Result<()> {
     #[cfg(feature = "watch")]
     {
+        use crate::error::ResultExt;
         use notify::{watcher, RecursiveMode, Watcher};
-        use std::sync::mpsc::channel;
-        use std::time::Duration;
+        use std::{fs, sync::mpsc::channel, time::Duration};
 
         // Create the target directory first, to ensure we can unwatch it if
         // needed.
