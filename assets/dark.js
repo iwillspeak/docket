@@ -20,7 +20,7 @@ const setIconFromMode = (button, mode) => {
     stroke-linecap="round"
     stroke-linejoin="round"
   >
-    <use href="${rootPath}/feather-sprite.svg#${(mode === "light") ?
+    <use href="${rootPath}feather-sprite.svg#${(mode === "light") ?
             moonIcon : sunIcon}"/>
   </svg>`
 };
