@@ -165,12 +165,12 @@ impl Layout for HtmlLayout {
     <header class="site-head">
         <div class="content">
             <nav class="breadcrumbs">{breadcrumbs}</nav>
-            <div id="docket-search"></div>
             <div id="dark-mode-placeholder"></div>
         </div>
     </header>
     <section class="content doc-grid">
         <asside class="sidebar">
+            <div id="docket-search"></div>
             <nav class="site-nav">
                 <h2>Related</h2>
                 <ul>
