@@ -20,7 +20,7 @@ const initialiseSearch = async (rootPath, targetSelector) => {
     const searchResults = searchForm.querySelector('#docket-search-results');
 
     const searchEntryForResult = result => {
-        return `<li><a class="search-result" href="${rootPath}/${result.slug}/" >${result.title}</a></li>`;
+        return `<li><a class="search-result" href="${rootPath}${result.slug}/" >${result.title}</a></li>`;
     }
 
     const displayResults = results => {
@@ -35,7 +35,7 @@ const initialiseSearch = async (rootPath, targetSelector) => {
         }
     }
 
-    const searchIndex = await fetch(rootPath + "/search_index.json")
+    const searchIndex = await fetch(rootPath + "search_index.json")
         .then(response => response.json());
 
     const doSearch = query => {
