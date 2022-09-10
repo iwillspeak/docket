@@ -31,7 +31,7 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v2
       - name: Build Site
-        run: cargo run -- -s docs -t build
+        run: cargo run --no-default-features --features=syntect-hl -- -s docs -t build
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
