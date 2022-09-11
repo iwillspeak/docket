@@ -35,7 +35,7 @@ const initialiseSearch = async (rootPath, targetSelector) => {
         }
     }
 
-    const searchIndex = await fetch(rootPath + "search_index.json")
+    const searchIndex = await fetch("./search_index.json")
         .then(response => response.json());
 
     const doSearch = query => {
@@ -94,4 +94,5 @@ const initialiseSearch = async (rootPath, targetSelector) => {
     });
 }
 
-initialiseSearch(document.body.dataset['root'], '#docket-search')
+const uri = import.meta.url;
+initialiseSearch(uri.substring(0, uri.lastIndexOf('/') + 1), '#docket-search')
