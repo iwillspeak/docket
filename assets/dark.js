@@ -1,7 +1,8 @@
 const darkModePlaceholder = document.getElementById("dark-mode-placeholder");
 const prefersDarkMode = window.matchMedia("(prefers-color-scheme: dark)");
 
-const rootPath = document.body.dataset['root'];
+const url = import.meta.url;
+const rootPath = url.substring(0, url.lastIndexOf('/') + 1)
 
 const sunIcon = `sun`
 const moonIcon = `moon`

@@ -161,7 +161,7 @@ impl Layout for HtmlLayout {
     <script src="{root}dark.js" type=module></script>
     <script src="{root}search.js" type=module></script>
 </head>
-<body data-root="{root}">
+<body>
     <header class="site-head">
         <div class="content">
             <nav class="breadcrumbs">{breadcrumbs}</nav>
