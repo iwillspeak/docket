@@ -35,7 +35,7 @@ const initialiseSearch = async (rootPath, targetSelector) => {
         }
     }
 
-    const searchIndex = await fetch("./search_index.json")
+    const searchIndex = await fetch(`${rootPath}search_index.json`)
         .then(response => response.json());
 
     const doSearch = query => {
