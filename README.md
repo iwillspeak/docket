@@ -1,6 +1,6 @@
 # Docket
 
-[![Build Status][build_badge_image]][build_info]
+[![Build Status][build_badge_image]][build_info] [![Build Docker Container][docker_badge_image]][docker_info]
 
 Simple markdown to HTML documentation rendering. Docket aims to be a Rust clone of [`d`](https://github.com/sjl/d).
 
@@ -30,3 +30,5 @@ To render the HTML output change to the `docs/` folder and run `docket`. This sh
 
  [build_badge_image]: https://dev.azure.com/iwillspeak/GitHub/_apis/build/status/iwillspeak.docket?branchName=main
  [build_info]: https://dev.azure.com/iwillspeak/GitHub/_build/latest?definitionId=1&branchName=main
+ [docker_badge_image]: https://github.com/iwillspeak/docket/actions/workflows/container.yml/badge.svg
+ [docker_info]: https://github.com/iwillspeak/docket/actions/workflows/container.yml
