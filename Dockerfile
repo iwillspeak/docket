@@ -1,4 +1,4 @@
-FROM rust:1.63 as build
+FROM rust:latest as build
 WORKDIR /usr/src/docket
 COPY . .
 RUN cargo install --path .
