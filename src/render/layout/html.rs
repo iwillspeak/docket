@@ -152,11 +152,11 @@ impl Layout for HtmlLayout {
 <html>
 <head>
     <title>{site_name} | {page_title}</title>
-    <meta name="viewport" content="width=device-wdith,initial-scale=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta charset="UTF-8">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{root}style.css">
     <script src="{root}dark.js" type=module></script>
     <script src="{root}search.js" type=module></script>
@@ -169,7 +169,7 @@ impl Layout for HtmlLayout {
         </div>
     </header>
     <section class="content doc-grid">
-        <asside class="sidebar">
+        <aside class="sidebar">
             <div id="docket-search"></div>
             <nav class="site-nav">
                 <h2>Related</h2>
@@ -178,7 +178,7 @@ impl Layout for HtmlLayout {
                         {navs}
                 </ul>
             </nav>
-        </asside>
+        </aside>
         <nav class="toc-tree">
             <h2>On this Page</h2>
             {toc}

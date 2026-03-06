@@ -17,6 +17,7 @@
 	--fnt-base-size: 16px;
 	--fnt-base-lineheight: 1.75;
 	--fnt-family-body: 'Montserrat', sans-serif;
+	--fnt-family-mono: 'JetBrains Mono', 'Fira Code', Consolas, Monospace;
 
 	/* SIZES */
 	--sz-header-height: 45px;
@@ -88,6 +89,12 @@ html[data-color-mode="light"] {
 
 	.doc-grid main {
 		grid-area: content;
+		padding-top: 1.5rem;
+		min-width: 0;
+	}
+
+	.doc-grid main article {
+		max-width: 75ch;
 	}
 }
 
@@ -137,10 +144,18 @@ body {
 	flex-grow: 1;
 }
 
+.doc-grid main {
+	padding-top: 1.5rem;
+}
+
 /* ------------------------- HEADER AND BREADCRUMBS --------------------------*/
 
 header.site-head {
 	border-bottom: 1px solid var(--col-bg-dimmed);
+	background-color: var(--col-bg);
+	position: sticky;
+	top: 0;
+	z-index: 10;
 }
 
 header.site-head .content {
@@ -184,11 +199,18 @@ header.site-head .content {
 .breadcrumbs ol li::after {
 	content: "/";
 	margin: 0 10px;
+	color: var(--col-fg-dimmed);
 }
 
 .breadcrumbs ol :first-child a {
-	font-size: 1.1rem;
+	font-size: 1.15rem;
 	font-weight: bold;
+	color: var(--col-accent);
+	letter-spacing: 0.02em;
+}
+
+.breadcrumbs ol :last-child::after {
+	display: none;
 }
 
 /* ------------------------------- TOC TREES ---------------------------------*/
@@ -202,6 +224,30 @@ header.site-head .content {
 
 .site-nav ul ul {
 	padding-left: 1rem;
+}
+
+.site-nav h2 {
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--col-fg-dimmed);
+	margin: 1rem 0 0.25rem 0;
+}
+
+.site-nav a {
+	display: block;
+	padding: 0.2rem 0;
+	color: var(--col-fg);
+	text-decoration: none;
+}
+
+.site-nav a:hover {
+	color: var(--col-accent);
+}
+
+.site-nav ul ul a {
+	font-size: 0.9em;
+	color: var(--col-fg-dimmed);
 }
 
 .toc-tree ul li li {
@@ -241,26 +287,27 @@ h3,
 h4,
 h5,
 h6 {
-	margin: 1em 0 0 0;
+	margin: 1em 0 0.4em 0;
 	font-weight: bold;
+	line-height: 1.3;
 }
 
 h1 {
-	font-size: 1.5rem;
+	font-size: 2rem;
 }
 
 h2 {
-	font-size: 1.2rem;
+	font-size: 1.5rem;
 }
 
 h3 {
-	font-size: 1.1rem;
+	font-size: 1.2rem;
 }
 
 h4,
 h5,
 h6 {
-	font-size: 0.8rem;
+	font-size: 1rem;
 }
 
 img {
@@ -308,24 +355,31 @@ td {
 }
 
 blockquote {
-	padding: 0 0.5rem;
-	margin: 0 -0.5rem;
+	padding: 0.5rem 1rem;
+	margin: 1em 0;
 	border-left: 3px solid var(--col-fg-dimmed);
 	font-style: italic;
+	color: var(--col-fg-dimmed);
 }
 
 ul,
 ol {
-	padding: 0;
+	padding: 0 0 0 1.5rem;
+}
+
+article ul,
+article ol {
+	margin: 0.5em 0;
 }
 
 /* ---------------------- SYNTAX HIGHLIGHING & CODEBLOCKS --------------------*/
 
 code,
 pre {
-	font-family: Monospace;
+	font-family: var(--fnt-family-mono);
 	background-color: var(--col-bg-dimmed);
 	border-radius: 2px;
+	font-size: 0.875em;
 }
 
 code {
@@ -333,14 +387,28 @@ code {
 }
 
 pre {
-	margin: 1em 0 1em -0.5rem;
+	margin: 1em 0;
 	border-top: none;
-	border-left: 2px solid var(--col-accent);
+	border-left: 3px solid var(--col-accent);
 	border-bottom: 1px solid var(--col-bg-dimmed);
 	border-right: 1px solid var(--col-bg-dimmed);
 	display: block;
 	overflow: auto;
-	padding: 0.5rem;
+	padding: 0.75rem 1rem;
+	/* Override Syntect's hardcoded inline background-color */
+	background-color: var(--col-bg-dimmed) !important;
+}
+
+/* In dark mode, mute Syntect's hardcoded text colours so they remain readable */
+@media (prefers-color-scheme: dark) {
+	pre[style] span {
+		color: var(--col-fg) !important;
+		font-weight: normal !important;
+	}
+}
+html[data-color-mode="dark"] pre[style] span {
+	color: var(--col-fg) !important;
+	font-weight: normal !important;
 }
 
 /* --------------------------------- FOOTER ----------------------------------*/
