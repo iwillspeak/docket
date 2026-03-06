@@ -277,7 +277,7 @@ body.drawer-open {
 	position: fixed;
 	top: var(--sz-header-height);
 	bottom: 0;
-	z-index: 100;
+	z-index: 98;
 	width: min(300px, 85vw);
 	background-color: var(--col-bg);
 	overflow-y: auto;
@@ -304,6 +304,7 @@ body.drawer-open {
 .toc-tree.open {
 	transform: translateX(0);
 	visibility: visible;
+	z-index: 101;
 }
 
 /* ====================== END MOBILE DRAWER TOGGLES ======================== */
@@ -313,7 +314,8 @@ header.site-head {
 	background-color: var(--col-bg);
 	position: sticky;
 	top: 0;
-	z-index: 10;
+	/* nav and toc drawers are z-index 100, so this keeps the header above them */
+	z-index: 1000; 
 }
 
 header.site-head .content {
@@ -381,12 +383,20 @@ header.site-head .content {
 	padding: 0;
 }
 
-.site-nav h2 {
+/* Shared label style for all sidebar/toc section headings */
+.sidebar h2,
+.toc-tree h2 {
 	font-size: 0.7rem;
+	font-weight: normal;
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
 	color: var(--col-fg-dimmed);
-	margin: 1rem 0 0.25rem 0;
+	margin: 0 0 0.4rem 0;
+}
+
+/* Extra top margin between nav sections */
+.site-nav h2 {
+	margin-top: 1rem;
 }
 
 .site-nav a {
@@ -457,13 +467,6 @@ header.site-head .content {
 	padding-left: 1.2rem;
 }
 
-.toc-tree h2 {
-	font-size: 0.7rem;
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-	color: var(--col-fg-dimmed);
-	margin: 0 0 0.4rem 0;
-}
 
 .toc-tree li a {
 	display: block;
@@ -657,29 +660,76 @@ footer .content li {
 /* --------------------------------- SEARCH ----------------------------------*/
 
 #docket-search form {
-	text-align: center;
-	margin: 15px auto;
-	border: 1px solid var(--col-fg);
-	border-radius: 4px;
 	display: flex;
 	flex-direction: row;
+	margin: 0 0 0.75rem 0;
+	border: 1px solid var(--col-bg-dimmed);
+	border-radius: 4px;
+	overflow: hidden;
+	transition: border-color 0.12s;
+}
+
+#docket-search form:focus-within {
+	border-color: var(--col-accent);
 }
 
 #docket-search form #query,
 #docket-search form button {
-	padding: 5px;
+	padding: 0.3rem 0.5rem;
 	background: none;
 	color: var(--col-fg);
 	border: none;
-	flex-grow: 0;
-	flex-shrink: 1;
+	font-size: 0.85rem;
+	line-height: 1.4;
 }
 
 #docket-search form #query {
-	min-width: 100px;
-	flex-grow: 1;
+	flex: 1;
+	min-width: 0;
+	outline: none;
 }
 
 #docket-search form button {
-	font-weight: bold;
+	flex-shrink: 0;
+	cursor: pointer;
+	color: var(--col-fg-dimmed);
+	border-left: 1px solid var(--col-bg-dimmed);
+	transition: color 0.12s;
+}
+
+#docket-search form button:hover {
+	color: var(--col-accent);
+}
+
+/* Results count label */
+#docket-search-results h3 {
+	font-size: 0.7rem;
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--col-fg-dimmed);
+	font-weight: normal;
+	margin: 0 0 0.25rem 0;
+}
+
+/* Results list — same treatment as site-nav links */
+ul.search-results {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+ul.search-results li a {
+	display: block;
+	padding: 0.15rem 0.4rem 0.15rem 0.6rem;
+	font-size: 0.88rem;
+	line-height: 1.45;
+	color: var(--col-fg);
+	text-decoration: none;
+	border-left: 2px solid transparent;
+	transition: border-color 0.12s, color 0.12s;
+}
+
+ul.search-results li a:hover {
+	color: var(--col-accent);
+	border-left-color: var(--col-accent);
 }
