@@ -78,7 +78,7 @@ function initToggles() {
     });
 
     // On resize below tablet, the TOC moves back to a drawer — reset open state
-    const tabletMq = window.matchMedia('(min-width: 500px)');
+    const tabletMq = window.matchMedia('(min-width: 800px)');
     tabletMq.addEventListener('change', e => {
         if (!e.matches) closeAll();
     });
