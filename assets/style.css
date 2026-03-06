@@ -551,6 +551,28 @@ h6 a {
 	color: var(--col-fg);
 }
 
+/* Permalink anchors on headings — visible only on hover */
+:is(h1, h2, h3, h4, h5, h6) .heading-anchor {
+	opacity: 0;
+	transition: opacity 0.15s;
+	font-size: 0.75em;
+	font-weight: normal;
+	color: var(--col-fg-dimmed);
+	text-decoration: none;
+	padding-left: 0.35em;
+	user-select: none;
+}
+
+:is(h1, h2, h3, h4, h5, h6):hover .heading-anchor {
+	opacity: 1;
+}
+
+.heading-anchor:hover,
+.heading-anchor.copied {
+	color: var(--col-accent) !important;
+	text-decoration: none !important;
+}
+
 table {
 	width: 100%;
 	border-collapse: collapse;

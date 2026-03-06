@@ -56,7 +56,7 @@ impl<'a> fmt::Display for Content<'a> {
                 // handled by the recurse from the walker.
                 TocElement::Node(nested) => write!(
                     f,
-                    "<{level} id='{slug}'><a href='#{slug}'>{heading}</a></{level}>",
+                    "<{level} id='{slug}'>{heading}<a class='heading-anchor' href='#{slug}' aria-label='Permalink to this heading'>#</a></{level}>",
                     level = &nested.heading.level,
                     slug = &nested.heading.slug,
                     heading = &nested.heading.contents,
@@ -188,6 +188,7 @@ impl Layout for HtmlLayout {
     <script src="{root}dark.js" type=module></script>
     <script src="{root}search.js" type=module></script>
     <script src="{root}nav.js" type=module></script>
+    <script src="{root}permalink.js" type=module></script>
 </head>
 <body>
     <header class="site-head">
@@ -242,11 +243,15 @@ impl Layout for HtmlLayout {
     }
 
     fn assets(&self) -> &[Asset] {
-        static ASSETS: [Asset; 5] = [
+        static ASSETS: [Asset; 6] = [
             Asset::internal("style.css", include_str!("../../../assets/style.css")),
             Asset::internal("search.js", include_str!("../../../assets/search.js")),
             Asset::internal("dark.js", include_str!("../../../assets/dark.js")),
             Asset::internal("nav.js", include_str!("../../../assets/nav.js")),
+            Asset::internal(
+                "permalink.js",
+                include_str!("../../../assets/permalink.js"),
+            ),
             Asset::internal(
                 "feather-sprite.svg",
                 include_str!("../../../assets/feather-sprite.svg"),
