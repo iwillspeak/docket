@@ -436,18 +436,16 @@ header.site-head .content {
 	display: none;
 }
 
-.site-nav details > summary::before {
-	content: "▶";
-	display: inline-block;
+.site-nav details > summary > .nav-chevron {
 	flex-shrink: 0;
-	font-size: 0.55em;
-	width: 0.9em;
+	width: 0.75em;
+	height: 0.75em;
 	vertical-align: middle;
 	transition: transform 0.15s ease;
 	color: var(--col-fg-dimmed);
 }
 
-.site-nav details[open] > summary::before {
+.site-nav details[open] > summary > .nav-chevron {
 	transform: rotate(90deg);
 }
 
