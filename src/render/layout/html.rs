@@ -181,8 +181,11 @@ impl Layout for HtmlLayout {
         let root = state.path_to_root(&kind);
         let hl_header = {
             let mut buf = Vec::new();
-            let _ = highlight::get_hilighter().write_header(&mut buf);
-            String::from_utf8(buf).unwrap_or_default()
+            highlight::get_hilighter().write_header(&mut buf)?;
+            match String::from_utf8(buf) {
+                Ok(s) => s,
+                Err(e) => String::from_utf8_lossy(&e.into_bytes()).into_owned(),
+            }
         };
         write!(
             writer,
