@@ -32,6 +32,7 @@ pub use syntect_hl::SyntectHighlighter;
 mod syntect_hl {
     use std::io::Write;
 
+    use once_cell::sync::OnceCell;
     use pulldown_cmark::Event;
     use syntect::{
         highlighting::ThemeSet,
@@ -52,6 +53,7 @@ mod syntect_hl {
     pub struct SyntectHighlighter {
         ss: SyntaxSet,
         ts: ThemeSet,
+        header_cache: OnceCell<String>,
     }
 
     impl SyntectHighlighter {
@@ -60,6 +62,7 @@ mod syntect_hl {
             SyntectHighlighter {
                 ss: SyntaxSet::load_defaults_newlines(),
                 ts: ThemeSet::load_defaults(),
+                header_cache: OnceCell::new(),
             }
         }
     }
@@ -86,23 +89,28 @@ mod syntect_hl {
         }
 
         fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()> {
-            let io_err =
-                |e: syntect::Error| std::io::Error::new(std::io::ErrorKind::Other, e.to_string());
-            let light_css = strip_background_color(
-                &css_for_theme_with_class_style(&self.ts.themes[LIGHT_THEME], class_style())
-                    .map_err(io_err)?,
-            );
-            let dark_css = strip_background_color(
-                &css_for_theme_with_class_style(&self.ts.themes[DARK_THEME], class_style())
-                    .map_err(io_err)?,
-            );
-            let dark_prefixed =
-                prefix_css_selectors(&dark_css, "html[data-color-mode=\"dark\"]");
-            write!(
-                out,
-                "<style>\n{}\n@media (prefers-color-scheme: dark) {{\n{}}}\n{}</style>",
-                light_css, dark_css, dark_prefixed
-            )
+            let header = self.header_cache.get_or_try_init(|| -> std::io::Result<String> {
+                let io_err = |e: syntect::Error| {
+                    std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
+                };
+                let light_css = strip_background_color(
+                    &css_for_theme_with_class_style(&self.ts.themes[LIGHT_THEME], class_style())
+                        .map_err(io_err)?,
+                );
+                let dark_css = strip_background_color(
+                    &css_for_theme_with_class_style(&self.ts.themes[DARK_THEME], class_style())
+                        .map_err(io_err)?,
+                );
+                let dark_auto =
+                    prefix_css_selectors(&dark_css, "html:not([data-color-mode])");
+                let dark_prefixed =
+                    prefix_css_selectors(&dark_css, "html[data-color-mode=\"dark\"]");
+                Ok(format!(
+                    "<style>\n{}\n@media (prefers-color-scheme: dark) {{\n{}}}\n{}</style>",
+                    light_css, dark_auto, dark_prefixed
+                ))
+            })?;
+            out.write_all(header.as_bytes())
         }
     }
 
