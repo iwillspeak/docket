@@ -160,6 +160,8 @@ struct NavInfo {
     pub title: String,
     /// The slug to use when constructing a URI.
     pub slug: String,
+    /// Child navigation items, if this entry represents a bale.
+    pub children: Vec<NavInfo>,
 }
 
 impl NavInfo {
@@ -167,6 +169,15 @@ impl NavInfo {
         NavInfo {
             title: title.to_owned(),
             slug: slug.to_owned(),
+            children: Vec::new(),
+        }
+    }
+
+    fn with_children(slug: &str, title: &str, children: Vec<NavInfo>) -> Self {
+        NavInfo {
+            title: title.to_owned(),
+            slug: slug.to_owned(),
+            children,
         }
     }
 }
@@ -294,7 +305,16 @@ fn navs_for_items(items: &[DoctreeItem]) -> Vec<NavInfo> {
         .map(|item| match item {
             DoctreeItem::Page(page) => NavInfo::new(page.slug(), page.title()),
             DoctreeItem::Bale(bale) => {
-                NavInfo::new(bale.frontispiece().slug(), bale.frontispiece().title())
+                let children = bale
+                    .peek_children()
+                    .into_iter()
+                    .map(|(slug, title)| NavInfo::new(&slug, &title))
+                    .collect();
+                NavInfo::with_children(
+                    bale.frontispiece().slug(),
+                    bale.frontispiece().title(),
+                    children,
+                )
             }
         })
         .collect()

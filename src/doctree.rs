@@ -232,6 +232,35 @@ impl Bale {
     pub(crate) fn frontispiece(&self) -> &Frontispiece {
         &self.frontispiece
     }
+
+    /// Peek at the children of this bale without fully opening it.
+    ///
+    /// Returns (slug, title) pairs for each child page and nested bale, in
+    /// the same sort order that `break_open` would produce.
+    pub(crate) fn peek_children(&self) -> Vec<(String, String)> {
+        let mut items: Vec<(&PathBuf, bool)> = self
+            .pages
+            .iter()
+            .map(|p| (p, false))
+            .chain(self.nested.iter().map(|p| (p, true)))
+            .collect();
+        items.sort_by_cached_key(|(p, _)| utils::normalised_stem(p));
+
+        let mut result = Vec::new();
+        for (path, is_nested) in items {
+            if is_nested {
+                if let Ok(bale) = Bale::new(path) {
+                    result.push((
+                        bale.frontispiece().slug().to_owned(),
+                        bale.frontispiece().title().to_owned(),
+                    ));
+                }
+            } else if let Ok(page) = Page::open(path) {
+                result.push((page.slug().to_owned(), page.title().to_owned()));
+            }
+        }
+        result
+    }
 }
 
 /// Bale Frontispiece

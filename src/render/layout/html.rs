@@ -108,21 +108,48 @@ struct Navs<'a>(&'a [NavInfo], &'a str);
 
 impl<'a> fmt::Display for Navs<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.0.len() > 0 {
-            write!(f, "<ul>")?;
-            for nav in self.0.iter() {
-                write!(
-                    f,
-                    "<li><a href='{prefix}{slug}'>{title}</a>",
-                    title = nav.title,
-                    prefix = self.1,
-                    slug = nav.slug
-                )?;
-            }
-            write!(f, "</ul>")?;
-        }
-        Ok(())
+        render_nav_list(f, self.0, self.1)
     }
+}
+
+/// Recursively render a navigation list.
+///
+/// Items without children render as plain links; items with children render
+/// as `<details>/<summary>` disclosure widgets with a nested list.
+fn render_nav_list(
+    f: &mut fmt::Formatter<'_>,
+    navs: &[NavInfo],
+    prefix: &str,
+) -> fmt::Result {
+    if navs.is_empty() {
+        return Ok(());
+    }
+    write!(f, "<ul class='site-nav-list'>")?;
+    for nav in navs {
+        write!(f, "<li>")?;
+        if nav.children.is_empty() {
+            write!(
+                f,
+                "<a href='{prefix}{slug}'>{title}</a>",
+                prefix = prefix,
+                slug = nav.slug,
+                title = nav.title,
+            )?;
+        } else {
+            let child_prefix = format!("{}{}/", prefix, nav.slug);
+            write!(
+                f,
+                "<details><summary><a href='{prefix}{slug}'>{title}</a></summary>",
+                prefix = prefix,
+                slug = nav.slug,
+                title = nav.title,
+            )?;
+            render_nav_list(f, &nav.children, &child_prefix)?;
+            write!(f, "</details>")?;
+        }
+        write!(f, "</li>")?;
+    }
+    write!(f, "</ul>")
 }
 
 fn get_footer<'a>(state: &'a RenderState) -> &'a str {
@@ -182,11 +209,8 @@ impl Layout for HtmlLayout {
             </button>
             <div id="docket-search"></div>
             <nav class="site-nav">
-                <h2>Related</h2>
-                <ul>
-                    <li><a href='{nav_prefix}'>{bale_title}</a>
-                        {navs}
-                </ul>
+                <h2>In this section</h2>
+                {navs}
             </nav>
         </aside>
         <nav class="toc-tree" id="toc-panel">
@@ -209,8 +233,6 @@ impl Layout for HtmlLayout {
             root = state.path_to_root(&kind),
             breadcrumbs = Breadcrumbs(state, nav_prefix),
             page_title = page.title(),
-            bale_title = state.current_bale().title(),
-            nav_prefix = nav_prefix,
             navs = Navs(&state.navs, nav_prefix),
             toc = RenderedToc(page.content(), HeadingLevel::H3),
             content = Content(page.content()),
