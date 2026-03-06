@@ -44,10 +44,11 @@ impl<'a> fmt::Display for Breadcrumbs<'a> {
     }
 }
 
-struct Content<'a>(&'a Toc);
+struct Content<'a>(&'a Toc, &'a str);
 
 impl<'a> fmt::Display for Content<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let root = self.1;
         for element in self.0.walk_elements() {
             match element {
                 TocElement::Html(htm) => htm.fmt(f)?,
@@ -56,10 +57,11 @@ impl<'a> fmt::Display for Content<'a> {
                 // handled by the recurse from the walker.
                 TocElement::Node(nested) => write!(
                     f,
-                    "<{level} id='{slug}'>{heading}<a class='heading-anchor' href='#{slug}' aria-label='Permalink to this heading'>#</a></{level}>",
+                    "<{level} id='{slug}'>{heading}<a class='heading-anchor' href='#{slug}' aria-label='Permalink to this heading'><svg class='anchor-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><use href='{root}feather-sprite.svg#copy'/></svg></a></{level}>",
                     level = &nested.heading.level,
                     slug = &nested.heading.slug,
                     heading = &nested.heading.contents,
+                    root = root,
                 )?,
             }
         }
@@ -104,16 +106,13 @@ fn render_toc_to(f: &mut fmt::Formatter<'_>, nodes: Nodes, limit: HeadingLevel) 
 }
 
 /// Renderable struct
-struct Navs<'a>(&'a [NavInfo], &'a str);
+struct Navs<'a>(&'a [NavInfo], &'a str, &'a str);
 
 impl<'a> fmt::Display for Navs<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        render_nav_list(f, self.0, self.1)
+        render_nav_list(f, self.0, self.1, self.2)
     }
 }
-
-/// SVG chevron icon used as the disclosure triangle in nav `<details>` widgets.
-const NAV_CHEVRON_SVG: &str = "<svg class='nav-chevron' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polyline points='9 18 15 12 9 6'/></svg>";
 
 /// Recursively render a navigation list.
 ///
@@ -123,6 +122,7 @@ fn render_nav_list(
     f: &mut fmt::Formatter<'_>,
     navs: &[NavInfo],
     prefix: &str,
+    root: &str,
 ) -> fmt::Result {
     if navs.is_empty() {
         return Ok(());
@@ -142,13 +142,13 @@ fn render_nav_list(
             let child_prefix = format!("{}{}/", prefix, nav.slug);
             write!(
                 f,
-                "<details><summary>{chevron}<a href='{prefix}{slug}'>{title}</a></summary>",
-                chevron = NAV_CHEVRON_SVG,
+                "<details><summary><svg class='nav-chevron' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><use href='{root}feather-sprite.svg#chevron-right'/></svg><a href='{prefix}{slug}'>{title}</a></summary>",
+                root = root,
                 prefix = prefix,
                 slug = nav.slug,
                 title = nav.title,
             )?;
-            render_nav_list(f, &nav.children, &child_prefix)?;
+            render_nav_list(f, &nav.children, &child_prefix, root)?;
             write!(f, "</details>")?;
         }
         write!(f, "</li>")?;
@@ -177,6 +177,7 @@ impl Layout for HtmlLayout {
         page: &Page,
     ) -> Result<()> {
         let nav_prefix = kind.path_to_bale();
+        let root = state.path_to_root(&kind);
         write!(
             writer,
             r##"<!DOCTYPE html>
@@ -198,19 +199,19 @@ impl Layout for HtmlLayout {
     <header class="site-head">
         <div class="content">
             <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebar">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href='{root}feather-sprite.svg#menu'/></svg>
             </button>
             <nav class="breadcrumbs">{breadcrumbs}</nav>
             <div id="dark-mode-placeholder"></div>
             <button class="toc-toggle" id="toc-toggle" aria-label="Toggle table of contents" aria-expanded="false" aria-controls="toc-panel">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href='{root}feather-sprite.svg#list'/></svg>
             </button>
         </div>
     </header>
     <section class="content doc-grid">
         <aside class="sidebar" id="sidebar">
             <button class="drawer-close" aria-label="Close navigation">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href='{root}feather-sprite.svg#x'/></svg>
             </button>
             <div id="docket-search"></div>
             <nav class="site-nav">
@@ -220,7 +221,7 @@ impl Layout for HtmlLayout {
         </aside>
         <nav class="toc-tree" id="toc-panel">
             <button class="drawer-close" aria-label="Close table of contents">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href='{root}feather-sprite.svg#x'/></svg>
             </button>
             <h2>On this Page</h2>
             {toc}
@@ -235,12 +236,12 @@ impl Layout for HtmlLayout {
 </body>
 </html>"##,
             site_name = state.ctx().site_name,
-            root = state.path_to_root(&kind),
+            root = root,
             breadcrumbs = Breadcrumbs(state, nav_prefix),
             page_title = page.title(),
-            navs = Navs(&state.navs, nav_prefix),
+            navs = Navs(&state.navs, nav_prefix, &root),
             toc = RenderedToc(page.content(), HeadingLevel::H3),
-            content = Content(page.content()),
+            content = Content(page.content(), &root),
             footer = get_footer(state)
         )?;
         Ok(())
