@@ -72,7 +72,7 @@ html[data-color-mode="light"] {
 /* Tablets */
 @media screen and (min-width: 800px) {
 	:root {
-	--fnt-base-size: 17px;
+		--fnt-base-size: 17px;
 	}
 
 	/* Two-column layout: TOC in-grid, sidebar remains a drawer */
@@ -314,7 +314,7 @@ header.site-head {
 	background-color: var(--col-bg);
 	position: sticky;
 	top: 0;
-	/* nav and toc drawers are z-index 100, so this keeps the header above them */
+	/* nav and toc drawers are z-index 101, so this keeps the header above them */
 	z-index: 1000; 
 }
 

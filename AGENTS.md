@@ -99,8 +99,8 @@ Three tiers, all in `assets/style.css`:
 
 | Range | Grid | Sidebar | TOC |
 |---|---|---|---|
-| `< 500px` | 1 column | drawer (☰ button) | drawer (≡ button) |
-| `500px – 979px` | 2 columns: `content toc` | drawer (☰ button) | in-grid sticky |
+| `< 800px` | 1 column | drawer (☰ button) | drawer (≡ button) |
+| `800px – 979px` | 2 columns: `content toc` | drawer (☰ button) | in-grid sticky |
 | `≥ 980px` | 3 columns: `sidebar content toc` | in-grid sticky | in-grid sticky |
 
 ### CSS cascade trap (hit twice during development)
