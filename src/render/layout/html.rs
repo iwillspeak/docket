@@ -2,6 +2,7 @@ use crate::{
     asset::Asset,
     doctree::Page,
     error::Result,
+    highlight,
     render::{NavInfo, PageKind, RenderState},
     toc::{Nodes, Toc, TocElement},
 };
@@ -178,6 +179,11 @@ impl Layout for HtmlLayout {
     ) -> Result<()> {
         let nav_prefix = kind.path_to_bale();
         let root = state.path_to_root(&kind);
+        let hl_header = {
+            let mut buf = Vec::new();
+            let _ = highlight::get_hilighter().write_header(&mut buf);
+            String::from_utf8(buf).unwrap_or_default()
+        };
         write!(
             writer,
             r##"<!DOCTYPE html>
@@ -190,6 +196,7 @@ impl Layout for HtmlLayout {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat&family=JetBrains+Mono&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{root}style.css">
+    {hl_header}
     <script src="{root}dark.js" type=module></script>
     <script src="{root}search.js" type=module></script>
     <script src="{root}nav.js" type=module></script>
@@ -237,6 +244,7 @@ impl Layout for HtmlLayout {
 </html>"##,
             site_name = state.ctx().site_name,
             root = root,
+            hl_header = hl_header,
             breadcrumbs = Breadcrumbs(state, nav_prefix),
             page_title = page.title(),
             navs = Navs(&state.navs, nav_prefix, &root),
