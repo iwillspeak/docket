@@ -129,7 +129,7 @@ impl<'s, 'b> RenderState<'s, 'b> {
     }
 
     /// Get this state's parent, if any
-    fn parent(&self) -> Option<&RenderState> {
+    fn parent(&self) -> Option<&RenderState<'_, '_>> {
         if let RenderStateKind::Nested(parent, _) = &self.kind {
             Some(parent)
         } else {

@@ -18,9 +18,10 @@ pub(crate) trait Highlighter {
     /// # Highlight a Code Block
     ///
     /// Returns a list of the events to emit to the TOC to represent the block.
-    fn hl_codeblock<'a>(&self, name: Option<&str>, block: &str) -> Vec<Event>;
+    fn hl_codeblock<'a>(&self, name: Option<&str>, block: &str) -> Vec<Event<'_>>;
 
     /// # Write any HTML header required for highlighting on this page.
+    #[allow(dead_code)]
     fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()>;
 }
 
@@ -54,7 +55,7 @@ mod syntect_hl {
     }
 
     impl Highlighter for SyntectHighlighter {
-        fn hl_codeblock(&self, name: Option<&str>, block: &str) -> Vec<Event> {
+        fn hl_codeblock(&self, name: Option<&str>, block: &str) -> Vec<Event<'_>> {
             let syntax = name
                 .and_then(|name| self.ss.find_syntax_by_token(&name))
                 .unwrap_or_else(|| self.ss.find_syntax_plain_text());
@@ -84,7 +85,7 @@ mod js_hl {
     pub struct HighlightJsHighlighter;
 
     impl Highlighter for HighlightJsHighlighter {
-        fn hl_codeblock(&self, name: Option<&str>, block: &str) -> Vec<Event> {
+        fn hl_codeblock(&self, name: Option<&str>, block: &str) -> Vec<Event<'_>> {
             to_default_events(name, &block)
         }
 
