@@ -41,8 +41,22 @@ jobs:
             # pull requests -> pr-25
             type=ref,event=pr
 
-      - name: Build and Push Container
+      - name: Build Container
         uses: docker/build-push-action@v7
         with:
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          push: false
+          load: true
+          tags: docket-test:latest
+
+      - name: Test Container
+        run: docker run --rm docket-test:latest docket --version
+
+      - name: Push Container
+        if: github.event_name != 'pull_request'
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          set -e
+          while IFS= read -r tag; do
+            [ -n "$tag" ] && docker tag docket-test:latest "$tag" && docker push "$tag"
+          done <<< "$TAGS"
