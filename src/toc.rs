@@ -61,7 +61,7 @@ pub(crate) struct TocNode {
 }
 
 impl TocNode {
-    pub fn nodes(&self) -> Nodes {
+    pub fn nodes(&self) -> Nodes<'_> {
         Nodes(&self.contents, 0)
     }
 }
@@ -150,12 +150,12 @@ impl Toc {
     /// # Get the Nodes Iterator
     ///
     /// Returns an iterator over the nodes within the root of the tree.
-    pub fn nodes(&self) -> Nodes {
+    pub fn nodes(&self) -> Nodes<'_> {
         Nodes(&self.0, 0)
     }
 
     /// # Depth-frist walk of the elements of the tree
-    pub fn walk_elements(&self) -> Elements {
+    pub fn walk_elements(&self) -> Elements<'_> {
         Elements::new(&self.0)
     }
 
@@ -348,21 +348,21 @@ where
 /// Check if we have just seen a `<p>`, `[`, `TOC`, and `]`
 fn in_toc(current: &[Event]) -> bool {
     let idx = current.len() - 1;
-    if let Some(Event::Text(ref toc)) = current.get(idx) {
+    if let Some(Event::Text(toc)) = current.get(idx) {
         if toc.as_ref() != "]" {
             return false;
         }
     } else {
         return false;
     }
-    if let Some(Event::Text(ref toc)) = current.get(idx - 1) {
+    if let Some(Event::Text(toc)) = current.get(idx - 1) {
         if toc.as_ref() != "TOC" {
             return false;
         }
     } else {
         return false;
     }
-    if let Some(Event::Text(ref toc)) = current.get(idx - 2) {
+    if let Some(Event::Text(toc)) = current.get(idx - 2) {
         if toc.as_ref() != "[" {
             return false;
         }
@@ -380,7 +380,7 @@ fn in_toc(current: &[Event]) -> bool {
 fn is_below(level: Option<HeadingLevel>, event: &Event) -> bool {
     level
         .map(|level| match event {
-            Event::Start(Tag::Heading(ref next_level, ..)) => *next_level > level,
+            Event::Start(Tag::Heading(next_level, ..)) => *next_level > level,
             _ => true,
         })
         .unwrap_or(true)
