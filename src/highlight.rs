@@ -44,7 +44,7 @@ mod syntect_hl {
     use super::{to_default_events, Highlighter};
 
     const LIGHT_THEME: &str = "InspiredGitHub";
-    const DARK_THEME: &str = "base16-ocean.dark";
+    const DARK_THEME: &str = "Solarized (dark)";
 
     fn class_style() -> ClassStyle {
         ClassStyle::SpacedPrefixed { prefix: "hl-" }
@@ -93,55 +93,30 @@ mod syntect_hl {
                 let io_err = |e: syntect::Error| {
                     std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
                 };
-                let light_css = strip_background_color(
-                    &css_for_theme_with_class_style(&self.ts.themes[LIGHT_THEME], class_style())
-                        .map_err(io_err)?,
-                );
-                let dark_css = strip_background_color(
-                    &css_for_theme_with_class_style(&self.ts.themes[DARK_THEME], class_style())
-                        .map_err(io_err)?,
-                );
-                let dark_system_preference =
-                    prefix_css_selectors(&dark_css, "html:not([data-color-mode])");
-                let dark_prefixed =
-                    prefix_css_selectors(&dark_css, "html[data-color-mode=\"dark\"]");
+                let light_css =
+                    css_for_theme_with_class_style(&self.ts.themes[LIGHT_THEME], class_style())
+                        .map_err(io_err)?;
+                let dark_css =
+                    css_for_theme_with_class_style(&self.ts.themes[DARK_THEME], class_style())
+                        .map_err(io_err)?;
+                // A reset rule ensures light-mode colours don't bleed through
+                // for any tokens the dark theme doesn't explicitly re-declare.
+                const DARK_RESET: &str = ".hl-code, .hl-code * { color: inherit; }\n";
                 Ok(format!(
-                    "<style>\n{}\n@media (prefers-color-scheme: dark) {{\n{}}}\n{}</style>",
-                    light_css, dark_system_preference, dark_prefixed
+                    concat!(
+                        "<style>\n",
+                        "{light}\n",
+                        "@media (prefers-color-scheme: dark) {{\n{reset}{dark}}}\n",
+                        "html[data-color-mode=\"dark\"] {{\n{reset}{dark}}}\n",
+                        "</style>",
+                    ),
+                    light = light_css,
+                    dark = dark_css,
+                    reset = DARK_RESET,
                 ))
             })?;
             out.write_all(header.as_bytes())
         }
-    }
-
-    /// Strip `background-color` declarations from generated theme CSS.
-    ///
-    /// This lets the design's own `pre` rule control the container background
-    /// consistently across light and dark modes.
-    fn strip_background_color(css: &str) -> String {
-        css.lines()
-            .filter(|line| !line.trim_start().starts_with("background-color"))
-            .map(|line| format!("{}\n", line))
-            .collect()
-    }
-
-    /// Prefix each CSS selector in `css` with `prefix`.
-    ///
-    /// Used to scope a theme's CSS under a manual dark-mode override selector.
-    fn prefix_css_selectors(css: &str, prefix: &str) -> String {
-        let mut result = String::new();
-        for chunk in css.split('}') {
-            let trimmed = chunk.trim();
-            if trimmed.is_empty() {
-                continue;
-            }
-            if let Some(brace) = trimmed.find('{') {
-                let selector = trimmed[..brace].trim();
-                let props = trimmed[brace + 1..].trim();
-                result.push_str(&format!("{} {} {{\n    {}\n}}\n", prefix, selector, props));
-            }
-        }
-        result
     }
 }
 
