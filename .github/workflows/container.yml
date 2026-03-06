@@ -38,9 +38,11 @@ jobs:
             type=ref,event=tag
             # branches -> branch name
             type=ref,event=branch
+            # pull requests -> pr-25
+            type=ref,event=pr
 
       - name: Build and Push Container
         uses: docker/build-push-action@v7
         with:
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
