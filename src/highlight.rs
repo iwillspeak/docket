@@ -101,13 +101,13 @@ mod syntect_hl {
                     &css_for_theme_with_class_style(&self.ts.themes[DARK_THEME], class_style())
                         .map_err(io_err)?,
                 );
-                let dark_auto =
+                let dark_system_preference =
                     prefix_css_selectors(&dark_css, "html:not([data-color-mode])");
                 let dark_prefixed =
                     prefix_css_selectors(&dark_css, "html[data-color-mode=\"dark\"]");
                 Ok(format!(
                     "<style>\n{}\n@media (prefers-color-scheme: dark) {{\n{}}}\n{}</style>",
-                    light_css, dark_auto, dark_prefixed
+                    light_css, dark_system_preference, dark_prefixed
                 ))
             })?;
             out.write_all(header.as_bytes())
