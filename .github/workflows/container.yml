@@ -32,12 +32,12 @@ jobs:
         with:
           images: ghcr.io/${{ github.repository }}
           tags: |
-            # main branch -> latest only
+            # main branch + version tags -> latest
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
             # version tags -> v1.2.3
             type=ref,event=tag
-            # non-main branches -> branch name
-            type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
+            # branches -> branch name
+            type=ref,event=branch
 
       - name: Build and Push Container
         uses: docker/build-push-action@v7
