@@ -197,7 +197,7 @@ impl Layout for HtmlLayout {
             {toc}
         </nav>
         <main>
-            <article id="documetnation">
+            <article id="document-content">
                 {content}
             </article>
         </main>
