@@ -21,7 +21,6 @@ pub(crate) trait Highlighter {
     fn hl_codeblock<'a>(&self, name: Option<&str>, block: &str) -> Vec<Event<'_>>;
 
     /// # Write any HTML header required for highlighting on this page.
-    #[allow(dead_code)]
     fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()>;
 }
 
@@ -35,10 +34,20 @@ mod syntect_hl {
 
     use pulldown_cmark::Event;
     use syntect::{
-        self, highlighting::ThemeSet, html::highlighted_html_for_string, parsing::SyntaxSet,
+        highlighting::ThemeSet,
+        html::{css_for_theme_with_class_style, ClassStyle, ClassedHTMLGenerator},
+        parsing::SyntaxSet,
+        util::LinesWithEndings,
     };
 
     use super::{to_default_events, Highlighter};
+
+    const LIGHT_THEME: &str = "InspiredGitHub";
+    const DARK_THEME: &str = "base16-ocean.dark";
+
+    fn class_style() -> ClassStyle {
+        ClassStyle::SpacedPrefixed { prefix: "hl-" }
+    }
 
     pub struct SyntectHighlighter {
         ss: SyntaxSet,
@@ -48,30 +57,83 @@ mod syntect_hl {
     impl SyntectHighlighter {
         /// # Create a New Highlighter
         pub fn new() -> Self {
-            let ss = SyntaxSet::load_defaults_newlines();
-            let ts = ThemeSet::load_defaults();
-            SyntectHighlighter { ss, ts }
+            SyntectHighlighter {
+                ss: SyntaxSet::load_defaults_newlines(),
+                ts: ThemeSet::load_defaults(),
+            }
         }
     }
 
     impl Highlighter for SyntectHighlighter {
         fn hl_codeblock(&self, name: Option<&str>, block: &str) -> Vec<Event<'_>> {
             let syntax = name
-                .and_then(|name| self.ss.find_syntax_by_token(&name))
+                .and_then(|n| self.ss.find_syntax_by_token(n))
                 .unwrap_or_else(|| self.ss.find_syntax_plain_text());
 
-            // debug!("source name: {}, syntax: {:?}", name, syntax.name);
+            let mut generator =
+                ClassedHTMLGenerator::new_with_class_style(syntax, &self.ss, class_style());
+            for line in LinesWithEndings::from(block) {
+                if generator
+                    .parse_html_for_line_which_includes_newline(line)
+                    .is_err()
+                {
+                    return to_default_events(name, block);
+                }
+            }
+            let inner = generator.finalize();
+            let html = format!("<pre class=\"hl-code\"><code>{}</code></pre>\n", inner);
+            vec![Event::Html(html.into())]
+        }
 
-            let theme = &self.ts.themes["InspiredGitHub"];
-            let highlighted = highlighted_html_for_string(&block, &self.ss, &syntax, theme);
-            match highlighted {
-                Ok(html) => vec![Event::Html(html.into())],
-                Err(_) => to_default_events(name, &block),
+        fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()> {
+            let io_err =
+                |e: syntect::Error| std::io::Error::new(std::io::ErrorKind::Other, e.to_string());
+            let light_css = strip_background_color(
+                &css_for_theme_with_class_style(&self.ts.themes[LIGHT_THEME], class_style())
+                    .map_err(io_err)?,
+            );
+            let dark_css = strip_background_color(
+                &css_for_theme_with_class_style(&self.ts.themes[DARK_THEME], class_style())
+                    .map_err(io_err)?,
+            );
+            let dark_prefixed =
+                prefix_css_selectors(&dark_css, "html[data-color-mode=\"dark\"]");
+            write!(
+                out,
+                "<style>\n{}\n@media (prefers-color-scheme: dark) {{\n{}}}\n{}</style>",
+                light_css, dark_css, dark_prefixed
+            )
+        }
+    }
+
+    /// Strip `background-color` declarations from generated theme CSS.
+    ///
+    /// This lets the design's own `pre` rule control the container background
+    /// consistently across light and dark modes.
+    fn strip_background_color(css: &str) -> String {
+        css.lines()
+            .filter(|line| !line.trim_start().starts_with("background-color"))
+            .map(|line| format!("{}\n", line))
+            .collect()
+    }
+
+    /// Prefix each CSS selector in `css` with `prefix`.
+    ///
+    /// Used to scope a theme's CSS under a manual dark-mode override selector.
+    fn prefix_css_selectors(css: &str, prefix: &str) -> String {
+        let mut result = String::new();
+        for chunk in css.split('}') {
+            let trimmed = chunk.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            if let Some(brace) = trimmed.find('{') {
+                let selector = trimmed[..brace].trim();
+                let props = trimmed[brace + 1..].trim();
+                result.push_str(&format!("{} {} {{\n    {}\n}}\n", prefix, selector, props));
             }
         }
-        fn write_header(&self, _out: &mut dyn Write) -> std::io::Result<()> {
-            Ok(())
-        }
+        result
     }
 }
 
