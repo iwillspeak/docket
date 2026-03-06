@@ -70,21 +70,32 @@ html[data-color-mode="light"] {
 }
 
 /* Tablets */
-@media screen and (min-width: 500px) {
+@media screen and (min-width: 800px) {
 	:root {
-		--fnt-base-size: 17px;
+	--fnt-base-size: 17px;
 	}
 
+	/* Two-column layout: TOC in-grid, sidebar remains a drawer */
 	.doc-grid {
 		display: grid;
-		grid-template-areas: "sidebar content";
-		grid-template-columns: minmax(0, 1.5fr) minmax(0, 2fr);
+		grid-template-areas: "content toc";
+		grid-template-columns: minmax(0, 3fr) minmax(0, 200px);
 		gap: 3rem;
 	}
 
-	.doc-grid .sidebar,
+	/* Restore TOC to normal in-grid sticky element */
 	.doc-grid .toc-tree {
-		grid-area: sidebar;
+		grid-area: toc;
+		position: sticky;
+		visibility: visible;
+		transform: none;
+		width: auto;
+		border: none;
+		padding: 0;
+		max-height: calc(100vh - var(--sz-header-height) - 15px);
+		top: calc(var(--sz-header-height) + 15px);
+		overflow-y: auto;
+		transition: none;
 	}
 
 	.doc-grid main {
@@ -95,6 +106,16 @@ html[data-color-mode="light"] {
 
 	.doc-grid main article {
 		max-width: 75ch;
+	}
+
+	/* Close button not needed — TOC is an in-grid panel at this width */
+	.doc-grid .toc-tree .drawer-close {
+		display: none;
+	}
+
+	/* TOC toggle not needed — TOC is always visible at this width */
+	.toc-toggle {
+		display: none;
 	}
 }
 
@@ -111,18 +132,43 @@ html[data-color-mode="light"] {
 	.doc-grid {
 		grid-template-areas: "sidebar content toc";
 		grid-template-columns: minmax(0, 1.2fr) minmax(0, 3fr) minmax(0, 240px);
+		gap: 3rem;
 	}
 
+	/* Restore sidebar and TOC to normal in-grid sticky elements */
 	.doc-grid .sidebar,
 	.doc-grid .toc-tree {
 		position: sticky;
-		max-height: calc(100vh - var(--sz-header-height));
-		top: 15px;
+		visibility: visible;
+		transform: none;
+		width: auto;
+		border: none;
+		padding: 0;
+		max-height: calc(100vh - var(--sz-header-height) - 15px);
+		top: calc(var(--sz-header-height) + 15px);
 		overflow-y: auto;
+		transition: none;
+	}
+
+	.doc-grid .sidebar {
+		grid-area: sidebar;
 	}
 
 	.doc-grid .toc-tree {
 		grid-area: toc;
+	}
+
+	.doc-grid main {
+		grid-area: content;
+	}
+
+	/* Close button not needed — sidebar is an in-grid panel at this width */
+	.doc-grid .sidebar .drawer-close {
+		display: none;
+	}
+
+	.nav-backdrop {
+		display: none !important;
 	}
 }
 
@@ -148,7 +194,111 @@ body {
 	padding-top: 1.5rem;
 }
 
-/* ------------------------- HEADER AND BREADCRUMBS --------------------------*/
+/* ========================= MOBILE DRAWER TOGGLES ========================= */
+
+/* Toggle buttons in the header — hidden by default, shown only on narrow viewports */
+.nav-toggle,
+.toc-toggle {
+	display: none;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: 1px solid var(--col-bg-dimmed);
+	border-radius: 3px;
+	color: var(--col-fg);
+	cursor: pointer;
+	padding: 5px;
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
+}
+
+/* Show toggle buttons only when screen is narrow enough that panels are drawers */
+@media screen and (max-width: 979px) {
+	.nav-toggle,
+	.toc-toggle {
+		display: flex;
+	}
+}
+
+.nav-toggle:hover,
+.toc-toggle:hover {
+	color: var(--col-accent);
+	border-color: var(--col-accent);
+}
+
+/* Close (×) button inside each drawer */
+.drawer-close {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: none;
+	border: none;
+	color: var(--col-fg-dimmed);
+	cursor: pointer;
+	padding: 4px;
+	margin: 0 0 0.5rem auto;
+	border-radius: 4px;
+}
+
+.drawer-close:hover {
+	color: var(--col-fg);
+}
+
+/* Backdrop overlay */
+.nav-backdrop {
+	display: none;
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.45);
+	z-index: 99;
+}
+
+.nav-backdrop.active {
+	display: block;
+}
+
+/* Prevent page scroll when a drawer is open */
+body.drawer-open {
+	overflow: hidden;
+}
+
+/* Drawer panels — off-screen by default on narrow viewports */
+.sidebar,
+.toc-tree {
+	position: fixed;
+	top: var(--sz-header-height);
+	bottom: 0;
+	z-index: 100;
+	width: min(300px, 85vw);
+	background-color: var(--col-bg);
+	overflow-y: auto;
+	padding: 1rem;
+	transition: transform 0.25s ease;
+	/* Ensure they are fully hidden when not open */
+	visibility: hidden;
+}
+
+.sidebar {
+	left: 0;
+	transform: translateX(-100%);
+	border-right: 1px solid var(--col-bg-dimmed);
+}
+
+.toc-tree {
+	right: 0;
+	left: auto;
+	transform: translateX(100%);
+	border-left: 1px solid var(--col-bg-dimmed);
+}
+
+.sidebar.open,
+.toc-tree.open {
+	transform: translateX(0);
+	visibility: visible;
+}
+
+/* ====================== END MOBILE DRAWER TOGGLES ======================== */
 
 header.site-head {
 	border-bottom: 1px solid var(--col-bg-dimmed);
@@ -161,6 +311,7 @@ header.site-head {
 header.site-head .content {
 	display: flex;
 	align-items: center;
+	gap: 8px;
 }
 
 .site-head #dark-mode-placeholder {
