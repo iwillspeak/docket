@@ -26,9 +26,21 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            # main branch -> latest only
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/') }}
+            # version tags -> v1.2.3
+            type=ref,event=tag
+            # non-main branches -> branch name
+            type=ref,event=branch,enable=${{ github.ref != 'refs/heads/main' }}
+
       - name: Build and Push Container
         uses: docker/build-push-action@v7
         with:
           push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ghcr.io/${{ github.repository }}:latest
+          tags: ${{ steps.meta.outputs.tags }}
