@@ -160,16 +160,26 @@ impl Layout for HtmlLayout {
     <link rel="stylesheet" href="{root}style.css">
     <script src="{root}dark.js" type=module></script>
     <script src="{root}search.js" type=module></script>
+    <script src="{root}nav.js" type=module></script>
 </head>
 <body>
     <header class="site-head">
         <div class="content">
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
             <nav class="breadcrumbs">{breadcrumbs}</nav>
             <div id="dark-mode-placeholder"></div>
+            <button class="toc-toggle" id="toc-toggle" aria-label="Toggle table of contents" aria-expanded="false" aria-controls="toc-panel">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="9" y1="18" x2="21" y2="18"/></svg>
+            </button>
         </div>
     </header>
     <section class="content doc-grid">
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
+            <button class="drawer-close" aria-label="Close navigation">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
             <div id="docket-search"></div>
             <nav class="site-nav">
                 <h2>Related</h2>
@@ -179,7 +189,10 @@ impl Layout for HtmlLayout {
                 </ul>
             </nav>
         </aside>
-        <nav class="toc-tree">
+        <nav class="toc-tree" id="toc-panel">
+            <button class="drawer-close" aria-label="Close table of contents">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
             <h2>On this Page</h2>
             {toc}
         </nav>
@@ -207,10 +220,11 @@ impl Layout for HtmlLayout {
     }
 
     fn assets(&self) -> &[Asset] {
-        static ASSETS: [Asset; 4] = [
+        static ASSETS: [Asset; 5] = [
             Asset::internal("style.css", include_str!("../../../assets/style.css")),
             Asset::internal("search.js", include_str!("../../../assets/search.js")),
             Asset::internal("dark.js", include_str!("../../../assets/dark.js")),
+            Asset::internal("nav.js", include_str!("../../../assets/nav.js")),
             Asset::internal(
                 "feather-sprite.svg",
                 include_str!("../../../assets/feather-sprite.svg"),
