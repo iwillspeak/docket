@@ -571,6 +571,12 @@ h6 a {
 	text-decoration: none !important;
 }
 
+.anchor-icon {
+	width: 0.85em;
+	height: 0.85em;
+	vertical-align: text-bottom;
+}
+
 table {
 	width: 100%;
 	border-collapse: collapse;
