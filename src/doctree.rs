@@ -404,22 +404,26 @@ say.)
 
         assert_eq!("Down the Rabbit Hole", page.title);
 
-        // Check some of the relative frequencies of terms
+        // Check some of the relative frequencies of terms.
+        // Note: terms are stored as Snowball English stems.
         let index = page.content().search_index().as_raw();
         assert_ne!(0, index.len());
         let rabbit_fq = index.get("rabbit").cloned().unwrap_or_default();
         assert!(rabbit_fq > 0.0);
         let well_fq = index.get("well").cloned().unwrap_or_default();
         assert!(well_fq > rabbit_fq);
+        // "distance" stems to "distanc"; it appears as often as "rabbit".
         assert_eq!(
-            index.get("distance").cloned().unwrap_or_default(),
+            index.get("distanc").cloned().unwrap_or_default(),
             rabbit_fq
         );
         assert!(index.get("down").cloned().unwrap_or_default() > well_fq);
 
-        // Check terms are downcased
-        assert_ne!(None, index.get("orange"));
+        // Check terms are downcased and stemmed ("orange" → "orang").
+        assert_ne!(None, index.get("orang"));
         assert_eq!(None, index.get("MARMALADE"));
+        // The original-case form must not be present either.
+        assert_eq!(None, index.get("orange"));
 
         // check we don't have any whitespace or other junk symbols in the index
         assert_eq!(None, index.get(""));
