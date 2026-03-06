@@ -112,6 +112,9 @@ impl<'a> fmt::Display for Navs<'a> {
     }
 }
 
+/// SVG chevron icon used as the disclosure triangle in nav `<details>` widgets.
+const NAV_CHEVRON_SVG: &str = "<svg class='nav-chevron' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><polyline points='9 18 15 12 9 6'/></svg>";
+
 /// Recursively render a navigation list.
 ///
 /// Items without children render as plain links; items with children render
@@ -139,7 +142,8 @@ fn render_nav_list(
             let child_prefix = format!("{}{}/", prefix, nav.slug);
             write!(
                 f,
-                "<details><summary><a href='{prefix}{slug}'>{title}</a></summary>",
+                "<details><summary>{chevron}<a href='{prefix}{slug}'>{title}</a></summary>",
+                chevron = NAV_CHEVRON_SVG,
                 prefix = prefix,
                 slug = nav.slug,
                 title = nav.title,
