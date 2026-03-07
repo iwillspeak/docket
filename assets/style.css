@@ -162,6 +162,7 @@ html[data-color-mode="light"] {
 	}
 
 	.doc-grid main {
+		padding-top: 1.5rem;
 		grid-area: content;
 	}
 
@@ -194,15 +195,14 @@ body {
 }
 
 .doc-grid main {
-	padding-top: 1.5rem;
+	padding-top: 0;
 }
 
 /* ========================= MOBILE DRAWER TOGGLES ========================= */
 
-/* Toggle buttons in the header — hidden by default, shown only on narrow viewports */
-.nav-toggle,
-.toc-toggle {
-	display: none;
+/* Shared styles for all box icon buttons in the header */
+.header-icon-btn {
+	display: flex;
 	align-items: center;
 	justify-content: center;
 	background: none;
@@ -210,10 +210,26 @@ body {
 	border-radius: 3px;
 	color: var(--col-fg);
 	cursor: pointer;
-	padding: 5px;
-	width: 24px;
-	height: 24px;
+	width: 34px;
+	height: 34px;
 	flex-shrink: 0;
+	text-decoration: none;
+}
+
+.header-icon-btn svg {
+	width: 20px;
+	height: 20px;
+}
+
+.header-icon-btn:hover {
+	color: var(--col-accent);
+	border-color: var(--col-accent);
+}
+
+/* Toggle buttons in the header — hidden by default, shown only on narrow viewports */
+.nav-toggle,
+.toc-toggle {
+	display: none;
 }
 
 /* Show toggle buttons only when screen is narrow enough that panels are drawers */
@@ -224,15 +240,39 @@ body {
 }
 
 @media screen and (max-width: 799px) {
+	:root {
+		--sz-header-height: 56px;
+	}
+
+	/* Header: keep only the site title (primary crumb), hide sub-path items */
+	.site-head .breadcrumbs ol li:not(.primary) {
+		display: none;
+	}
+
+	/* Inline breadcrumbs: show primary as icon-only home link */
+	.breadcrumbs-inline ol li.primary .bc-site-name {
+		display: none;
+	}
+
+	/* Show the inline breadcrumbs only when sub-path items exist */
+	.breadcrumbs-inline:has(li:not(.primary)) {
+		display: flex;
+	}
+
 	.toc-toggle {
 		display: flex;
 	}
-}
 
-.nav-toggle:hover,
-.toc-toggle:hover {
-	color: var(--col-accent);
-	border-color: var(--col-accent);
+	/* Larger tap targets for mobile */
+	.header-icon-btn {
+		width: 42px;
+		height: 42px;
+	}
+
+	.header-icon-btn svg {
+		width: 24px;
+		height: 24px;
+	}
 }
 
 /* Close (×) button inside each drawer */
@@ -324,21 +364,7 @@ header.site-head .content {
 	gap: 8px;
 }
 
-.site-head #dark-mode-placeholder {
-	border: 1px solid var(--col-bg-dimmed);
-	border-radius: 3px;
-}
 
-.site-head #dark-mode-placeholder a {
-	color: var(--col-fg);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-direction: row;
-	padding: 5px;
-	width: 24px;
-	height: 24px;
-}
 
 .breadcrumbs {
 	height: var(--sz-header-height);
@@ -346,6 +372,15 @@ header.site-head .content {
 	align-items: center;
 	flex-direction: row;
 	flex-grow: 1;
+}
+
+/* Mobile-only breadcrumbs rendered above the article */
+.breadcrumbs-inline {
+	display: none;
+	height: auto;
+	padding: 0.75rem 0 0.25rem;
+	border-bottom: 1px solid var(--col-bg-dimmed);
+	margin-bottom: 1rem;
 }
 
 .breadcrumbs ol {
@@ -368,6 +403,18 @@ header.site-head .content {
 	font-weight: bold;
 	color: var(--col-accent);
 	letter-spacing: 0.02em;
+}
+
+.breadcrumbs ol {
+	display: flex;
+	align-items: center;
+	gap: 0.3em;
+}
+
+.bc-home-icon {
+	width: 1em;
+	height: 1em;
+	flex-shrink: 0;
 }
 
 .breadcrumbs ol :last-child::after {

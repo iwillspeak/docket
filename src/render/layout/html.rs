@@ -45,6 +45,45 @@ impl<'a> fmt::Display for Breadcrumbs<'a> {
     }
 }
 
+struct InlineBreadcrumbs<'a>(&'a RenderState<'a, 'a>, &'a str, &'a str);
+
+impl<'a> fmt::Display for InlineBreadcrumbs<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut current = Some(self.0);
+        let mut stack = Vec::new();
+        let mut path = String::from(self.1);
+        let root = self.2;
+
+        while let Some(state) = current {
+            stack.push((path.clone(), state));
+            path.push_str("../");
+            current = state.parent();
+        }
+        write!(f, "<ol class='breadcrumbs'>")?;
+        if let Some((path, _)) = stack.pop() {
+            write!(
+                f,
+                "<li class='primary'><a href='{}'>\
+                    <svg class='bc-home-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' aria-hidden='true'><use href='{}feather-sprite.svg#home'/></svg>\
+                    <span class='bc-site-name'>{}</span>\
+                </a></li>",
+                path,
+                root,
+                self.0.ctx().site_name
+            )?;
+        }
+        while let Some((path, state)) = stack.pop() {
+            write!(
+                f,
+                "<li><a href='{}'>{}</a></li>",
+                path,
+                state.current_bale().title()
+            )?;
+        }
+        write!(f, "</ol>")
+    }
+}
+
 struct Content<'a>(&'a Toc, &'a str);
 
 impl<'a> fmt::Display for Content<'a> {
@@ -208,13 +247,13 @@ impl Layout for HtmlLayout {
 <body>
     <header class="site-head">
         <div class="content">
-            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebar">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href='{root}feather-sprite.svg#menu'/></svg>
+            <button class="nav-toggle header-icon-btn" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="sidebar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href='{root}feather-sprite.svg#menu'/></svg>
             </button>
             <nav class="breadcrumbs">{breadcrumbs}</nav>
             <div id="dark-mode-placeholder"></div>
-            <button class="toc-toggle" id="toc-toggle" aria-label="Toggle table of contents" aria-expanded="false" aria-controls="toc-panel">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href='{root}feather-sprite.svg#list'/></svg>
+            <button class="toc-toggle header-icon-btn" id="toc-toggle" aria-label="Toggle table of contents" aria-expanded="false" aria-controls="toc-panel">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><use href='{root}feather-sprite.svg#more-vertical'/></svg>
             </button>
         </div>
     </header>
@@ -237,6 +276,7 @@ impl Layout for HtmlLayout {
             {toc}
         </nav>
         <main>
+            <nav class="breadcrumbs breadcrumbs-inline">{inline_breadcrumbs}</nav>
             <article id="document-content">
                 {content}
             </article>
@@ -249,6 +289,7 @@ impl Layout for HtmlLayout {
             root = root,
             hl_header = hl_header,
             breadcrumbs = Breadcrumbs(state, nav_prefix),
+            inline_breadcrumbs = InlineBreadcrumbs(state, nav_prefix, &root),
             page_title = page.title(),
             navs = Navs(&state.navs, nav_prefix, &root),
             toc = RenderedToc(page.content(), HeadingLevel::H3),
