@@ -448,16 +448,21 @@ header.site-head .content {
 
 .site-nav a {
 	display: block;
-	padding: 0.15rem 0.4rem 0.15rem 0.6rem;
+	padding: 0.15rem 0.4rem 0.15rem 1rem;
 	font-size: 0.88rem;
 	line-height: 1.45;
 	color: var(--col-fg);
 	text-decoration: none;
-	border-left: 2px solid transparent;
-	transition: border-color 0.12s, color 0.12s;
 }
 
-.site-nav a:hover {
+.site-nav a,
+.site-nav details > summary {
+	border-left: 2px solid transparent;
+	transition: border-color 0.12s, color 0.12s;
+}	
+
+.site-nav a:hover,
+.site-nav details > summary:hover {
 	color: var(--col-accent);
 	border-left-color: var(--col-accent);
 }
@@ -476,7 +481,7 @@ header.site-head .content {
 	user-select: none;
 	padding: 0.15rem 0;
 	display: flex;
-	align-items: baseline;
+	align-items: center;
 }
 
 .site-nav details > summary::-webkit-details-marker {
@@ -496,11 +501,11 @@ header.site-head .content {
 	transform: rotate(90deg);
 }
 
-/* Summary contains a link — fills remaining space for full-row hit area */
+/* Summary contains a link — sized to text only; the summary row itself is the toggle target */
 .site-nav details > summary > a {
-	flex: 1;
+	display: inline;
 	border-left: none;
-	padding-left: 0.25rem;
+	padding: 0 0.25rem;
 }
 
 .site-nav details > summary > a:hover {
@@ -619,9 +624,9 @@ h6 a {
 }
 
 .anchor-icon {
-	width: 0.85em;
-	height: 0.85em;
-	vertical-align: text-bottom;
+	width: 0.7em;
+	height: 0.7em;
+	vertical-align: text-top;
 }
 
 table {
