@@ -116,3 +116,44 @@ Two patterns used here to fix it:
 2. **Raise specificity in the media query**: use a more-specific selector like
    `.doc-grid .sidebar .drawer-close` inside the media query to beat the global
    `.drawer-close` rule. Used for `.drawer-close`.
+
+## TOC rendering rules (as of 2026-03-07)
+
+`render_toc_to` in `src/render/layout/html.rs` applies these rules when building
+the navigation trees:
+
+- **Single H1**: sidebar and the `[TOC]` macro both skip the H1 and start at H2,
+  so the page title is not repeated.
+- **Multiple H1s**: every H1 is shown along with its direct H2 children.
+- **Sidebar depth**: renders headings down to **H4** (`HeadingLevel::H4`).
+- **Inline `[TOC]`**: wrapped in `<nav class='inline-toc'>` with a
+  `<p class='toc-section-label'>In this section</p>` label; also starts at H2 when
+  there is a single H1.
+
+The fix for the previous borrow-checker bug: `Nodes` is a consuming iterator, so
+calling `.count()` then `.next()` is a use-after-move. Solution: collect into a
+`Vec` first, check `len()`, then call `into_iter()`. `render_toc_node_to` was also
+made generic (`impl Iterator<Item = &'a TocNode>`) so it accepts both `Nodes` and
+`vec::IntoIter`.
+
+## Test / preview pages
+
+`docs/examples/` is **gitignored** and used as a scratch area for test pages.
+Do not commit it, but feel free to create or modify files there freely.
+
+To add a new test scenario:
+
+1. Create `docs/examples/<NN>-<name>.md` with the heading structure you want to
+   exercise.
+2. Optionally place a `[TOC]` macro in the body to test inline TOC rendering.
+3. Run `cargo run -- -s docs/ -t output/` to rebuild.
+4. Browse `output/examples/<name>/index.html` to inspect the result.
+
+### Current test pages
+
+| File | What it tests |
+|---|---|
+| `01-single-h1-deep.md` | Single H1 → sidebar starts at H2; `[TOC]` shows "In this section"; H4 sidebar depth |
+| `02-multi-h1.md` | Three H1 roots → main TOC lists all H1s + H2 children |
+| `03-api-reference.md` | Single H1 with H2→H3→H4 nesting; sidebar depth stress test |
+

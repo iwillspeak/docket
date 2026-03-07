@@ -4,7 +4,7 @@ use crate::{
     error::Result,
     highlight,
     render::{NavInfo, PageKind, RenderState},
-    toc::{Nodes, Toc, TocElement},
+    toc::{Nodes, Toc, TocElement, TocNode},
 };
 use pulldown_cmark::HeadingLevel;
 use std::{fmt, io::Write};
@@ -92,7 +92,11 @@ impl<'a> fmt::Display for Content<'a> {
         for element in self.0.walk_elements() {
             match element {
                 TocElement::Html(htm) => htm.fmt(f)?,
-                TocElement::TocReference => render_toc_to(f, self.0.nodes(), HeadingLevel::H3)?,
+                TocElement::TocReference => {
+                    write!(f, "<nav class='inline-toc'><h2 class='toc-section-label'>In this section</h2>")?;
+                    render_toc_to(f, self.0.nodes(), HeadingLevel::H2)?;
+                    write!(f, "</nav>")?;
+                }
                 // We only need to write the heading here, the contents will be
                 // handled by the recurse from the walker.
                 TocElement::Node(nested) => write!(
@@ -113,14 +117,6 @@ struct RenderedToc<'a>(&'a Toc, HeadingLevel);
 
 impl<'a> fmt::Display for RenderedToc<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        if self.0.nodes().count() == 1 {
-            let inner_node = self.0.nodes().next().unwrap();
-            if inner_node.nodes().count() > 0 {
-                render_toc_to(f, inner_node.nodes(), self.1)?;
-
-                return Ok(());
-            }
-        }
         render_toc_to(f, self.0.nodes(), self.1)
     }
 }
@@ -129,7 +125,31 @@ impl<'a> fmt::Display for RenderedToc<'a> {
 ///
 /// This walks the list of `TocElement`s and renders them as a list of links
 /// using their clean text for the link body.
+///
+/// When there is exactly one root node (the page's H1), its children (H2+) are
+/// rendered directly so the page title is not repeated in the TOC.
 fn render_toc_to(f: &mut fmt::Formatter<'_>, nodes: Nodes, limit: HeadingLevel) -> fmt::Result {
+    if nodes.len() == 1 {
+        let inner_nodes = nodes.into_iter().next().unwrap().nodes();
+        if !inner_nodes.len() > 0 {
+            return render_toc_node_to(f, inner_nodes, limit);
+        }
+
+        return Ok(());
+    }
+
+    render_toc_node_to(f, nodes.into_iter(), limit)
+}
+
+/// Render a Single TOC Node and its children
+///
+/// This renders a single TOC node as a link, and then recurses to render any
+/// children it may have as a nested list.
+fn render_toc_node_to<'a>(
+    f: &mut fmt::Formatter<'_>,
+    nodes: impl Iterator<Item = &'a TocNode>,
+    limit: HeadingLevel,
+) -> fmt::Result {
     write!(f, "<ul class='toc'>")?;
     for node in nodes {
         if node.heading.level <= limit {
@@ -139,7 +159,7 @@ fn render_toc_to(f: &mut fmt::Formatter<'_>, nodes: Nodes, limit: HeadingLevel) 
                 node.heading.slug, node.heading.contents
             )?;
 
-            render_toc_to(f, node.nodes(), limit)?;
+            render_toc_node_to(f, node.nodes(), limit)?;
         }
     }
     write!(f, "</ul>")
@@ -332,7 +352,7 @@ impl Layout for HtmlLayout {
             inline_breadcrumbs = InlineBreadcrumbs(state, nav_prefix, &root),
             page_title = page.title(),
             navs = Navs(&state.navs, nav_prefix, &root),
-            toc = RenderedToc(page.content(), HeadingLevel::H3),
+            toc = RenderedToc(page.content(), HeadingLevel::H4),
             content = Content(page.content(), &root),
             last_updated = LastUpdated(page.modified()),
             footer = get_footer(state)
