@@ -26,8 +26,8 @@ use log::{info, warn};
 ///
 /// Chooses what should happen if an error happens when running the build.
 #[derive(PartialEq, Copy, Clone)]
-#[cfg_attr(not(feature = "watch"), allow(dead_code))]
 enum OnError {
+    #[cfg(feature = "watch")]
     Ignore,
     Exit,
 }

@@ -12,10 +12,12 @@ pub enum Error {
     /// A generic IO Error occured
     Io(io::Error),
     /// Annotated inner error
+    #[cfg(feature = "watch")]
     Annotated(String, Box<dyn std::error::Error>),
 }
 
 impl Error {
+    #[cfg(feature = "watch")]
     pub fn annotated<S, E>(anno: S, err: E) -> Self
     where
         S: Into<String>,
@@ -36,6 +38,7 @@ impl std::fmt::Display for Error {
                 )
             }
             Error::Io(io) => io.fmt(f),
+            #[cfg(feature = "watch")]
             Error::Annotated(anno, e) => {
                 write!(f, "{}: {}", anno, e)
             }
@@ -63,10 +66,12 @@ impl From<io::Error> for Error {
 /// Shorthand result type for functions returning docket errors.
 pub type Result<T> = std::result::Result<T, Error>;
 
+#[cfg(feature = "watch")]
 pub(crate) trait ResultExt<T, A: Into<String>> {
     fn annotate_err(self, anno: A) -> Result<T>;
 }
 
+#[cfg(feature = "watch")]
 impl<T, E, A> ResultExt<T, A> for std::result::Result<T, E>
 where
     E: std::error::Error + 'static,
