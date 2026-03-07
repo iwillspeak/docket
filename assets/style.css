@@ -2,7 +2,8 @@
 	/* Colourschemes */
 
 	/* Sharp - Pinktacular accents */
-	--col-accent: #ee0b74;
+	--col-accent-light: #ee0b74;
+	--col-accent-dark: #f9479b;
 	--col-dark: #020202;
 	--col-dark-dimmed: #262826;
 	--col-light-dimmed: #e9e9e9;
@@ -12,6 +13,7 @@
 	--col-bg-dimmed: var(--col-light-dimmed);
 	--col-fg: var(--col-dark);
 	--col-fg-dimmed: var(--col-dark-dimmed);
+	--col-accent: var(--col-accent-light);
 
 	/* FONTS */
 	--fnt-base-size: 16px;
@@ -34,6 +36,7 @@
 		--col-bg-dimmed: var(--col-dark-dimmed);
 		--col-fg: var(--col-light);
 		--col-fg-dimmed: var(--col-light-dimmed);
+		--col-accent: var(--col-accent-dark);
 
 		color-scheme: dark;
 	}
@@ -45,6 +48,7 @@ html[data-color-mode="dark"] {
 	--col-bg-dimmed: var(--col-dark-dimmed);
 	--col-fg: var(--col-light);
 	--col-fg-dimmed: var(--col-light-dimmed);
+	--col-accent: var(--col-accent-dark);
 
 	color-scheme: dark;
 }
@@ -55,6 +59,7 @@ html[data-color-mode="light"] {
 	--col-bg-dimmed: var(--col-light-dimmed);
 	--col-fg: var(--col-dark);
 	--col-fg-dimmed: var(--col-dark-dimmed);
+	--col-accent: var(--col-accent-light);
 
 	color-scheme: light;
 }
