@@ -130,6 +130,23 @@ impl Page {
     pub fn modified(&self) -> Option<SystemTime> {
         self.modified
     }
+
+    /// Get the First Paragraph
+    ///
+    /// Walks the element tree and returns the HTML of the first non-empty HTML
+    /// blob (typically the opening paragraph of the page body). Returns `None`
+    /// if the page contains no prose content.
+    pub fn first_paragraph(&self) -> Option<&str> {
+        for el in self.content().walk_elements() {
+            if let crate::toc::TocElement::Html(html) = el {
+                let trimmed = html.trim();
+                if !trimmed.is_empty() {
+                    return Some(html);
+                }
+            }
+        }
+        None
+    }
 }
 
 /// An Unopened Bale

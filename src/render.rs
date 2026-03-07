@@ -182,12 +182,24 @@ impl NavInfo {
     }
 }
 
+/// A summary of a child page or bale, used to render index cards and sidebar
+/// child-link lists on bale index pages.
+#[derive(Debug)]
+pub(crate) struct CardSummary {
+    /// Relative URL from the bale root to the child (e.g. `./slug/`)
+    pub href: String,
+    /// Display title of the child
+    pub title: String,
+    /// Opening paragraph HTML of the child, if available
+    pub blurb: String,
+}
+
 /// Kind of page we are rendering. For index pages we don't need to do anything
 /// to get to the bale root. For nested pages we keep the page's slug.
 pub(crate) enum PageKind {
-    /// An index page
-    Index,
-    /// A neseted page with a given slug
+    /// An index page, carrying card summaries for each child item.
+    Index(Vec<CardSummary>),
+    /// A nested page with a given slug
     Nested(String),
 }
 
@@ -195,7 +207,7 @@ impl PageKind {
     /// Get the path to the current bale given this page's kind.
     fn path_to_bale(&self) -> &'static str {
         match self {
-            PageKind::Index => "./",
+            PageKind::Index(_) => "./",
             PageKind::Nested(_) => "../",
         }
     }
@@ -258,17 +270,22 @@ fn render_bale_contents(
 
     let mut rendered_items = Vec::new();
 
-    // If we have an index page render it; otherwise synthesise a simple
-    // child-listing page so the bale's nav link always has a landing page.
+    // Always build card summaries for the children when there are items, so
+    // both the real index page and the synthetic fallback can show them.
+    let cards = build_card_summaries(&items);
     if let Some(page) = state.current_bale().index_page() {
         trace!("Bale has an index. Rendering.");
-        render_page(&state, PageKind::Index, page)?;
+        render_page(&state, PageKind::Index(cards), page)?;
         // TODO: We don't add the index pages to the search index here, because
         // we don't _own_ the index pages. This needs fixing.
     } else if !items.is_empty() {
         trace!("No index page; generating auto-index for '{}'.", state.current_bale().title());
-        let auto = generate_auto_index(state.current_bale().title(), &items);
-        render_page(&state, PageKind::Index, &auto)?;
+        let title = state.current_bale().title();
+        let auto = doctree::Page::synthetic(
+            title.to_owned(),
+            format!("# {}\n\n", title),
+        );
+        render_page(&state, PageKind::Index(cards), &auto)?;
     }
 
     // Walk our assets and copy them
@@ -304,24 +321,34 @@ fn render_bale_contents(
     Ok(rendered_items)
 }
 
-/// Build a synthetic index `Page` listing links to each child item.
+/// Build the list of card summaries for a bale's child items.
 ///
-/// The generated page contains an H1 title and a bullet list of links to
-/// sibling pages and sub-bales, expressed as relative URLs from the bale root.
-fn generate_auto_index(title: &str, items: &[DoctreeItem]) -> doctree::Page {
-    let mut md = format!("# {}\n\n", title);
-    for item in items {
-        match item {
-            DoctreeItem::Page(page) => {
-                md.push_str(&format!("- [{}](./{}/)\n", page.title(), page.slug()));
-            }
+/// Each summary carries the href, title, and opening-paragraph blurb for one
+/// child page or sub-bale. The layout uses this list to render both the article
+/// card grid and the compact sidebar child-link list.
+fn build_card_summaries(items: &[DoctreeItem]) -> Vec<CardSummary> {
+    items
+        .iter()
+        .map(|item| match item {
+            DoctreeItem::Page(page) => CardSummary {
+                href: format!("./{}/", page.slug()),
+                title: page.title().to_owned(),
+                blurb: page.first_paragraph().unwrap_or("").to_owned(),
+            },
             DoctreeItem::Bale(bale) => {
                 let fp = bale.frontispiece();
-                md.push_str(&format!("- [{}](./{}/)\n", fp.title(), fp.slug()));
+                CardSummary {
+                    href: format!("./{}/", fp.slug()),
+                    title: fp.title().to_owned(),
+                    blurb: fp
+                        .index_page()
+                        .and_then(|p| p.first_paragraph())
+                        .unwrap_or("")
+                        .to_owned(),
+                }
             }
-        }
-    }
-    doctree::Page::synthetic(title.to_owned(), md)
+        })
+        .collect()
 }
 
 fn navs_for_items(items: &[DoctreeItem]) -> Vec<NavInfo> {
