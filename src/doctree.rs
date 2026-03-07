@@ -79,6 +79,21 @@ impl Page {
         Ok(page)
     }
 
+    /// Construct a Synthetic Page from In-Memory Content
+    ///
+    /// Creates a page whose content is provided directly as a markdown string
+    /// rather than read from disk. Used to generate auto-index pages for bales
+    /// that have no `index.md`.
+    pub fn synthetic(title: String, markdown: String) -> Self {
+        let tree = Toc::new(&markdown);
+        Page {
+            slug: String::from("index"),
+            title,
+            tree,
+            modified: None,
+        }
+    }
+
     /// Construct a Page from Constituent Parts
     ///
     /// Builds the TOC tree for the given page, and returns the opened and

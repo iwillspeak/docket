@@ -258,12 +258,17 @@ fn render_bale_contents(
 
     let mut rendered_items = Vec::new();
 
-    // If we have an index page then redner that
+    // If we have an index page render it; otherwise synthesise a simple
+    // child-listing page so the bale's nav link always has a landing page.
     if let Some(page) = state.current_bale().index_page() {
         trace!("Bale has an index. Rendering.");
         render_page(&state, PageKind::Index, page)?;
         // TODO: We don't add the index pages to the search index here, because
         // we don't _own_ the index pages. This needs fixing.
+    } else if !items.is_empty() {
+        trace!("No index page; generating auto-index for '{}'.", state.current_bale().title());
+        let auto = generate_auto_index(state.current_bale().title(), &items);
+        render_page(&state, PageKind::Index, &auto)?;
     }
 
     // Walk our assets and copy them
@@ -297,6 +302,26 @@ fn render_bale_contents(
     }
 
     Ok(rendered_items)
+}
+
+/// Build a synthetic index `Page` listing links to each child item.
+///
+/// The generated page contains an H1 title and a bullet list of links to
+/// sibling pages and sub-bales, expressed as relative URLs from the bale root.
+fn generate_auto_index(title: &str, items: &[DoctreeItem]) -> doctree::Page {
+    let mut md = format!("# {}\n\n", title);
+    for item in items {
+        match item {
+            DoctreeItem::Page(page) => {
+                md.push_str(&format!("- [{}](./{}/)\n", page.title(), page.slug()));
+            }
+            DoctreeItem::Bale(bale) => {
+                let fp = bale.frontispiece();
+                md.push_str(&format!("- [{}](./{}/)\n", fp.title(), fp.slug()));
+            }
+        }
+    }
+    doctree::Page::synthetic(title.to_owned(), md)
 }
 
 fn navs_for_items(items: &[DoctreeItem]) -> Vec<NavInfo> {

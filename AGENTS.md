@@ -50,6 +50,8 @@ assets/
 **Page** = a single Markdown file (leaf node). Slug derived from filename.
 **Site title** = last path component of source dir, with "docs" filtered out; or contents of a `title` file in the source dir.
 
+**Auto-index**: if a bale has no `index.md` (and is non-empty), `render.rs` calls `generate_auto_index` to synthesise a `Page` (via `Page::synthetic`) containing a bullet list of links to the bale's children. This is rendered as the bale's `index.html` so nav links always have a landing page.
+
 ## Assets are embedded at compile time
 
 `include_str!()` is used in `src/render/layout/html.rs`. This means:
@@ -156,4 +158,5 @@ To add a new test scenario:
 | `01-single-h1-deep.md` | Single H1 → sidebar starts at H2; `[TOC]` shows "In this section"; H4 sidebar depth |
 | `02-multi-h1.md` | Three H1 roots → main TOC lists all H1s + H2 children |
 | `03-api-reference.md` | Single H1 with H2→H3→H4 nesting; sidebar depth stress test |
+| `sub-section/` | Index-free sub-bale → auto-index generation |
 
