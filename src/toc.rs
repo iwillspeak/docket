@@ -112,7 +112,7 @@ impl<'a> Iterator for Nodes<'a> {
 
 impl<'a> Nodes<'a> {
     /// Get the number of nodes in this iterator
-    pub fn len(&self) -> usize {
+    pub fn full_width(&self) -> usize {
         self.0.len()
     }
 }
