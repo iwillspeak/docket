@@ -110,6 +110,13 @@ impl<'a> Iterator for Nodes<'a> {
     }
 }
 
+impl<'a> Nodes<'a> {
+    /// Get the number of nodes in this iterator
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
 /// # Tree of Contents
 ///
 /// The tree of contents is the basic unit of pages within the document tree. A
