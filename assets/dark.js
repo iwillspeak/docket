@@ -13,8 +13,7 @@ const setIconFromMode = (button, mode) => {
     }
 
     button.innerHTML = `<svg
-    width="24"
-    height="24"
+    viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
     stroke-width="2"
@@ -53,6 +52,7 @@ if (stashedTheme) {
 // Create a button and add it to the DOM to allow toggling dark mode.
 
 const darkModeButton = document.createElement("a");
+darkModeButton.classList.add("header-icon-btn");
 darkModeButton.addEventListener("click", () => {
     setIconFromMode(darkModeButton, toggleMode());
 });
