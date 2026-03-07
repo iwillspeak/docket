@@ -93,26 +93,24 @@ impl TermFrequenciesBuilder {
 pub struct TermFrequenciesIndex(HashMap<String, f64>);
 
 impl TermFrequenciesIndex {
-    /// Unpack the inner frequenceis map from this index type
-    #[allow(dead_code)]
+    /// Unpack the inner frequencies map from this index type
+    #[cfg(test)]
     pub fn into_raw(self) -> HashMap<String, f64> {
         self.0
     }
 
     /// Obtain a reference to the frequencies map for this index
-    #[allow(dead_code)]
+    #[cfg(test)]
     pub fn as_raw(&self) -> &HashMap<String, f64> {
         &self.0
     }
 
     /// Iterate over the terms in this index
-    #[allow(dead_code)]
     pub fn iter_terms(&self) -> impl Iterator<Item = &String> {
         self.0.keys()
     }
 
     /// Iterate over the term frequencies in this index
-    #[allow(dead_code)]
     pub fn iter_frequencies(&self) -> impl Iterator<Item = (&String, &f64)> {
         self.0.iter()
     }
