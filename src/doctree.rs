@@ -12,6 +12,7 @@ use std::{
     fs,
     path::{Path, PathBuf},
     result,
+    time::SystemTime,
 };
 
 use log::info;
@@ -46,6 +47,7 @@ pub(crate) struct Page {
     slug: String,
     title: String,
     tree: Toc,
+    modified: Option<SystemTime>,
 }
 
 impl search::SearchableDocument for Page {
@@ -70,8 +72,11 @@ impl Page {
     ///
     /// Loads the contents of the given file and parses it as markdown.
     pub fn open<P: AsRef<Path>>(path: P) -> result::Result<Self, std::io::Error> {
+        let modified = fs::metadata(&path).ok().and_then(|m| m.modified().ok());
         let markdown = fs::read_to_string(&path)?;
-        Ok(Self::from_parts(path, markdown))
+        let mut page = Self::from_parts(path, markdown);
+        page.modified = modified;
+        Ok(page)
     }
 
     /// Construct a Page from Constituent Parts
@@ -88,7 +93,7 @@ impl Page {
                 .to_string_lossy()
                 .into_owned()
         });
-        Page { slug, title, tree }
+        Page { slug, title, tree, modified: None }
     }
 
     /// Get the title for this page
@@ -104,6 +109,11 @@ impl Page {
     /// Get the content
     pub fn content(&self) -> &Toc {
         &self.tree
+    }
+
+    /// Get the last-modified time for this page, if known
+    pub fn modified(&self) -> Option<SystemTime> {
+        self.modified
     }
 }
 

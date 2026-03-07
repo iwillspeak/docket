@@ -666,6 +666,14 @@ article ol {
 	margin: 0.5em 0;
 }
 
+.page-updated {
+	margin-top: 2rem;
+	padding-top: 0.75rem;
+	border-top: 1px solid var(--col-bg-dimmed);
+	color: var(--col-fg-dimmed);
+	font-size: 0.875rem;
+}
+
 /* ---------------------- SYNTAX HIGHLIGHING & CODEBLOCKS --------------------*/
 
 code,

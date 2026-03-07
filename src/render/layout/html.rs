@@ -203,6 +203,45 @@ fn get_footer<'a>(state: &'a RenderState) -> &'a str {
         .unwrap_or("<p>Rendered by <a href='https://github.com/iwillspeak/docket/'>Docket</a></p>")
 }
 
+/// Convert a `SystemTime` to a `YYYY-MM-DD` date string.
+///
+/// Uses Howard Hinnant's `civil_from_days` algorithm to avoid any external
+/// date/time dependency.
+fn format_date(t: std::time::SystemTime) -> String {
+    use std::time::UNIX_EPOCH;
+    let secs = match t.duration_since(UNIX_EPOCH) {
+        Ok(d) => d.as_secs() as i64,
+        Err(_) => return String::from("unknown"),
+    };
+    let z = secs / 86400 + 719468;
+    let era = if z >= 0 { z } else { z - 146096 } / 146097;
+    let doe = (z - era * 146097) as u64;
+    let yoe = (doe - doe / 1460 + doe / 36524 - doe / 146096) / 365;
+    let y = yoe as i64 + era * 400;
+    let doy = doe - (365 * yoe + yoe / 4 - yoe / 100);
+    let mp = (5 * doy + 2) / 153;
+    let d = doy - (153 * mp + 2) / 5 + 1;
+    let m = if mp < 10 { mp + 3 } else { mp - 9 };
+    let y = if m <= 2 { y + 1 } else { y };
+    format!("{:04}-{:02}-{:02}", y, m, d)
+}
+
+/// Renders the last-updated mini-footer inside the article, or nothing.
+struct LastUpdated(Option<std::time::SystemTime>);
+
+impl fmt::Display for LastUpdated {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(t) = self.0 {
+            write!(
+                f,
+                "<p class='page-updated'>Last updated: {}</p>",
+                format_date(t)
+            )?;
+        }
+        Ok(())
+    }
+}
+
 /// The HTML Layout
 ///
 /// This struct implements the `Layout` trait to allow rendering pages.
@@ -279,6 +318,7 @@ impl Layout for HtmlLayout {
             <nav class="breadcrumbs breadcrumbs-inline">{inline_breadcrumbs}</nav>
             <article id="document-content">
                 {content}
+                {last_updated}
             </article>
         </main>
     </section>
@@ -294,6 +334,7 @@ impl Layout for HtmlLayout {
             navs = Navs(&state.navs, nav_prefix, &root),
             toc = RenderedToc(page.content(), HeadingLevel::H3),
             content = Content(page.content(), &root),
+            last_updated = LastUpdated(page.modified()),
             footer = get_footer(state)
         )?;
         Ok(())
