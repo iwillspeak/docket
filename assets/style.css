@@ -815,3 +815,61 @@ ul.search-results li a:hover {
 	color: var(--col-accent);
 	border-left-color: var(--col-accent);
 }
+
+/* ── Auto-index cards ─────────────────────────────────────────────────────── */
+
+.index-cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+	gap: 1rem;
+	margin: 1.5rem 0;
+}
+
+.index-card {
+	position: relative;
+	display: block;
+	color: var(--col-fg);
+	background: var(--col-bg-dimmed);
+	border: 1px solid transparent;
+	border-left: 3px solid var(--col-accent);
+	border-radius: 4px;
+	padding: 1rem 1.25rem;
+	transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.index-card:hover {
+	border-color: var(--col-accent);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+}
+
+/* Stretch the title link to cover the whole card */
+.index-card-link {
+	color: var(--col-accent);
+	text-decoration: none;
+}
+
+.index-card-link::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+}
+
+.index-card-title {
+	margin: 0 0 0.45rem;
+	font-size: 1rem;
+}
+
+.index-card-blurb {
+	font-size: 0.85rem;
+	line-height: 1.5;
+	opacity: 0.8;
+	/* clamp to 3 lines */
+	display: -webkit-box;
+	-webkit-line-clamp: 3;
+	-webkit-box-orient: vertical;
+	overflow: hidden;
+}
+
+.index-card-blurb p {
+	margin: 0;
+}

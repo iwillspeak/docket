@@ -3,7 +3,7 @@ use crate::{
     doctree::Page,
     error::Result,
     highlight,
-    render::{NavInfo, PageKind, RenderState},
+    render::{CardSummary, NavInfo, PageKind, RenderState},
     toc::{Nodes, Toc, TocElement, TocNode},
 };
 use pulldown_cmark::HeadingLevel;
@@ -118,6 +118,54 @@ struct RenderedToc<'a>(&'a Toc, HeadingLevel);
 impl<'a> fmt::Display for RenderedToc<'a> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         render_toc_to(f, self.0.nodes(), self.1)
+    }
+}
+
+/// Renders the card grid for a bale's children in the article body.
+struct Cards<'a>(&'a [CardSummary]);
+
+impl<'a> fmt::Display for Cards<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.0.is_empty() {
+            return Ok(());
+        }
+        write!(f, "<div class='index-cards'>")?;
+        for card in self.0 {
+            write!(
+                f,
+                "<div class='index-card'>\
+                    <h3 class='index-card-title'>\
+                        <a class='index-card-link' href='{href}'>{title}</a>\
+                    </h3>\
+                    <div class='index-card-blurb'>{blurb}</div>\
+                </div>",
+                href = card.href,
+                title = card.title,
+                blurb = card.blurb,
+            )?;
+        }
+        write!(f, "</div>")
+    }
+}
+
+/// Renders a compact link list of child pages below the sidebar TOC.
+struct CardLinks<'a>(&'a [CardSummary]);
+
+impl<'a> fmt::Display for CardLinks<'a> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if self.0.is_empty() {
+            return Ok(());
+        }
+        write!(f, "<nav class='child-links'><h2>Pages</h2><ul class='toc'>")? ;
+        for card in self.0 {
+            write!(
+                f,
+                "<li><a href='{href}'>{title}</a></li>",
+                href = card.href,
+                title = card.title,
+            )?;
+        }
+        write!(f, "</ul></nav>")
     }
 }
 
@@ -277,6 +325,10 @@ impl Layout for HtmlLayout {
     ) -> Result<()> {
         let nav_prefix = kind.path_to_bale();
         let root = state.path_to_root(&kind);
+        let cards = match &kind {
+            PageKind::Index(summaries) => summaries.as_slice(),
+            PageKind::Nested(_) => &[],
+        };
         let hl_header = {
             let mut buf = Vec::new();
             highlight::get_hilighter().write_header(&mut buf)?;
@@ -333,11 +385,13 @@ impl Layout for HtmlLayout {
             </button>
             <h2>On this Page</h2>
             {toc}
+            {card_links}
         </nav>
         <main>
             <nav class="breadcrumbs breadcrumbs-inline">{inline_breadcrumbs}</nav>
             <article id="document-content">
                 {content}
+                {child_cards}
                 {last_updated}
             </article>
         </main>
@@ -353,7 +407,9 @@ impl Layout for HtmlLayout {
             page_title = page.title(),
             navs = Navs(&state.navs, nav_prefix, &root),
             toc = RenderedToc(page.content(), HeadingLevel::H4),
+            card_links = CardLinks(cards),
             content = Content(page.content(), &root),
+            child_cards = Cards(cards),
             last_updated = LastUpdated(page.modified()),
             footer = get_footer(state)
         )?;
