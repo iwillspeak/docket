@@ -2,33 +2,37 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "cargo",
-			"command": "build",
-			"problemMatcher": [
-				"$rustc"
-			],
+			"label": "build",
+			"type": "shell",
+			"command": "cargo build",
+			"problemMatcher": ["$rustc"],
 			"group": {
 				"kind": "build",
 				"isDefault": true
 			}
 		},
 		{
-			"type": "cargo",
-			"command": "test",
-			"problemMatcher": [
-				"$rustc"
-			],
+			"label": "test",
+			"type": "shell",
+			"command": "cargo test",
+			"problemMatcher": ["$rustc"],
 			"group": {
 				"kind": "test",
 				"isDefault": true
 			}
 		},
 		{
-			"type": "cargo",
-			"command": "fmt",
-			"problemMatcher": [
-				"$rustc"
-			],
+			"label": "fmt",
+			"type": "shell",
+			"command": "cargo fmt",
+			"problemMatcher": []
+		},
+		{
+			"label": "regenerate-site",
+			"type": "shell",
+			"command": "cargo run -- -s docs/ -t output/",
+			"problemMatcher": ["$rustc"],
+			"group": "build"
 		}
 	]
 }
