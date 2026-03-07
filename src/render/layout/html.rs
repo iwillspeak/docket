@@ -93,7 +93,7 @@ impl<'a> fmt::Display for Content<'a> {
             match element {
                 TocElement::Html(htm) => htm.fmt(f)?,
                 TocElement::TocReference => {
-                    write!(f, "<nav class='inline-toc'><h2 class='toc-section-label'>In this section</h2>")?;
+                    write!(f, "<nav class='inline-toc'><p class='toc-section-label'>In this section</p>")?;
                     render_toc_to(f, self.0.nodes(), HeadingLevel::H2)?;
                     write!(f, "</nav>")?;
                 }
@@ -156,7 +156,7 @@ impl<'a> fmt::Display for CardLinks<'a> {
         if self.0.is_empty() {
             return Ok(());
         }
-        write!(f, "<nav class='child-links'><h2>Pages</h2><ul class='toc'>")? ;
+        write!(f, "<nav class='child-links'><h2>Pages</h2><ul class='toc'>")?;
         for card in self.0 {
             write!(
                 f,
@@ -177,9 +177,9 @@ impl<'a> fmt::Display for CardLinks<'a> {
 /// When there is exactly one root node (the page's H1), its children (H2+) are
 /// rendered directly so the page title is not repeated in the TOC.
 fn render_toc_to(f: &mut fmt::Formatter<'_>, nodes: Nodes, limit: HeadingLevel) -> fmt::Result {
-    if nodes.len() == 1 {
+    if nodes.full_width() == 1 {
         let inner_nodes = nodes.into_iter().next().unwrap().nodes();
-        if !inner_nodes.len() > 0 {
+        if inner_nodes.full_width() > 0 {
             return render_toc_node_to(f, inner_nodes, limit);
         }
 

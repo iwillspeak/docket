@@ -552,6 +552,7 @@ ul.toc ul.toc {
 
 /* ------------------------------ MAIN ARTICLE -------------------------------*/
 
+p.toc-section-label,
 h1,
 h2,
 h3,
@@ -567,6 +568,7 @@ h1 {
 	font-size: 2rem;
 }
 
+p.toc-section-label,
 h2 {
 	font-size: 1.5rem;
 }
