@@ -50,7 +50,7 @@ assets/
 **Page** = a single Markdown file (leaf node). Slug derived from filename.
 **Site title** = last path component of source dir, with "docs" filtered out; or contents of a `title` file in the source dir.
 
-**Auto-index**: if a bale has no `index.md` (and is non-empty), `render.rs` calls `generate_auto_index` to synthesise a `Page` (via `Page::synthetic`) containing a bullet list of links to the bale's children. This is rendered as the bale's `index.html` so nav links always have a landing page.
+**Auto-index**: if a bale has no `index.md` (and is non-empty), `render.rs` uses `Page::synthetic` to create an implicit index page whose markdown body is just `# <title>`. This synthetic page is rendered as the bale's `index.html`, and the layout is responsible for showing cards/links to the bale's children so nav links always have a landing page.
 
 ## Assets are embedded at compile time
 
@@ -129,14 +129,14 @@ the navigation trees:
 - **Multiple H1s**: every H1 is shown along with its direct H2 children.
 - **Sidebar depth**: renders headings down to **H4** (`HeadingLevel::H4`).
 - **Inline `[TOC]`**: wrapped in `<nav class='inline-toc'>` with a
-  `<p class='toc-section-label'>In this section</p>` label; also starts at H2 when
+  `<h2 class='toc-section-label'>In this section</h2>` label; also starts at H2 when
   there is a single H1.
 
-The fix for the previous borrow-checker bug: `Nodes` is a consuming iterator, so
-calling `.count()` then `.next()` is a use-after-move. Solution: collect into a
-`Vec` first, check `len()`, then call `into_iter()`. `render_toc_node_to` was also
-made generic (`impl Iterator<Item = &'a TocNode>`) so it accepts both `Nodes` and
-`vec::IntoIter`.
+The previous borrow-checker bug came from treating `Nodes` (a consuming iterator)
+as reusable: calling `.count()` and then `.next()` is effectively a use-after-move.
+When modifying `render_toc_to` / `render_toc_node_to`, use a pattern that avoids
+consuming the iterator twice (for example, collect into a `Vec` first and then
+iterate over it).
 
 ## Test / preview pages
 
