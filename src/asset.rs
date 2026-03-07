@@ -30,6 +30,24 @@ pub enum Asset {
     /// Internal assets represent fixed strings which are copied to a
     /// named file in the output directory when rendered.
     Internal(InternalAsset),
+
+    /// Generated Asset
+    ///
+    /// Generated assets hold runtime-computed content written to a named file
+    /// in the output directory when rendered.
+    #[cfg_attr(not(feature = "syntect-hl"), allow(dead_code))]
+    Generated(GeneratedAsset),
+}
+
+/// Generated Asset
+///
+/// Defines runtime-computed contents for an asset.
+#[derive(Debug)]
+pub struct GeneratedAsset {
+    /// The file name to create
+    name: String,
+    /// The contents of the asset
+    contents: String,
 }
 
 /// Internal Asset
@@ -61,6 +79,19 @@ impl Asset {
         Asset::Disk(path)
     }
 
+    /// Create a Generated Asset
+    ///
+    /// # Parameters
+    ///  * `name` - The name of the file to create in the output
+    ///  * `contents` - The runtime-computed contents
+    #[cfg_attr(not(feature = "syntect-hl"), allow(dead_code))]
+    pub fn generated(name: impl Into<String>, contents: impl Into<String>) -> Self {
+        Asset::Generated(GeneratedAsset {
+            name: name.into(),
+            contents: contents.into(),
+        })
+    }
+
     /// Copy To
     ///
     /// This method is called to copy a given asset to the output
@@ -71,6 +102,12 @@ impl Asset {
                 let path = output.join(int.name);
                 let mut file = File::create(&path)?;
                 write!(file, "{}", int.contents)?;
+                Ok(())
+            }
+            Asset::Generated(gen) => {
+                let path = output.join(&gen.name);
+                let mut file = File::create(&path)?;
+                write!(file, "{}", gen.contents)?;
                 Ok(())
             }
             Asset::Disk(path) => copy_single(&path, output),

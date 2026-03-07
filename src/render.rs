@@ -397,7 +397,7 @@ fn render_page(state: &RenderState, kind: PageKind, page: &doctree::Page) -> Res
 /// Copy any assets used by the layout
 fn copy_global_assets(ctx: &RenderContext) -> Result<()> {
     fs::create_dir_all(&ctx.path)?;
-    for asset in ctx.layout().assets() {
+    for asset in ctx.layout().assets()? {
         asset.copy_to(&ctx.path)?;
     }
 

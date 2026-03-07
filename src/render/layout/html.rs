@@ -331,7 +331,7 @@ impl Layout for HtmlLayout {
         };
         let hl_header = {
             let mut buf = Vec::new();
-            highlight::get_hilighter().write_header(&mut buf)?;
+            highlight::get_hilighter().write_header(&mut buf, &root)?;
             match String::from_utf8(buf) {
                 Ok(s) => s,
                 Err(e) => String::from_utf8_lossy(&e.into_bytes()).into_owned(),
@@ -416,8 +416,8 @@ impl Layout for HtmlLayout {
         Ok(())
     }
 
-    fn assets(&self) -> &[Asset] {
-        static ASSETS: [Asset; 6] = [
+    fn assets(&self) -> Result<Vec<Asset>> {
+        let mut assets = vec![
             Asset::internal("style.css", include_str!("../../../assets/style.css")),
             Asset::internal("search.js", include_str!("../../../assets/search.js")),
             Asset::internal("dark.js", include_str!("../../../assets/dark.js")),
@@ -431,6 +431,7 @@ impl Layout for HtmlLayout {
                 include_str!("../../../assets/feather-sprite.svg"),
             ),
         ];
-        &ASSETS[..]
+        assets.extend(highlight::get_hilighter().assets()?);
+        Ok(assets)
     }
 }

@@ -14,14 +14,25 @@ use std::io::Write;
 use log::debug;
 use pulldown_cmark::{CodeBlockKind, Event, Tag};
 
+use crate::asset::Asset;
+
 pub(crate) trait Highlighter {
     /// # Highlight a Code Block
     ///
     /// Returns a list of the events to emit to the TOC to represent the block.
     fn hl_codeblock<'a>(&self, name: Option<&str>, block: &str) -> Vec<Event<'_>>;
 
+    /// # Get the Assets Required by this Highlighter
+    ///
+    /// Returns a list of assets to be written to the output root alongside
+    /// the other site assets.
+    fn assets(&self) -> std::io::Result<Vec<Asset>>;
+
     /// # Write any HTML header required for highlighting on this page.
-    fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()>;
+    ///
+    /// `root` is the relative path from the current page back to the site
+    /// root (e.g. `""`, `"../"`, `"../../"`).
+    fn write_header(&self, out: &mut dyn Write, root: &str) -> std::io::Result<()>;
 }
 
 pub use js_hl::HighlightJsHighlighter;
@@ -41,10 +52,13 @@ mod syntect_hl {
         util::LinesWithEndings,
     };
 
-    use super::{to_default_events, Highlighter};
+    use super::{to_default_events, Asset, Highlighter};
 
     const LIGHT_THEME: &str = "InspiredGitHub";
     const DARK_THEME: &str = "Solarized (dark)";
+
+    /// The name of the generated CSS asset file.
+    const HIGHLIGHT_CSS: &str = "highlight.css";
 
     fn class_style() -> ClassStyle {
         ClassStyle::SpacedPrefixed { prefix: "hl-" }
@@ -53,7 +67,7 @@ mod syntect_hl {
     pub struct SyntectHighlighter {
         ss: SyntaxSet,
         ts: ThemeSet,
-        header_cache: OnceCell<String>,
+        css_cache: OnceCell<String>,
     }
 
     impl SyntectHighlighter {
@@ -62,8 +76,36 @@ mod syntect_hl {
             SyntectHighlighter {
                 ss: SyntaxSet::load_defaults_newlines(),
                 ts: ThemeSet::load_defaults(),
-                header_cache: OnceCell::new(),
+                css_cache: OnceCell::new(),
             }
+        }
+
+        fn get_css(&self) -> std::io::Result<&str> {
+            let css = self.css_cache.get_or_try_init(|| -> std::io::Result<String> {
+                let io_err = |e: syntect::Error| {
+                    std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
+                };
+                let light_css =
+                    css_for_theme_with_class_style(&self.ts.themes[LIGHT_THEME], class_style())
+                        .map_err(io_err)?;
+                let dark_css =
+                    css_for_theme_with_class_style(&self.ts.themes[DARK_THEME], class_style())
+                        .map_err(io_err)?;
+                // A reset rule ensures light-mode colours don't bleed through
+                // for any tokens the dark theme doesn't explicitly re-declare.
+                const DARK_RESET: &str = ".hl-code, .hl-code * { color: inherit; }\n";
+                Ok(format!(
+                    concat!(
+                        "{light}\n",
+                        "@media (prefers-color-scheme: dark) {{\n{reset}{dark}}}\n",
+                        "html[data-color-mode=\"dark\"] {{\n{reset}{dark}}}\n",
+                    ),
+                    light = light_css,
+                    dark = dark_css,
+                    reset = DARK_RESET,
+                ))
+            })?;
+            Ok(css)
         }
     }
 
@@ -88,34 +130,18 @@ mod syntect_hl {
             vec![Event::Html(html.into())]
         }
 
-        fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()> {
-            let header = self.header_cache.get_or_try_init(|| -> std::io::Result<String> {
-                let io_err = |e: syntect::Error| {
-                    std::io::Error::new(std::io::ErrorKind::Other, e.to_string())
-                };
-                let light_css =
-                    css_for_theme_with_class_style(&self.ts.themes[LIGHT_THEME], class_style())
-                        .map_err(io_err)?;
-                let dark_css =
-                    css_for_theme_with_class_style(&self.ts.themes[DARK_THEME], class_style())
-                        .map_err(io_err)?;
-                // A reset rule ensures light-mode colours don't bleed through
-                // for any tokens the dark theme doesn't explicitly re-declare.
-                const DARK_RESET: &str = ".hl-code, .hl-code * { color: inherit; }\n";
-                Ok(format!(
-                    concat!(
-                        "<style>\n",
-                        "{light}\n",
-                        "@media (prefers-color-scheme: dark) {{\n{reset}{dark}}}\n",
-                        "html[data-color-mode=\"dark\"] {{\n{reset}{dark}}}\n",
-                        "</style>",
-                    ),
-                    light = light_css,
-                    dark = dark_css,
-                    reset = DARK_RESET,
-                ))
-            })?;
-            out.write_all(header.as_bytes())
+        fn assets(&self) -> std::io::Result<Vec<Asset>> {
+            let css = self.get_css()?.to_owned();
+            Ok(vec![Asset::generated(HIGHLIGHT_CSS, css)])
+        }
+
+        fn write_header(&self, out: &mut dyn Write, root: &str) -> std::io::Result<()> {
+            write!(
+                out,
+                "<link rel=\"stylesheet\" href=\"{root}{name}\">",
+                root = root,
+                name = HIGHLIGHT_CSS,
+            )
         }
     }
 }
@@ -125,7 +151,7 @@ mod js_hl {
 
     use pulldown_cmark::Event;
 
-    use super::{to_default_events, Highlighter};
+    use super::{to_default_events, Asset, Highlighter};
 
     pub struct HighlightJsHighlighter;
 
@@ -134,7 +160,11 @@ mod js_hl {
             to_default_events(name, &block)
         }
 
-        fn write_header(&self, out: &mut dyn Write) -> std::io::Result<()> {
+        fn assets(&self) -> std::io::Result<Vec<Asset>> {
+            Ok(vec![])
+        }
+
+        fn write_header(&self, out: &mut dyn Write, _root: &str) -> std::io::Result<()> {
             const HLJS_VERSION: &str = "10.5.0";
             write!(
                 out,

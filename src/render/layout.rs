@@ -33,7 +33,7 @@ pub(crate) trait Layout {
     ///
     /// Returns a list of items to copy to the site root if this layout is used
     /// to render things.
-    fn assets(&self) -> &[Asset];
+    fn assets(&self) -> Result<Vec<Asset>>;
 }
 
 // Get the dfault layout
