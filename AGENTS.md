@@ -150,13 +150,3 @@ To add a new test scenario:
 2. Optionally place a `[TOC]` macro in the body to test inline TOC rendering.
 3. Run `cargo run -- -s docs/ -t output/` to rebuild.
 4. Browse `output/examples/<name>/index.html` to inspect the result.
-
-### Current test pages
-
-| File | What it tests |
-|---|---|
-| `01-single-h1-deep.md` | Single H1 → sidebar starts at H2; `[TOC]` shows "In this section"; H4 sidebar depth |
-| `02-multi-h1.md` | Three H1 roots → main TOC lists all H1s + H2 children |
-| `03-api-reference.md` | Single H1 with H2→H3→H4 nesting; sidebar depth stress test |
-| `sub-section/` | Index-free sub-bale → auto-index generation |
-
